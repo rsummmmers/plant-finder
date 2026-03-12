@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Palette Finder — Summers Gardening</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #fafaf7; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1W1CL_Q4guXnsLfCoPmM61rYXzBwHKB765L_rSAocjEY/export?format=csv&gid=1137105758";
+
+const MICROZONES = [
+  { key: "Mesic South- Facing Heat", label: "South-Facing / Heat", emoji: "☀️", desc: "Hot, dry, south-facing slope or pavement edge" },
+  { key: "Dry Upper Slope", label: "Dry Upper Slope", emoji: "🏔️", desc: "Elevated, exposed, dry and draining fast" },
+  { key: "Mid-Slope Mesic", label: "Mid-Slope Mesic", emoji: "🌿", desc: "Average suburban yard, moderate moisture" },
+  { key: "Moist Lower Area", label: "Moist Lower Area", emoji: "💧", desc: "Low spot, rain garden, holds moisture" },
+  { key: "Woodland Edge", label: "Woodland Edge", emoji: "🌳", desc: "Where lawn meets trees; dappled light" },
+  { key: "Conifer Shade", label: "Conifer Shade", emoji: "🌲", desc: "Under pine or hemlock; dry, acidic, dark" },
+  { key: "Dry Slope", label: "Dry Slope", emoji: "⛰️", desc: "Sloped, drains quickly, lean soil" },
+];
+
+const ZONE_KEYS = MICROZONES.map(z => z.key);
+
+const STATUS_COLORS = {
+  "Native":                    { bg: "#e8f5e9", text: "#2e7d32", label: "Native" },
+  "Native Cultivar":           { bg: "#f3e5f5", text: "#6a1b9a", label: "Native Cultivar" },
+  "Near-Native":               { bg: "#e3f2fd", text: "#1565c0", label: "Near-Native" },
+  "Near Native":               { bg: "#e3f2fd", text: "#1565c0", label: "Near-Native" },
+  "Safe Non-Native":           { bg: "#fff8e1", text: "#f57f17", label: "Safe Non-Native" },
+  "Safe Non Native":           { bg: "#fff8e1", text: "#f57f17", label: "Safe Non-Native" },
+  "Native/Non-Native Hybrid":  { bg: "#fce4ec", text: "#880e4f", label: "Hybrid" },
+  "Native / Nonnative Hybrid": { bg: "#fce4ec", text: "#880e4f", label: "Hybrid" },
+};
+
+const SCORE_LABELS = ["", "Don't Use", "Marginal", "OK", "Strong", "Best Fit"];
+const SCORE_COLORS = ["#ccc", "#ef5350", "#ff9800", "#fdd835", "#66bb6a", "#2e7d32"];
+
+const CATEGORY_ICONS = {
+  "Tree - Large":        { emoji: "🌳", bg: "#e8f5e9", fg: "#2e7d32" },
+  "Tree - Small":        { emoji: "🌲", bg: "#e8f5e9", fg: "#388e3c" },
+  "Tall Canopy Tree":    { emoji: "🌳", bg: "#e8f5e9", fg: "#1b5e20" },
+  "Midstory Tree":       { emoji: "🌿", bg: "#f1f8e9", fg: "#558b2f" },
+  "Shrub":               { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
+  "Shrub – Large":       { emoji: "🌾", bg: "#fff8e1", fg: "#e65100" },
+  "Shrub – Small":       { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
+  "Flowering Shrub":     { emoji: "🌸", bg: "#fce4ec", fg: "#c2185b" },
+  "Flowering Perennial": { emoji: "🌼", bg: "#fffde7", fg: "#f9a825" },
+  "Foliage Perennial":   { emoji: "🍃", bg: "#e8f5e9", fg: "#388e3c" },
+  "Groundcover":         { emoji: "🌿", bg: "#e8f5e9", fg: "#2e7d32" },
+  "Grass":               { emoji: "🌾", bg: "#f9fbe7", fg: "#827717" },
+  "Fern":                { emoji: "🌿", bg: "#e0f2f1", fg: "#00695c" },
+  "Broadleaf Evergreen": { emoji: "🍀", bg: "#e8f5e9", fg: "#1b5e20" },
+  "Vine":                { emoji: "🌿", bg: "#f3e5f5", fg: "#6a1b9a" },
+  "Annual":              { emoji: "🌻", bg: "#fff8e1", fg: "#f57f17" },
+};
+
+const COLOR_MAP = {
+  white: "#ffffff", cream: "#fffdd0", yellow: "#fdd835", orange: "#ff9800",
+  red: "#ef5350", pink: "#f48fb1", rose: "#e91e63", magenta: "#e040fb",
+  purple: "#9c27b0", lavender: "#ce93d8", blue: "#42a5f5", violet: "#7e57c2",
+  maroon: "#880e4f", green: "#66bb6a", "yellow-green": "#cddc39",
+  "blue-gray": "#90a4ae", silver: "#cfd8dc", "dark green": "#1b5e20",
+  "lime green": "#cddc39", "variegated green/white": "#c8e6c9",
+  burgundy: "#6d1f1f", bronze: "#cd7f32", gold: "#ffc107", "blue-green": "#00695c",
+};
+
+// ── CSV parser ────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  if (!lines.length) return [];
+  function parseLine(line) {
+    const result = []; let field = ""; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i+1] === '"') { field += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) { result.push(field); field = ""; }
+      else field += ch;
+    }
+    result.push(field);
+    return result;
+  }
+  const headers = parseLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] || "").trim(); });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function rowToPlant(row) {
+  const scores = {};
+  ZONE_KEYS.forEach(k => {
+    const raw = (row[k] || "").trim();
+    const match = raw.match(/\d/);
+    scores[k] = match ? parseInt(match[0]) : 0;
+  });
+  if (!Object.values(scores).some(s => s > 0)) return null;
+  return {
+    common:       row["Common Name"] || "",
+    latin:        row["Latin Name"] || "",
+    category:     row["Category"] || "",
+    status:       row["Ecological Status"] || "",
+    bloom:        row["Bloom Period"] || "",
+    height:       row["Height Class"] || "",
+    heightFt:     row["Max Height (ft)"] || "",
+    sun:          row["Sun Exposure"] || "",
+    moisture:     row["Moisture Preference"] || "",
+    notes:        row["Notes"] || "",
+    image:        row["inaturalist image url"] || "",
+    role:         row["Habitat Patch Role"] || "",
+    aggressive:   row["Aggressive"] || "",
+    flowerColor:  row["Flower Color"] || "",
+    foliageColor: row["Foliage Color"] || "",
+    scores,
+  };
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+function PlantImage({ plant, size = 48, borderRadius = 8 }) {
+  const [failed, setFailed] = useState(false);
+  const cat = CATEGORY_ICONS[plant.category] || { emoji: "🌿", bg: "#f0ede4", fg: "#4a7c59" };
+  const initial = plant.common.charAt(0).toUpperCase();
+  if (!plant.image || failed) {
+    return (
+      <div style={{ width: size, height: size, borderRadius, flexShrink: 0, overflow: "hidden",
+        background: cat.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
+        <div style={{ fontSize: size * 0.38, lineHeight: 1 }}>{cat.emoji}</div>
+        <div style={{ fontSize: size * 0.18, fontWeight: "bold", color: cat.fg, fontFamily: "Georgia, serif" }}>{initial}</div>
+      </div>
+    );
+  }
+  return <img src={plant.image} alt={plant.common} onError={() => setFailed(true)}
+    style={{ width: size, height: size, borderRadius, objectFit: "cover", flexShrink: 0 }} />;
+}
+
+function ColorDots({ colorStr, size = 10 }) {
+  if (!colorStr) return null;
+  const colors = colorStr.split(" | ").map(c => c.trim()).filter(Boolean);
+  return (
+    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
+      {colors.map((c, i) => (
+        <div key={i} title={c} style={{
+          width: size, height: size, borderRadius: "50%",
+          background: COLOR_MAP[c] || "#ccc",
+          border: c === "white" ? "1px solid #ccc" : "none", flexShrink: 0
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+function App() {
+  const [plants, setPlants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedZone, setSelectedZone] = useState(null);
+  const [minScore, setMinScore] = useState(3);
+  const [filterCats, setFilterCats] = useState([]);
+  const [nativeOnly, setNativeOnly] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    fetch(SHEET_CSV_URL)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+      .then(text => { setPlants(parseCSV(text).map(rowToPlant).filter(Boolean)); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  const categories = useMemo(() => [...new Set(plants.map(p => p.category))].sort(), [plants]);
+
+  const results = useMemo(() => {
+    if (!selectedZone) return [];
+    return plants.filter(p => {
+      const score = p.scores[selectedZone] || 0;
+      if (score < minScore) return false;
+      if (nativeOnly && !p.status.startsWith("Native")) return false;
+      if (filterCats.length > 0 && !filterCats.includes(p.category)) return false;
+      if (search) { const q = search.toLowerCase(); if (!p.common.toLowerCase().includes(q) && !p.latin.toLowerCase().includes(q)) return false; }
+      return true;
+    }).sort((a, b) => (b.scores[selectedZone] || 0) - (a.scores[selectedZone] || 0));
+  }, [plants, selectedZone, minScore, filterCats, nativeOnly, search]);
+
+  const toggleCat = cat => setFilterCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+
+  return (
+    <div style={{ fontFamily: "'Georgia', serif", background: "#fafaf7", minHeight: "100vh", color: "#2c2c2c" }}>
+
+      <div style={{ background: "#2d4a2d", color: "#f0ede4", padding: "28px 24px 20px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, right: 0, width: 200, height: 200, background: "rgba(255,255,255,0.03)", borderRadius: "0 0 0 100%" }} />
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", opacity: 0.6, marginBottom: 6 }}>Summers Gardening</div>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: "normal", letterSpacing: "-0.5px" }}>Plant Palette Finder</h1>
+          <p style={{ margin: "8px 0 0", opacity: 0.7, fontSize: 14, fontStyle: "italic" }}>Match your site conditions to the right plants</p>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 16px 60px" }}>
+
+        {loading && (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#888" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
+            <div style={{ fontStyle: "italic" }}>Loading plant data…</div>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: "bold", color: "#b71c1c", marginBottom: 8 }}>Could not load plant data</div>
+            <div style={{ fontSize: 12, color: "#888", maxWidth: 400, margin: "0 auto" }}>
+              Make sure the Google Sheet is set to "Anyone with the link can view" (File → Share → Share with others). Error: {error}
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div style={{ padding: "24px 0 8px" }}>
+              <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#888", marginBottom: 12 }}>Step 1 — Choose your site type</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                {MICROZONES.map(z => (
+                  <button key={z.key} onClick={() => { setSelectedZone(z.key); setExpanded(null); }}
+                    style={{ background: selectedZone === z.key ? "#2d4a2d" : "white", color: selectedZone === z.key ? "white" : "#2c2c2c",
+                      border: selectedZone === z.key ? "2px solid #2d4a2d" : "2px solid #e0ddd5",
+                      borderRadius: 10, padding: "12px 14px", cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                      boxShadow: selectedZone === z.key ? "0 2px 12px rgba(45,74,45,0.25)" : "none" }}>
+                    <div style={{ fontSize: 20, marginBottom: 4 }}>{z.emoji}</div>
+                    <div style={{ fontWeight: "bold", fontSize: 13, marginBottom: 3 }}>{z.label}</div>
+                    <div style={{ fontSize: 11, opacity: 0.7, lineHeight: 1.4 }}>{z.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedZone && (
+              <>
+                <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10, padding: "14px 16px", margin: "16px 0", display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search plants…"
+                    style={{ flex: 1, minWidth: 140, border: "1px solid #ddd", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none", fontFamily: "inherit" }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 12, color: "#666" }}>Min fit:</span>
+                    {[3,4,5].map(s => (
+                      <button key={s} onClick={() => setMinScore(s)}
+                        style={{ padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontFamily: "inherit",
+                          background: minScore === s ? SCORE_COLORS[s] : "#f0ede4", color: minScore === s ? (s >= 4 ? "white" : "#333") : "#555",
+                          fontWeight: minScore === s ? "bold" : "normal" }}>
+                        {SCORE_LABELS[s]}
+                      </button>
+                    ))}
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13 }}>
+                    <input type="checkbox" checked={nativeOnly} onChange={e => setNativeOnly(e.target.checked)} style={{ accentColor: "#2d4a2d" }} />
+                    <span>Natives only</span>
+                  </label>
+                  <button onClick={() => setShowFilters(!showFilters)}
+                    style={{ background: showFilters ? "#2d4a2d" : "#f0ede4", color: showFilters ? "white" : "#555",
+                      border: "none", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+                    {showFilters ? "▲ Categories" : "▼ Categories"}
+                  </button>
+                </div>
+
+                {showFilters && (
+                  <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10, padding: "12px 16px", marginBottom: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {categories.map(cat => (
+                      <button key={cat} onClick={() => toggleCat(cat)}
+                        style={{ padding: "4px 10px", borderRadius: 20, border: "1px solid", cursor: "pointer", fontSize: 11, fontFamily: "inherit",
+                          background: filterCats.includes(cat) ? "#2d4a2d" : "transparent", color: filterCats.includes(cat) ? "white" : "#555",
+                          borderColor: filterCats.includes(cat) ? "#2d4a2d" : "#ccc" }}>
+                        {cat}
+                      </button>
+                    ))}
+                    {filterCats.length > 0 && (
+                      <button onClick={() => setFilterCats([])} style={{ padding: "4px 10px", borderRadius: 20, border: "1px solid #e57373", cursor: "pointer", fontSize: 11, background: "transparent", color: "#e57373", fontFamily: "inherit" }}>Clear</button>
+                    )}
+                  </div>
+                )}
+
+                <div style={{ fontSize: 13, color: "#888", marginBottom: 12, fontStyle: "italic" }}>
+                  {results.length} plants for <strong style={{ color: "#2d4a2d" }}>{MICROZONES.find(z => z.key === selectedZone)?.label}</strong>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {results.map(plant => {
+                    const score = plant.scores[selectedZone] || 0;
+                    const isOpen = expanded === plant.latin;
+                    const statusStyle = STATUS_COLORS[plant.status] || { bg: "#f5f5f5", text: "#555", label: plant.status };
+                    return (
+                      <div key={plant.latin} style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10, overflow: "hidden",
+                        boxShadow: isOpen ? "0 4px 16px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.2s" }}>
+
+                        <div onClick={() => setExpanded(isOpen ? null : plant.latin)}
+                          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer" }}>
+                          <div style={{ background: SCORE_COLORS[score], color: score >= 3 ? "white" : "#333",
+                            borderRadius: 8, minWidth: 56, textAlign: "center", padding: "4px 6px", flexShrink: 0 }}>
+                            <div style={{ fontSize: 16, fontWeight: "bold" }}>{"●".repeat(score)}</div>
+                            <div style={{ fontSize: 9, opacity: 0.9, lineHeight: 1 }}>{SCORE_LABELS[score]}</div>
+                          </div>
+                          <PlantImage plant={plant} size={48} borderRadius={8} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: "bold", fontSize: 15 }}>{plant.common}</div>
+                            <div style={{ fontSize: 12, color: "#888", fontStyle: "italic", marginBottom: 3 }}>{plant.latin}</div>
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+                              <span style={{ background: statusStyle.bg, color: statusStyle.text, fontSize: 10, padding: "2px 7px", borderRadius: 10, fontWeight: "bold" }}>{statusStyle.label}</span>
+                              <span style={{ background: "#f0ede4", color: "#666", fontSize: 10, padding: "2px 7px", borderRadius: 10 }}>{plant.category}</span>
+                              {plant.flowerColor && <ColorDots colorStr={plant.flowerColor} size={9} />}
+                            </div>
+                          </div>
+                          <span style={{ color: "#aaa", fontSize: 18, flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
+                        </div>
+
+                        {isOpen && (
+                          <div style={{ padding: "0 14px 16px", borderTop: "1px solid #f0ede4" }}>
+                            <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
+                              <PlantImage plant={plant} size={120} borderRadius={10} />
+                              <div style={{ flex: 1 }}>
+                                {plant.notes && <p style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.5, color: "#444" }}>{plant.notes}</p>}
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 12px", fontSize: 12 }}>
+                                  {plant.sun && <div><span style={{ color: "#888" }}>Sun: </span>{plant.sun}</div>}
+                                  {plant.moisture && <div><span style={{ color: "#888" }}>Moisture: </span>{plant.moisture}</div>}
+                                  {plant.heightFt ? <div><span style={{ color: "#888" }}>Height: </span>{plant.heightFt} ft</div>
+                                    : plant.height ? <div><span style={{ color: "#888" }}>Height: </span>{plant.height}</div> : null}
+                                  {plant.bloom && plant.bloom !== "N/A" && plant.bloom !== "n/a" && <div><span style={{ color: "#888" }}>Bloom: </span>{plant.bloom}</div>}
+                                  {plant.role && <div><span style={{ color: "#888" }}>Role: </span>{plant.role}</div>}
+                                  {plant.aggressive && <div><span style={{ color: "#888" }}>Spreads: </span>
+                                    {plant.aggressive === "Y" ? "⚠️ Vigorously" : plant.aggressive === "M" ? "Moderately" : "Stays put"}</div>}
+                                  {plant.flowerColor && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ color: "#888" }}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={11} />
+                                    </div>
+                                  )}
+                                  {plant.foliageColor && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ color: "#888" }}>Foliage: </span><ColorDots colorStr={plant.foliageColor} size={11} />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ marginTop: 14 }}>
+                              <div style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: "#aaa", marginBottom: 6 }}>Fit across all zones</div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                {MICROZONES.map(z => {
+                                  const s = plant.scores[z.key] || 0;
+                                  return (
+                                    <div key={z.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      <div style={{ fontSize: 11, width: 150, color: z.key === selectedZone ? "#2d4a2d" : "#666", fontWeight: z.key === selectedZone ? "bold" : "normal" }}>
+                                        {z.emoji} {z.label}
+                                      </div>
+                                      <div style={{ flex: 1, height: 6, background: "#f0ede4", borderRadius: 3, overflow: "hidden" }}>
+                                        <div style={{ width: `${(s/5)*100}%`, height: "100%", background: SCORE_COLORS[s], borderRadius: 3, transition: "width 0.3s" }} />
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "#aaa", width: 50 }}>{SCORE_LABELS[s]}</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {results.length === 0 && (
+                    <div style={{ textAlign: "center", padding: 40, color: "#aaa", fontStyle: "italic" }}>
+                      No plants match these filters. Try lowering the minimum fit score.
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!selectedZone && (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🌿</div>
+                <div style={{ fontStyle: "italic", fontSize: 16 }}>Select a site type above to see your plant palette</div>
+                <div style={{ fontSize: 12, marginTop: 8, opacity: 0.6 }}>{plants.length} plants loaded</div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div style={{ textAlign: "center", padding: "16px", color: "#aaa", fontSize: 11, borderTop: "1px solid #e0ddd5" }}>
+        <a href="https://www.summersgardening.com" target="_blank" rel="noopener noreferrer" style={{ color: "#2d4a2d", textDecoration: "none" }}>summersgardening.com</a>
+        {" · "}Plant data compiled by Rachel Summers · Images via iNaturalist
+      </div>
+    </div>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
