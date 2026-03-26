@@ -9,840 +9,1223 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #fafaf7; }
-    input:focus { outline: 2px solid #2d4a2d; }
-    button:focus-visible { outline: 2px solid #2d4a2d; }
+    body { background: #fafaf7; font-family: Georgia, serif; color: #2c2c2c; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-card { break-inside: avoid; }
+      body { background: white; }
+    }
   </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useMemo, useEffect } = React;
+<div id="root"></div>
+<script type="text/babel">
+  const { useState, useMemo, useEffect, useCallback } = React;
 
-    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRiUGIg_9Eqv8Uwgp__RzcAJqNcB5vq7MHTbY1ZMqoEVtgNVlxo4CtocWgvztvQwUEzXOmMvjgP5UGA/pub?output=csv&gid=1137105758";
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRiUGIg_9Eqv8Uwgp__RzcAJqNcB5vq7MHTbY1ZMqoEVtgNVlxo4CtocWgvztvQwUEzXOmMvjgP5UGA/pub?output=csv&gid=1137105758";
 
-    const MICROZONES = [
-      { key: "Mesic South- Facing Heat", label: "South-Facing / Heat",  emoji: "☀️",  desc: "Hot, dry, south-facing slope or pavement edge" },
-      { key: "Dry Upper Slope",          label: "Dry Upper Slope",       emoji: "🏔️", desc: "Elevated, exposed, drains fast" },
-      { key: "Mid-Slope Mesic",          label: "Mid-Slope / Typical",   emoji: "🌿",  desc: "Average suburban yard, moderate moisture" },
-      { key: "Moist Lower Area",         label: "Moist Lower Area",      emoji: "💧",  desc: "Low spot, rain garden, holds moisture" },
-      { key: "Woodland Edge",            label: "Woodland Edge",         emoji: "🌳",  desc: "Where lawn meets trees; dappled light" },
-      { key: "Conifer Shade",            label: "Conifer Shade",         emoji: "🌲",  desc: "Under pine or hemlock; dry, acidic, dark" },
-      { key: "Dry Slope",               label: "Dry Slope",             emoji: "⛰️", desc: "Sloped, drains quickly, lean soil" },
-    ];
-    const ZONE_KEYS = MICROZONES.map(z => z.key);
+  // ── Zone / site constants ────────────────────────────────────────────────────
 
-    const STATUS_COLORS = {
-      "Native":                    { bg: "#e8f5e9", text: "#2e7d32", label: "Native" },
-      "Native Cultivar":           { bg: "#f3e5f5", text: "#6a1b9a", label: "Native Cultivar" },
-      "Near-Native":               { bg: "#e3f2fd", text: "#1565c0", label: "Near-Native" },
-      "Near Native":               { bg: "#e3f2fd", text: "#1565c0", label: "Near-Native" },
-      "Safe Non-Native":           { bg: "#fff8e1", text: "#f57f17", label: "Safe Non-Native" },
-      "Safe Non Native":           { bg: "#fff8e1", text: "#f57f17", label: "Safe Non-Native" },
-      "Native/Non-Native Hybrid":  { bg: "#fce4ec", text: "#880e4f", label: "Hybrid" },
-      "Native / Nonnative Hybrid": { bg: "#fce4ec", text: "#880e4f", label: "Hybrid" },
+  const MICROZONES = [
+    { key: "Mesic South- Facing Heat", label: "South-Facing / Heat",  emoji: "☀️",  desc: "Hot, dry, south-facing slope or pavement edge" },
+    { key: "Dry Upper Slope",          label: "Dry Upper Slope",       emoji: "🏔️", desc: "Elevated, exposed, drains fast" },
+    { key: "Mid-Slope Mesic",          label: "Mid-Slope / Typical",   emoji: "🌿",  desc: "Average suburban yard, moderate moisture" },
+    { key: "Moist Lower Area",         label: "Moist Lower Area",      emoji: "💧",  desc: "Low spot, rain garden, holds moisture" },
+    { key: "Woodland Edge",            label: "Woodland Edge",         emoji: "🌳",  desc: "Where lawn meets trees; dappled light" },
+    { key: "Conifer Shade",            label: "Conifer Shade",         emoji: "🌲",  desc: "Under pine or hemlock; dry, acidic, dark" },
+    { key: "Dry Slope",               label: "Dry Slope",             emoji: "⛰️", desc: "Sloped, drains quickly, lean soil" },
+  ];
+  const ZONE_KEYS = MICROZONES.map(z => z.key);
+
+  const EXTENDED_SITES = [
+    { key: "white-pine",        label: "Under white pines",     emoji: "🌲", desc: "Dry, acidic, needle-carpeted — white pine understory" },
+    { key: "norway-maple",      label: "Under Norway maple",    emoji: "🍁", desc: "Dense dry shade with allelopathic roots — a tough spot" },
+    { key: "post-construction", label: "Post-construction",     emoji: "🏗️", desc: "Compacted, disturbed, or fill soil — stripped of topsoil" },
+  ];
+
+  const ALL_WIZARD_SITES = [...MICROZONES, ...EXTENDED_SITES];
+
+  const SCORE_LABELS = ["", "Don't Use", "Marginal", "OK", "Strong", "Best Fit"];
+  const SCORE_COLORS = ["#ccc", "#ef5350", "#ff9800", "#fdd835", "#66bb6a", "#2e7d32"];
+
+  const STATUS_COLORS = {
+    "Native":                    { bg: "#e8f5e9", text: "#2e7d32",  label: "Native" },
+    "Native Cultivar":           { bg: "#f3e5f5", text: "#6a1b9a",  label: "Native Cultivar" },
+    "Near-Native":               { bg: "#e3f2fd", text: "#1565c0",  label: "Near-Native" },
+    "Near Native":               { bg: "#e3f2fd", text: "#1565c0",  label: "Near-Native" },
+    "Safe Non-Native":           { bg: "#fff8e1", text: "#f57f17",  label: "Safe Non-Native" },
+    "Safe Non Native":           { bg: "#fff8e1", text: "#f57f17",  label: "Safe Non-Native" },
+    "Native/Non-Native Hybrid":  { bg: "#fce4ec", text: "#880e4f",  label: "Hybrid" },
+    "Native / Nonnative Hybrid": { bg: "#fce4ec", text: "#880e4f",  label: "Hybrid" },
+  };
+
+  const CATEGORY_ICONS = {
+    "Tree - Large":        { emoji: "🌳", bg: "#e8f5e9", fg: "#2e7d32" },
+    "Tree - Small":        { emoji: "🌲", bg: "#e8f5e9", fg: "#388e3c" },
+    "Tall Canopy Tree":    { emoji: "🌳", bg: "#e8f5e9", fg: "#1b5e20" },
+    "Midstory Tree":       { emoji: "🌿", bg: "#f1f8e9", fg: "#558b2f" },
+    "Shrub":               { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
+    "Shrub – Large":       { emoji: "🌾", bg: "#fff8e1", fg: "#e65100" },
+    "Shrub – Small":       { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
+    "Flowering Shrub":     { emoji: "🌸", bg: "#fce4ec", fg: "#c2185b" },
+    "Flowering Perennial": { emoji: "🌼", bg: "#fffde7", fg: "#f9a825" },
+    "Foliage Perennial":   { emoji: "🍃", bg: "#e8f5e9", fg: "#388e3c" },
+    "Groundcover":         { emoji: "🌿", bg: "#e8f5e9", fg: "#2e7d32" },
+    "Grass":               { emoji: "🌾", bg: "#f9fbe7", fg: "#827717" },
+    "Fern":                { emoji: "🌿", bg: "#e0f2f1", fg: "#00695c" },
+    "Broadleaf Evergreen": { emoji: "🍀", bg: "#e8f5e9", fg: "#1b5e20" },
+    "Vine":                { emoji: "🌿", bg: "#f3e5f5", fg: "#6a1b9a" },
+    "Annual":              { emoji: "🌻", bg: "#fff8e1", fg: "#f57f17" },
+  };
+
+  const COLOR_MAP = {
+    white: "#ffffff", cream: "#fffdd0", yellow: "#fdd835", orange: "#ff9800",
+    red: "#ef5350", pink: "#f48fb1", rose: "#e91e63", magenta: "#e040fb",
+    purple: "#9c27b0", lavender: "#ce93d8", blue: "#42a5f5", violet: "#7e57c2",
+    maroon: "#880e4f", green: "#66bb6a", "yellow-green": "#cddc39",
+    "blue-gray": "#90a4ae", silver: "#cfd8dc", "dark green": "#1b5e20",
+    "lime green": "#cddc39", "variegated green/white": "#c8e6c9",
+    burgundy: "#6d1f1f", bronze: "#cd7f32", gold: "#ffc107", "blue-green": "#00695c",
+  };
+
+  const WIZARD_STEPS = [
+    {
+      id: "site", type: "single",
+      question: "Where is this spot in your yard?",
+      subtext: "Pick the one that feels closest",
+      options: [
+        { value: "Mesic South- Facing Heat", emoji: "☀️",  label: "Hot and sunny",        desc: "South-facing, near pavement, or against a wall" },
+        { value: "Dry Upper Slope",          emoji: "🏔️", label: "High and exposed",     desc: "Top of a slope, drains fast after rain" },
+        { value: "Mid-Slope Mesic",          emoji: "🌿",  label: "Typical yard",         desc: "Normal moisture — not especially wet or dry" },
+        { value: "Moist Lower Area",         emoji: "💧",  label: "Low or soggy spot",    desc: "Holds water after rain, or a rain garden" },
+        { value: "Woodland Edge",            emoji: "🌳",  label: "Edge of trees",        desc: "Where the lawn meets the woods, dappled light" },
+        { value: "white-pine",              emoji: "🌲",  label: "Under white pines",    desc: "Dry, acidic, needle-carpeted understory" },
+        { value: "norway-maple",            emoji: "🍁",  label: "Under Norway maple",   desc: "Dense dry shade with allelopathic roots" },
+        { value: "post-construction",       emoji: "🏗️", label: "Post-construction",    desc: "Compacted or disturbed soil, stripped of topsoil" },
+        { value: "Conifer Shade",            emoji: "🌲",  label: "Under other conifers", desc: "Under hemlock, spruce, or fir — dry and shady" },
+        { value: "Dry Slope",               emoji: "⛰️", label: "Sloped and dry",       desc: "Grades downhill, drains fast, lean soil" },
+      ]
+    },
+    {
+      id: "sun", type: "single",
+      question: "How much sun does this spot get?",
+      subtext: "On a typical summer day",
+      options: [
+        { value: "full",  emoji: "☀️",  label: "Full sun",              desc: "6 or more hours of direct sun" },
+        { value: "part",  emoji: "⛅",  label: "Part sun / part shade", desc: "3–6 hours, or bright but indirect" },
+        { value: "shade", emoji: "🌥️", label: "Mostly shade",          desc: "Under a tree canopy, fewer than 3 hours" },
+      ]
+    },
+    {
+      id: "moisture", type: "single",
+      question: "How wet does the soil get?",
+      options: [
+        { value: "dry",     emoji: "🏜️", label: "Dry",          desc: "Rarely holds moisture, drains fast" },
+        { value: "average", emoji: "🌱", label: "Average",       desc: "Dries out between rains, nothing extreme" },
+        { value: "moist",   emoji: "💧", label: "Moist or wet",  desc: "Stays damp, or floods after heavy rain" },
+      ]
+    },
+    {
+      id: "size", type: "single",
+      question: "How tall can plants get here?",
+      options: [
+        { value: "low",  emoji: "🪨", label: "Low (under 2 ft)",  desc: "Ground-level, path edges, front of border" },
+        { value: "mid",  emoji: "🌼", label: "Medium (2–4 ft)",   desc: "Typical perennial height" },
+        { value: "tall", emoji: "🌾", label: "Tall (over 4 ft)",  desc: "Back of planting, screening, meadow" },
+        { value: "any",  emoji: "✨", label: "No preference",     desc: "Show me everything that fits" },
+      ]
+    },
+    {
+      id: "concerns", type: "multi", skippable: true,
+      question: "Any concerns to keep in mind?",
+      subtext: "Select all that apply — or skip",
+      options: [
+        { value: "deer",     emoji: "🦌", label: "Deer browse here",         desc: "Favor plants with low deer pressure" },
+        { value: "rabbits",  emoji: "🐇", label: "Rabbits are a problem",    desc: "Favor plants less likely to be nibbled" },
+        { value: "dogs",     emoji: "🐕", label: "Dogs use this area",       desc: "Exclude plants toxic to dogs" },
+        { value: "cats",     emoji: "🐈", label: "Cats in the garden",       desc: "Exclude plants toxic to cats" },
+        { value: "children", emoji: "👶", label: "Young children play here", desc: "Exclude plants with toxic parts" },
+        { value: "spread",   emoji: "🚫", label: "No aggressive spreaders",  desc: "Skip plants flagged as vigorous" },
+      ]
+    },
+  ];
+
+  // ── URL state ────────────────────────────────────────────────────────────────
+
+  function readURL() {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      mode:      p.get("mode") || "browse",
+      label:     p.get("label") || "",
+      // Browse
+      bzone:     p.get("bzone") || null,
+      bscore:    parseInt(p.get("bscore") || "3"),
+      bnative:   p.get("bnative") === "1",
+      bcats:     p.get("bcats") ? p.get("bcats").split(",") : [],
+      bsearch:   p.get("bq") || "",
+      // Wizard answers
+      wsite:     p.get("wsite") || null,
+      wsun:      p.get("wsun") || null,
+      wmoisture: p.get("wmoisture") || null,
+      wsize:     p.get("wsize") || null,
+      wconcerns: p.get("wconcerns") ? p.get("wconcerns").split(",") : [],
+      wdone:     p.get("wdone") === "1",
+      // Post-result filters
+      rnative:   p.get("rnative") === "1",
+      rscore:    parseInt(p.get("rscore") || "3"),
+      rcats:     p.get("rcats") ? p.get("rcats").split(",") : [],
+      rcolors:   p.get("rcolors") ? p.get("rcolors").split(",") : [],
+      rwinter:   p.get("rwinter") === "1",
     };
+  }
 
-    const SCORE_LABELS = ["", "Don't Use", "Marginal", "OK", "Strong", "Best Fit"];
-    const SCORE_COLORS = ["#ccc", "#ef5350", "#ff9800", "#fdd835", "#66bb6a", "#2e7d32"];
+  function toURL(s) {
+    const p = new URLSearchParams();
+    if (s.mode && s.mode !== "browse") p.set("mode", s.mode);
+    if (s.label)            p.set("label", s.label);
+    if (s.bzone)            p.set("bzone", s.bzone);
+    if (s.bscore && s.bscore !== 3) p.set("bscore", String(s.bscore));
+    if (s.bnative)          p.set("bnative", "1");
+    if (s.bcats?.length)    p.set("bcats", s.bcats.join(","));
+    if (s.bsearch)          p.set("bq", s.bsearch);
+    if (s.wsite)            p.set("wsite", s.wsite);
+    if (s.wsun)             p.set("wsun", s.wsun);
+    if (s.wmoisture)        p.set("wmoisture", s.wmoisture);
+    if (s.wsize)            p.set("wsize", s.wsize);
+    if (s.wconcerns?.length) p.set("wconcerns", s.wconcerns.join(","));
+    if (s.wdone)            p.set("wdone", "1");
+    if (s.rnative)          p.set("rnative", "1");
+    if (s.rscore && s.rscore !== 3) p.set("rscore", String(s.rscore));
+    if (s.rcats?.length)    p.set("rcats", s.rcats.join(","));
+    if (s.rcolors?.length)  p.set("rcolors", s.rcolors.join(","));
+    if (s.rwinter)          p.set("rwinter", "1");
+    const str = p.toString();
+    return str ? `${window.location.pathname}?${str}` : window.location.pathname;
+  }
 
-    const CATEGORY_ICONS = {
-      "Tree - Large":        { emoji: "🌳", bg: "#e8f5e9", fg: "#2e7d32" },
-      "Tree - Small":        { emoji: "🌲", bg: "#e8f5e9", fg: "#388e3c" },
-      "Tall Canopy Tree":    { emoji: "🌳", bg: "#e8f5e9", fg: "#1b5e20" },
-      "Midstory Tree":       { emoji: "🌿", bg: "#f1f8e9", fg: "#558b2f" },
-      "Shrub":               { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
-      "Shrub – Large":       { emoji: "🌾", bg: "#fff8e1", fg: "#e65100" },
-      "Shrub – Small":       { emoji: "🌾", bg: "#fff8e1", fg: "#f57f17" },
-      "Flowering Shrub":     { emoji: "🌸", bg: "#fce4ec", fg: "#c2185b" },
-      "Flowering Perennial": { emoji: "🌼", bg: "#fffde7", fg: "#f9a825" },
-      "Foliage Perennial":   { emoji: "🍃", bg: "#e8f5e9", fg: "#388e3c" },
-      "Groundcover":         { emoji: "🌿", bg: "#e8f5e9", fg: "#2e7d32" },
-      "Grass":               { emoji: "🌾", bg: "#f9fbe7", fg: "#827717" },
-      "Fern":                { emoji: "🌿", bg: "#e0f2f1", fg: "#00695c" },
-      "Broadleaf Evergreen": { emoji: "🍀", bg: "#e8f5e9", fg: "#1b5e20" },
-      "Vine":                { emoji: "🌿", bg: "#f3e5f5", fg: "#6a1b9a" },
-      "Annual":              { emoji: "🌻", bg: "#fff8e1", fg: "#f57f17" },
+  function pushURL(s) {
+    window.history.replaceState(null, "", toURL(s));
+  }
+
+  // ── Data helpers ─────────────────────────────────────────────────────────────
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/);
+    if (!lines.length) return [];
+    function parseLine(line) {
+      const result = []; let field = ""; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { if (inQ && line[i+1] === '"') { field += '"'; i++; } else inQ = !inQ; }
+        else if (ch === ',' && !inQ) { result.push(field); field = ""; }
+        else field += ch;
+      }
+      result.push(field);
+      return result;
+    }
+    const headers = parseLine(lines[0]);
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const vals = parseLine(lines[i]);
+      const row = {};
+      headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] || "").trim(); });
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function rowToPlant(row) {
+    const scores = {};
+    ZONE_KEYS.forEach(k => {
+      const raw = (row[k] || "").trim();
+      const m = raw.match(/\d/);
+      scores[k] = m ? parseInt(m[0]) : 0;
+    });
+    if (!Object.values(scores).some(s => s > 0)) return null;
+    return {
+      common:        row["Common Name"]            || "",
+      latin:         row["Latin Name"]             || "",
+      category:      row["Category"]               || "",
+      status:        row["Ecological Status"]      || "",
+      bloom:         row["Bloom Period"]            || "",
+      seasonal:      row["Seasonal Interest"]      || "",
+      evergreen:     row["Evergreen"]              || "",
+      height:        row["Height Class"]           || "",
+      heightFt:      parseFloat(row["Max Height (ft)"]) || 0,
+      sun:           row["Sun Exposure"]           || "",
+      moisture:      row["Moisture Preference"]    || "",
+      notes:         row["Notes"]                  || "",
+      image:         row["inaturalist image url"]  || "",
+      role:          row["Habitat Patch Role"]     || "",
+      aggressive:    row["Aggressive"]             || "",
+      flowerColor:   row["Flower Color"]           || "",
+      foliageColor:  row["Foliage Color"]          || "",
+      deerPressure:  row["deer_pressure"]          || "",
+      rabbitDamage:  row["rabbit_damage"]          || "",
+      voleRisk:      row["vole_girdling_risk"]     || "",
+      toxicDogs:     row["toxic_dogs"]             || "",
+      toxicCats:     row["toxic_cats"]             || "",
+      toxicChildren: row["toxic_children"]         || "",
+      juglone:       row["juglone_sensitivity"]    || "",
+      whitePine:     row["white_pine_tolerance"]   || "",
+      norwayMaple:   row["norway_maple_tolerance"] || "",
+      scores,
     };
+  }
 
-    const COLOR_MAP = {
-      white: "#ffffff", cream: "#fffdd0", yellow: "#fdd835", orange: "#ff9800",
-      red: "#ef5350", pink: "#f48fb1", rose: "#e91e63", magenta: "#e040fb",
-      purple: "#9c27b0", lavender: "#ce93d8", blue: "#42a5f5", violet: "#7e57c2",
-      maroon: "#880e4f", green: "#66bb6a", "yellow-green": "#cddc39",
-      "blue-gray": "#90a4ae", silver: "#cfd8dc", "dark green": "#1b5e20",
-      "lime green": "#cddc39", "variegated green/white": "#c8e6c9",
-      burgundy: "#6d1f1f", bronze: "#cd7f32", gold: "#ffc107", "blue-green": "#00695c",
-    };
+  function getSiteScore(plant, siteKey) {
+    if (ZONE_KEYS.includes(siteKey)) return plant.scores[siteKey] || 0;
+    if (siteKey === "white-pine") {
+      const base = plant.scores["Conifer Shade"] || 0;
+      if (plant.whitePine === "avoid")    return 0;
+      if (plant.whitePine === "tolerant") return Math.min(5, base + 1);
+      return base;
+    }
+    if (siteKey === "norway-maple") {
+      const base = plant.scores["Conifer Shade"] || 0;
+      if (plant.norwayMaple === "avoid" || plant.norwayMaple === "") return 0;
+      if (plant.norwayMaple === "tolerant") return Math.min(5, base + 1);
+      return base;
+    }
+    if (siteKey === "post-construction") {
+      return Math.max(plant.scores["Dry Upper Slope"] || 0, plant.scores["Dry Slope"] || 0);
+    }
+    return 0;
+  }
 
-    // ── Wizard steps ──────────────────────────────────────────────────────────
-
-    const WIZARD_STEPS = [
-      {
-        id: "site",
-        question: "Where is this spot in your yard?",
-        subtext: "Pick the one that feels closest",
-        type: "single",
-        options: [
-          { value: "Mesic South- Facing Heat", label: "Hot and sunny",      desc: "South-facing, near pavement, or against a wall", emoji: "☀️" },
-          { value: "Dry Upper Slope",          label: "High and exposed",   desc: "Top of a slope, drains fast after rain",         emoji: "🏔️" },
-          { value: "Mid-Slope Mesic",          label: "Typical yard",       desc: "Normal moisture — not especially wet or dry",    emoji: "🌿" },
-          { value: "Moist Lower Area",         label: "Low or soggy spot",  desc: "Holds water after rain, or a rain garden area",  emoji: "💧" },
-          { value: "Woodland Edge",            label: "Edge of trees",      desc: "Where the lawn meets the woods, dappled light",  emoji: "🌳" },
-          { value: "Conifer Shade",            label: "Under evergreens",   desc: "Under pine or hemlock — dry, shady, acidic",     emoji: "🌲" },
-          { value: "Dry Slope",               label: "Sloped and dry",     desc: "Grades downhill, drains fast, lean soil",        emoji: "⛰️" },
-        ]
-      },
-      {
-        id: "sun",
-        question: "How much sun does this spot get?",
-        subtext: "On a typical summer day",
-        type: "single",
-        options: [
-          { value: "full",  label: "Full sun",                desc: "6 or more hours of direct sun",           emoji: "☀️" },
-          { value: "part",  label: "Part sun / part shade",   desc: "3–6 hours, or bright but indirect light", emoji: "⛅" },
-          { value: "shade", label: "Mostly shade",            desc: "Under a tree canopy, fewer than 3 hours", emoji: "🌥️" },
-        ]
-      },
-      {
-        id: "moisture",
-        question: "How wet does the soil get?",
-        type: "single",
-        options: [
-          { value: "dry",     label: "Dry",           desc: "Rarely holds moisture, drains fast",        emoji: "🏜️" },
-          { value: "average", label: "Average",        desc: "Normal — dries out between rains",          emoji: "🌱" },
-          { value: "moist",   label: "Moist or wet",  desc: "Stays damp, or floods after heavy rain",    emoji: "💧" },
-        ]
-      },
-      {
-        id: "size",
-        question: "How tall can plants get here?",
-        type: "single",
-        options: [
-          { value: "low",  label: "Low (under 2 ft)",   desc: "Ground-level, path edges, front of border", emoji: "🪨" },
-          { value: "mid",  label: "Medium (2–4 ft)",    desc: "Typical perennial height",                   emoji: "🌼" },
-          { value: "tall", label: "Tall (over 4 ft)",   desc: "Back of planting, screening, meadow",        emoji: "🌾" },
-          { value: "any",  label: "No preference",      desc: "Show me everything that fits",               emoji: "✨" },
-        ]
-      },
-      {
-        id: "concerns",
-        question: "Any concerns to keep in mind?",
-        subtext: "Select all that apply — or skip ahead",
-        type: "multi",
-        skippable: true,
-        options: [
-          { value: "deer",     label: "Deer browse here",           desc: "Favor lower-pressure plants",            emoji: "🦌" },
-          { value: "dogs",     label: "Dogs use this area",         desc: "Exclude plants toxic to dogs",           emoji: "🐕" },
-          { value: "cats",     label: "Cats in the garden",         desc: "Exclude plants toxic to cats",           emoji: "🐈" },
-          { value: "children", label: "Young children play here",   desc: "Exclude plants with toxic parts",        emoji: "👶" },
-          { value: "spread",   label: "No aggressive spreaders",    desc: "Skip plants flagged as vigorous",        emoji: "🚫" },
-        ]
-      },
-    ];
-
-    // ── Data helpers ──────────────────────────────────────────────────────────
-
-    function parseCSV(text) {
-      const lines = text.split(/\r?\n/);
-      if (!lines.length) return [];
-      function parseLine(line) {
-        const result = []; let field = ""; let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') {
-            if (inQuotes && line[i+1] === '"') { field += '"'; i++; }
-            else inQuotes = !inQuotes;
-          } else if (ch === ',' && !inQuotes) { result.push(field); field = ""; }
-          else field += ch;
-        }
-        result.push(field);
-        return result;
+  function applyWizardFilters(plants, answers) {
+    return plants.filter(p => {
+      if (answers.site) {
+        if (getSiteScore(p, answers.site) < 3) return false;
+        if (answers.site === "norway-maple" && (p.norwayMaple === "avoid" || p.norwayMaple === "")) return false;
+        if (answers.site === "white-pine"   && p.whitePine === "avoid") return false;
       }
-      const headers = parseLine(lines[0]);
-      const rows = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const vals = parseLine(lines[i]);
-        const row = {};
-        headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] || "").trim(); });
-        rows.push(row);
+      if (answers.sun) {
+        const sun = (p.sun || "").toLowerCase();
+        if (answers.sun === "full"  && !sun.startsWith("full sun"))       return false;
+        if (answers.sun === "shade" && !sun.includes("shade"))            return false;
+        if (answers.sun === "part"  && !sun.includes("part"))             return false;
       }
-      return rows;
-    }
-
-    function rowToPlant(row) {
-      const scores = {};
-      ZONE_KEYS.forEach(k => {
-        const raw = (row[k] || "").trim();
-        const match = raw.match(/\d/);
-        scores[k] = match ? parseInt(match[0]) : 0;
-      });
-      if (!Object.values(scores).some(s => s > 0)) return null;
-      return {
-        common:        row["Common Name"] || "",
-        latin:         row["Latin Name"] || "",
-        category:      row["Category"] || "",
-        status:        row["Ecological Status"] || "",
-        bloom:         row["Bloom Period"] || "",
-        height:        row["Height Class"] || "",
-        heightFt:      row["Max Height (ft)"] || "",
-        sun:           row["Sun Exposure"] || "",
-        moisture:      row["Moisture Preference"] || "",
-        notes:         row["Notes"] || "",
-        image:         row["inaturalist image url"] || "",
-        role:          row["Habitat Patch Role"] || "",
-        aggressive:    row["Aggressive"] || "",
-        flowerColor:   row["Flower Color"] || "",
-        foliageColor:  row["Foliage Color"] || "",
-        deerPressure:  row["deer_pressure"] || "",
-        rabbitDamage:  row["rabbit_damage"] || "",
-        voleRisk:      row["vole_girdling_risk"] || "",
-        toxicDogs:     row["toxic_dogs"] || "",
-        toxicCats:     row["toxic_cats"] || "",
-        toxicChildren: row["toxic_children"] || "",
-        juglone:       row["juglone_sensitivity"] || "",
-        scores,
-      };
-    }
-
-    function applyWizardFilters(plants, answers) {
-      return plants.filter(p => {
-        // Site / microzone score
-        if (answers.site && (p.scores[answers.site] || 0) < 3) return false;
-
-        // Sun
-        if (answers.sun) {
-          const sun = (p.sun || "").toLowerCase();
-          if (answers.sun === "full"  && !sun.startsWith("full sun")) return false;
-          if (answers.sun === "shade" && !sun.includes("shade"))       return false;
-          if (answers.sun === "part"  && !sun.includes("part"))        return false;
-        }
-
-        // Moisture
-        if (answers.moisture) {
-          const m = (p.moisture || "").toLowerCase();
-          if (answers.moisture === "dry"     && !m.includes("dry") && m !== "mesic")  return false;
-          if (answers.moisture === "moist"   && !m.includes("moist") && !m.includes("wet")) return false;
-          if (answers.moisture === "average" && !m.includes("mesic"))                  return false;
-        }
-
-        // Size
-        if (answers.size && answers.size !== "any") {
-          const h = (p.height || "").toLowerCase();
-          const hft = parseFloat(p.heightFt) || 0;
-          if (answers.size === "low"  && h !== "low"  && !(hft > 0 && hft <= 2)) return false;
-          if (answers.size === "mid"  && h !== "mid"  && !(hft > 1 && hft <= 4)) return false;
-          if (answers.size === "tall" && h !== "tall" && h !== "structural" && !(hft > 4)) return false;
-        }
-
-        // Concerns
-        const concerns = answers.concerns || [];
-        if (concerns.includes("deer")     && p.deerPressure  === "high") return false;
-        if (concerns.includes("dogs")     && p.toxicDogs     === "yes")  return false;
-        if (concerns.includes("cats")     && p.toxicCats     === "yes")  return false;
-        if (concerns.includes("children") && p.toxicChildren === "yes")  return false;
-        if (concerns.includes("spread")   && p.aggressive    === "Y")    return false;
-
-        return true;
-      });
-    }
-
-    // ── Shared UI components ──────────────────────────────────────────────────
-
-    function PlantImage({ plant, size = 48, borderRadius = 8 }) {
-      const [failed, setFailed] = useState(false);
-      const cat = CATEGORY_ICONS[plant.category] || { emoji: "🌿", bg: "#f0ede4", fg: "#4a7c59" };
-      if (!plant.image || failed) {
-        return (
-          <div style={{ width: size, height: size, borderRadius, flexShrink: 0,
-            background: cat.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-            <div style={{ fontSize: size * 0.38, lineHeight: 1 }}>{cat.emoji}</div>
-            <div style={{ fontSize: size * 0.18, fontWeight: "bold", color: cat.fg, fontFamily: "Georgia, serif" }}>{plant.common.charAt(0)}</div>
-          </div>
-        );
+      if (answers.moisture) {
+        const m = (p.moisture || "").toLowerCase();
+        if (answers.moisture === "dry"     && !m.includes("dry") && m !== "mesic") return false;
+        if (answers.moisture === "moist"   && !m.includes("moist") && !m.includes("wet")) return false;
+        if (answers.moisture === "average" && !m.includes("mesic"))                return false;
       }
-      return <img src={plant.image} alt={plant.common} onError={() => setFailed(true)}
-        style={{ width: size, height: size, borderRadius, objectFit: "cover", flexShrink: 0 }} />;
-    }
+      if (answers.size && answers.size !== "any") {
+        const h   = (p.height || "").toLowerCase();
+        const hft = p.heightFt || 0;
+        if (answers.size === "low"  && h !== "low"  && !(hft > 0 && hft <= 2))      return false;
+        if (answers.size === "mid"  && h !== "mid"  && !(hft > 1 && hft <= 4))      return false;
+        if (answers.size === "tall" && h !== "tall" && h !== "structural" && !(hft > 4)) return false;
+      }
+      const c = answers.concerns || [];
+      if (c.includes("deer")     && p.deerPressure  === "high") return false;
+      if (c.includes("rabbits")  && p.rabbitDamage  === "high") return false;
+      if (c.includes("dogs")     && p.toxicDogs     === "yes")  return false;
+      if (c.includes("cats")     && p.toxicCats     === "yes")  return false;
+      if (c.includes("children") && p.toxicChildren === "yes")  return false;
+      if (c.includes("spread")   && p.aggressive    === "Y")    return false;
+      return true;
+    });
+  }
 
-    function ColorDots({ colorStr, size = 10 }) {
-      if (!colorStr) return null;
-      const colors = colorStr.split("|").map(c => c.trim()).filter(Boolean);
+  function applyResultFilters(plants, siteKey, rf) {
+    return plants.filter(p => {
+      if (siteKey && (getSiteScore(p, siteKey) || 0) < (rf.rscore || 3)) return false;
+      if (rf.rnative && !p.status.startsWith("Native")) return false;
+      if (rf.rcats?.length && !rf.rcats.includes(p.category)) return false;
+      if (rf.rwinter) {
+        const hasWinter = (p.seasonal || "").toLowerCase().includes("winter") ||
+          (p.evergreen || "").toLowerCase() === "yes";
+        if (!hasWinter) return false;
+      }
+      if (rf.rcolors?.length) {
+        const colors = (p.flowerColor + " " + p.foliageColor).split(/\s*[|,]\s*/).map(c => c.trim().toLowerCase());
+        if (!rf.rcolors.some(rc => colors.includes(rc))) return false;
+      }
+      return true;
+    });
+  }
+
+  // ── Small UI pieces ──────────────────────────────────────────────────────────
+
+  function PlantImage({ plant, size = 48, radius = 8 }) {
+    const [failed, setFailed] = useState(false);
+    const cat = CATEGORY_ICONS[plant.category] || { emoji: "🌿", bg: "#f0ede4", fg: "#4a7c59" };
+    if (!plant.image || failed) {
       return (
-        <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
-          {colors.map((c, i) => (
-            <div key={i} title={c} style={{ width: size, height: size, borderRadius: "50%",
-              background: COLOR_MAP[c] || "#ccc", border: c === "white" ? "1px solid #ccc" : "none", flexShrink: 0 }} />
-          ))}
+        <div style={{ width: size, height: size, borderRadius: radius, flexShrink: 0,
+          background: cat.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: size * 0.38, lineHeight: 1 }}>{cat.emoji}</div>
+          <div style={{ fontSize: size * 0.18, fontWeight: "bold", color: cat.fg }}>{plant.common.charAt(0)}</div>
         </div>
       );
     }
+    return <img src={plant.image} alt={plant.common} onError={() => setFailed(true)}
+      style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", flexShrink: 0 }} />;
+  }
 
-    function RiskBadges({ plant }) {
-      const badges = [];
-      if (plant.deerPressure === "high")   badges.push({ label: "🦌 High deer pressure",  bg: "#fff3e0", fg: "#e65100" });
-      if (plant.aggressive   === "Y")      badges.push({ label: "⚠️ Spreads vigorously",   bg: "#fff8e1", fg: "#f57f17" });
-      if (plant.toxicDogs    === "yes")    badges.push({ label: "🐕 Toxic to dogs",        bg: "#fce4ec", fg: "#c62828" });
-      if (plant.toxicCats    === "yes")    badges.push({ label: "🐈 Toxic to cats",        bg: "#fce4ec", fg: "#c62828" });
-      if (plant.toxicChildren === "yes")   badges.push({ label: "👶 Toxic to children",    bg: "#fce4ec", fg: "#c62828" });
-      if (!badges.length) return null;
+  function ColorDots({ colorStr, size = 10 }) {
+    if (!colorStr) return null;
+    const colors = colorStr.split(/\s*[|]\s*/).map(c => c.trim()).filter(Boolean);
+    return (
+      <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
+        {colors.map((c, i) => (
+          <div key={i} title={c} style={{ width: size, height: size, borderRadius: "50%",
+            background: COLOR_MAP[c] || "#ccc", border: c === "white" ? "1px solid #ccc" : "none", flexShrink: 0 }} />
+        ))}
+      </div>
+    );
+  }
+
+  function RiskBadges({ plant }) {
+    const badges = [];
+    if (plant.deerPressure === "high")  badges.push({ t: "🦌 High deer pressure",  bg: "#fff3e0", fg: "#e65100" });
+    if (plant.rabbitDamage === "high")  badges.push({ t: "🐇 High rabbit damage",  bg: "#fff3e0", fg: "#bf360c" });
+    if (plant.aggressive   === "Y")     badges.push({ t: "⚠️ Spreads vigorously",  bg: "#fff8e1", fg: "#f57f17" });
+    if (plant.toxicDogs    === "yes")   badges.push({ t: "🐕 Toxic to dogs",        bg: "#fce4ec", fg: "#c62828" });
+    if (plant.toxicCats    === "yes")   badges.push({ t: "🐈 Toxic to cats",        bg: "#fce4ec", fg: "#c62828" });
+    if (plant.toxicChildren === "yes")  badges.push({ t: "👶 Toxic to children",    bg: "#fce4ec", fg: "#c62828" });
+    if (!badges.length) return null;
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
+        {badges.map((b, i) => (
+          <span key={i} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10,
+            background: b.bg, color: b.fg, fontWeight: "bold" }}>{b.t}</span>
+        ))}
+      </div>
+    );
+  }
+
+  // ── iNaturalist photo gallery ────────────────────────────────────────────────
+
+  function taxonQuery(latin) {
+    return latin
+      .replace(/['''][^''']*[''']/g, "")
+      .replace(/\bcultivars?\b/ig, "")
+      .replace(/\bhybrids?\b/ig, "")
+      .replace(/\bspp?\b/ig, "")
+      .replace(/\bvar\b.*/ig, "")
+      .replace(/[×x]\s+/g, "")
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .join(" ");
+  }
+
+  function PhotoGallery({ latin, fallbackImage }) {
+    const [photos, setPhotos] = useState(null);
+    const [idx, setIdx]       = useState(0);
+
+    useEffect(() => {
+      if (photos !== null) return;
+      const q = taxonQuery(latin);
+      if (!q) { setPhotos([]); return; }
+      fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(q)}&rank=species&per_page=1`)
+        .then(r => r.json())
+        .then(d => {
+          const taxon = d.results?.[0];
+          const imgs = (taxon?.taxon_photos || [])
+            .slice(0, 6)
+            .map(tp => ({
+              thumb: (tp.photo?.url || ""),
+              medium: (tp.photo?.url || "").replace("square", "medium"),
+              credit: (tp.photo?.attribution || "").replace(/\(c\)/g, "©"),
+            }))
+            .filter(p => p.medium && p.medium.includes("http"));
+          if (!imgs.length && fallbackImage) imgs.push({ thumb: fallbackImage, medium: fallbackImage, credit: "" });
+          setPhotos(imgs);
+          setIdx(0);
+        })
+        .catch(() => {
+          setPhotos(fallbackImage ? [{ thumb: fallbackImage, medium: fallbackImage, credit: "" }] : []);
+        });
+    }, [latin]);
+
+    if (photos === null) {
       return (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
-          {badges.map((b, i) => (
-            <span key={i} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10,
-              background: b.bg, color: b.fg, fontWeight: "bold" }}>{b.label}</span>
-          ))}
+        <div style={{ width: 200, height: 160, borderRadius: 10, background: "#f0ede4",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "#aaa", fontStyle: "italic" }}>Loading photos…</span>
         </div>
       );
     }
+    if (!photos.length) return <PlantImage plant={{ image: "", common: latin, category: "" }} size={120} radius={10} />;
 
-    function PlantCard({ plant, selectedZone }) {
-      const [open, setOpen] = useState(false);
-      const score = selectedZone ? (plant.scores[selectedZone] || 0) : null;
-      const statusStyle = STATUS_COLORS[plant.status] || { bg: "#f5f5f5", text: "#555", label: plant.status };
-
-      return (
-        <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10, overflow: "hidden",
-          boxShadow: open ? "0 4px 16px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.2s" }}>
-
-          <div onClick={() => setOpen(!open)}
-            style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer" }}>
-
-            {score !== null && (
-              <div style={{ background: SCORE_COLORS[score], color: score >= 3 ? "white" : "#333",
-                borderRadius: 8, minWidth: 56, textAlign: "center", padding: "4px 6px", flexShrink: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: "bold", letterSpacing: -1 }}>{"●".repeat(score)}</div>
-                <div style={{ fontSize: 9, opacity: 0.85, lineHeight: 1 }}>{SCORE_LABELS[score]}</div>
-              </div>
-            )}
-
-            <PlantImage plant={plant} size={48} borderRadius={8} />
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: "bold", fontSize: 15 }}>{plant.common}</div>
-              <div style={{ fontSize: 12, color: "#888", fontStyle: "italic", marginBottom: 3 }}>{plant.latin}</div>
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ background: statusStyle.bg, color: statusStyle.text, fontSize: 10, padding: "2px 7px", borderRadius: 10, fontWeight: "bold" }}>{statusStyle.label}</span>
-                <span style={{ background: "#f0ede4", color: "#666", fontSize: 10, padding: "2px 7px", borderRadius: 10 }}>{plant.category}</span>
-                {plant.flowerColor && <ColorDots colorStr={plant.flowerColor} size={9} />}
-              </div>
-            </div>
-
-            <span style={{ color: "#aaa", fontSize: 18, flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+    const cur = photos[idx];
+    return (
+      <div style={{ flexShrink: 0, maxWidth: 240 }}>
+        <img src={cur.medium} alt={latin} onError={e => { e.target.src = cur.thumb; }}
+          style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 10, display: "block" }} />
+        {photos.length > 1 && (
+          <div style={{ display: "flex", gap: 5, marginTop: 6, overflowX: "auto", paddingBottom: 2 }}>
+            {photos.map((ph, i) => (
+              <img key={i} src={ph.thumb} alt="" onClick={() => setIdx(i)}
+                onError={e => e.target.style.opacity = "0.2"}
+                style={{ width: 38, height: 38, borderRadius: 5, objectFit: "cover", flexShrink: 0,
+                  cursor: "pointer", border: `2px solid ${i === idx ? "#2d4a2d" : "transparent"}`,
+                  opacity: i === idx ? 1 : 0.65, transition: "opacity 0.15s" }} />
+            ))}
           </div>
+        )}
+        {cur.credit && (
+          <div style={{ fontSize: 9, color: "#bbb", marginTop: 3, lineHeight: 1.3,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {cur.credit.length > 70 ? cur.credit.slice(0, 70) + "…" : cur.credit}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-          {open && (
-            <div style={{ padding: "0 14px 16px", borderTop: "1px solid #f0ede4" }}>
-              <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
-                <PlantImage plant={plant} size={120} borderRadius={10} />
-                <div style={{ flex: 1 }}>
-                  {plant.notes && <p style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.5, color: "#444" }}>{plant.notes}</p>}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 12px", fontSize: 12 }}>
-                    {plant.sun      && <div><span style={{ color: "#888" }}>Sun: </span>{plant.sun}</div>}
-                    {plant.moisture && <div><span style={{ color: "#888" }}>Moisture: </span>{plant.moisture}</div>}
-                    {plant.heightFt
-                      ? <div><span style={{ color: "#888" }}>Height: </span>{plant.heightFt} ft</div>
-                      : plant.height
-                        ? <div><span style={{ color: "#888" }}>Height: </span>{plant.height}</div>
-                        : null}
-                    {plant.bloom && plant.bloom !== "N/A" && plant.bloom !== "n/a" &&
-                      <div><span style={{ color: "#888" }}>Bloom: </span>{plant.bloom}</div>}
-                    {plant.role &&
-                      <div><span style={{ color: "#888" }}>Role: </span>{plant.role}</div>}
-                    {plant.aggressive &&
-                      <div><span style={{ color: "#888" }}>Spreads: </span>
-                        {plant.aggressive === "Y" ? "⚠️ Vigorously" : plant.aggressive === "M" ? "Moderately" : "Stays put"}</div>}
-                    {plant.deerPressure &&
-                      <div><span style={{ color: "#888" }}>Deer: </span>{plant.deerPressure}</div>}
-                    {plant.flowerColor && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ color: "#888" }}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={11} />
-                      </div>
-                    )}
-                    {plant.foliageColor && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ color: "#888" }}>Foliage: </span><ColorDots colorStr={plant.foliageColor} size={11} />
-                      </div>
-                    )}
-                  </div>
-                  <RiskBadges plant={plant} />
-                </div>
-              </div>
+  // ── Plant card ───────────────────────────────────────────────────────────────
 
-              {selectedZone && (
-                <div style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: "#aaa", marginBottom: 6 }}>Fit across all zones</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    {MICROZONES.map(z => {
-                      const s = plant.scores[z.key] || 0;
-                      return (
-                        <div key={z.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ fontSize: 11, width: 150, color: z.key === selectedZone ? "#2d4a2d" : "#666",
-                            fontWeight: z.key === selectedZone ? "bold" : "normal" }}>
-                            {z.emoji} {z.label}
-                          </div>
-                          <div style={{ flex: 1, height: 6, background: "#f0ede4", borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{ width: `${(s/5)*100}%`, height: "100%", background: SCORE_COLORS[s], borderRadius: 3 }} />
-                          </div>
-                          <div style={{ fontSize: 10, color: "#aaa", width: 50 }}>{SCORE_LABELS[s]}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+  function PlantCard({ plant, siteKey }) {
+    const [open, setOpen] = useState(false);
+    const score = siteKey ? getSiteScore(plant, siteKey) : null;
+    const ss = STATUS_COLORS[plant.status] || { bg: "#f5f5f5", text: "#555", label: plant.status };
+
+    return (
+      <div className="print-card" style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
+        overflow: "hidden", boxShadow: open ? "0 4px 16px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.2s" }}>
+
+        <div onClick={() => setOpen(!open)}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", cursor: "pointer" }}>
+          {score !== null && (
+            <div style={{ background: SCORE_COLORS[score], color: score >= 3 ? "white" : "#333",
+              borderRadius: 8, minWidth: 56, textAlign: "center", padding: "4px 6px", flexShrink: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", letterSpacing: -1 }}>{"●".repeat(score)}</div>
+              <div style={{ fontSize: 9, opacity: 0.85, lineHeight: 1 }}>{SCORE_LABELS[score]}</div>
             </div>
           )}
-        </div>
-      );
-    }
-
-    // ── Browse mode ───────────────────────────────────────────────────────────
-
-    function BrowseMode({ plants }) {
-      const [search,       setSearch]       = useState("");
-      const [selectedZone, setSelectedZone] = useState(null);
-      const [minScore,     setMinScore]     = useState(3);
-      const [filterCats,   setFilterCats]   = useState([]);
-      const [nativeOnly,   setNativeOnly]   = useState(false);
-      const [showZones,    setShowZones]    = useState(false);
-      const [showCats,     setShowCats]     = useState(false);
-
-      const categories = useMemo(() => [...new Set(plants.map(p => p.category))].sort(), [plants]);
-
-      const results = useMemo(() => {
-        return plants.filter(p => {
-          if (selectedZone && (p.scores[selectedZone] || 0) < minScore) return false;
-          if (nativeOnly && !p.status.startsWith("Native")) return false;
-          if (filterCats.length > 0 && !filterCats.includes(p.category)) return false;
-          if (search) {
-            const q = search.toLowerCase();
-            if (!p.common.toLowerCase().includes(q) && !p.latin.toLowerCase().includes(q)) return false;
-          }
-          return true;
-        }).sort((a, b) => {
-          if (selectedZone) {
-            const diff = (b.scores[selectedZone] || 0) - (a.scores[selectedZone] || 0);
-            if (diff !== 0) return diff;
-          }
-          return a.common.localeCompare(b.common);
-        });
-      }, [plants, selectedZone, minScore, filterCats, nativeOnly, search]);
-
-      const toggleCat = cat => setFilterCats(prev =>
-        prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
-
-      return (
-        <div>
-          {/* Search */}
-          <div style={{ padding: "20px 0 10px" }}>
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder={`Search ${plants.length} plants by name…`}
-              style={{ width: "100%", border: "1px solid #ddd", borderRadius: 8,
-                padding: "11px 16px", fontSize: 15, fontFamily: "inherit",
-                background: "white", outline: "none" }} />
+          <PlantImage plant={plant} size={48} radius={8} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: "bold", fontSize: 15 }}>{plant.common}</div>
+            <div style={{ fontSize: 12, color: "#888", fontStyle: "italic", marginBottom: 3 }}>{plant.latin}</div>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ background: ss.bg, color: ss.text, fontSize: 10, padding: "2px 7px", borderRadius: 10, fontWeight: "bold" }}>{ss.label}</span>
+              <span style={{ background: "#f0ede4", color: "#666", fontSize: 10, padding: "2px 7px", borderRadius: 10 }}>{plant.category}</span>
+              {plant.flowerColor && <ColorDots colorStr={plant.flowerColor} size={9} />}
+            </div>
           </div>
+          <span className="no-print" style={{ color: "#aaa", fontSize: 18, flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+        </div>
 
-          {/* Filter bar */}
-          <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
-            padding: "10px 14px", marginBottom: 10, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        {open && (
+          <div style={{ padding: "0 14px 16px", borderTop: "1px solid #f0ede4" }}>
+            <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+              <PhotoGallery latin={plant.latin} fallbackImage={plant.image} />
+              <div style={{ flex: 1, minWidth: 200 }}>
+                {plant.notes && <p style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.5, color: "#444" }}>{plant.notes}</p>}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 12px", fontSize: 12 }}>
+                  {plant.sun      && <div><span style={{ color: "#888" }}>Sun: </span>{plant.sun}</div>}
+                  {plant.moisture && <div><span style={{ color: "#888" }}>Moisture: </span>{plant.moisture}</div>}
+                  {plant.heightFt ? <div><span style={{ color: "#888" }}>Height: </span>{plant.heightFt} ft</div>
+                    : plant.height ? <div><span style={{ color: "#888" }}>Height: </span>{plant.height}</div> : null}
+                  {plant.bloom && plant.bloom !== "N/A" &&
+                    <div><span style={{ color: "#888" }}>Bloom: </span>{plant.bloom}</div>}
+                  {plant.seasonal &&
+                    <div><span style={{ color: "#888" }}>Interest: </span>{plant.seasonal}</div>}
+                  {plant.role &&
+                    <div><span style={{ color: "#888" }}>Role: </span>{plant.role}</div>}
+                  {plant.deerPressure &&
+                    <div><span style={{ color: "#888" }}>Deer: </span>{plant.deerPressure}</div>}
+                  {plant.rabbitDamage &&
+                    <div><span style={{ color: "#888" }}>Rabbit: </span>{plant.rabbitDamage}</div>}
+                  {plant.flowerColor && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ color: "#888" }}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={11} />
+                    </div>
+                  )}
+                  {plant.foliageColor && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ color: "#888" }}>Foliage: </span><ColorDots colorStr={plant.foliageColor} size={11} />
+                    </div>
+                  )}
+                </div>
+                <RiskBadges plant={plant} />
+              </div>
+            </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 5, cursor: "pointer", fontSize: 13, userSelect: "none" }}>
-              <input type="checkbox" checked={nativeOnly} onChange={e => setNativeOnly(e.target.checked)} style={{ accentColor: "#2d4a2d" }} />
-              Natives only
-            </label>
+            {siteKey && ZONE_KEYS.includes(siteKey) && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: "#aaa", marginBottom: 6 }}>Fit across all zones</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {MICROZONES.map(z => {
+                    const s = plant.scores[z.key] || 0;
+                    return (
+                      <div key={z.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 11, width: 150, color: z.key === siteKey ? "#2d4a2d" : "#666",
+                          fontWeight: z.key === siteKey ? "bold" : "normal" }}>{z.emoji} {z.label}</div>
+                        <div style={{ flex: 1, height: 6, background: "#f0ede4", borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{ width: `${(s/5)*100}%`, height: "100%", background: SCORE_COLORS[s], borderRadius: 3 }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: "#aaa", width: 50 }}>{SCORE_LABELS[s]}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-            <button onClick={() => { setShowCats(!showCats); setShowZones(false); }}
-              style={{ background: showCats || filterCats.length > 0 ? "#2d4a2d" : "#f0ede4",
-                color: showCats || filterCats.length > 0 ? "white" : "#555",
-                border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
-              {filterCats.length > 0 ? `Plant type (${filterCats.length})` : (showCats ? "▲ Plant type" : "▼ Plant type")}
+  // ── Results filters panel ────────────────────────────────────────────────────
+
+  function ResultFilters({ plants, siteKey, rf, onChange }) {
+    const [open, setOpen] = useState(false);
+
+    const allColors = useMemo(() => {
+      const counts = {};
+      plants.forEach(p => {
+        (p.flowerColor + "|" + p.foliageColor).split(/\s*[|]\s*/).forEach(c => {
+          const t = c.trim().toLowerCase();
+          if (t && COLOR_MAP[t]) counts[t] = (counts[t] || 0) + 1;
+        });
+      });
+      return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([c]) => c);
+    }, [plants]);
+
+    const toggleColor = c => onChange({ ...rf, rcolors: rf.rcolors?.includes(c) ? rf.rcolors.filter(x => x !== c) : [...(rf.rcolors || []), c] });
+    const toggleCat   = c => onChange({ ...rf, rcats:   rf.rcats?.includes(c)   ? rf.rcats.filter(x => x !== c)   : [...(rf.rcats   || []), c] });
+
+    const allCats = useMemo(() => [...new Set(plants.map(p => p.category))].sort(), [plants]);
+
+    const activeCount = (rf.rnative ? 1 : 0) + (rf.rwinter ? 1 : 0) +
+      (rf.rscore > 3 ? 1 : 0) + (rf.rcats?.length || 0) + (rf.rcolors?.length || 0);
+
+    return (
+      <div className="no-print" style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
+        marginBottom: 12, overflow: "hidden" }}>
+        <div onClick={() => setOpen(!open)}
+          style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer" }}>
+          <span style={{ fontSize: 13, fontWeight: "bold", color: "#555" }}>
+            Refine results {activeCount > 0 && <span style={{ background: "#2d4a2d", color: "white",
+              borderRadius: 10, padding: "1px 7px", fontSize: 11, marginLeft: 4 }}>{activeCount}</span>}
+          </span>
+          <span style={{ flex: 1 }} />
+          {activeCount > 0 && (
+            <button onClick={e => { e.stopPropagation(); onChange({ rnative: false, rscore: 3, rcats: [], rcolors: [], rwinter: false }); }}
+              style={{ fontSize: 11, color: "#e57373", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              Clear all
             </button>
+          )}
+          <span style={{ color: "#aaa", fontSize: 14 }}>{open ? "▲" : "▼"}</span>
+        </div>
 
-            <button onClick={() => { setShowZones(!showZones); setShowCats(false); }}
-              style={{ background: selectedZone ? "#2d4a2d" : showZones ? "#2d4a2d" : "#f0ede4",
-                color: selectedZone || showZones ? "white" : "#555",
-                border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
-              {selectedZone
-                ? `📍 ${MICROZONES.find(z => z.key === selectedZone)?.label}`
-                : (showZones ? "▲ Site type" : "▼ Site type")}
-            </button>
+        {open && (
+          <div style={{ padding: "0 14px 14px", borderTop: "1px solid #f0ede4" }}>
 
-            {selectedZone && (
-              <>
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ fontSize: 12, color: "#666" }}>Min fit:</span>
-                  {[3,4,5].map(s => (
-                    <button key={s} onClick={() => setMinScore(s)}
-                      style={{ padding: "3px 9px", borderRadius: 6, border: "none", cursor: "pointer",
-                        fontSize: 11, fontFamily: "inherit",
-                        background: minScore === s ? SCORE_COLORS[s] : "#f0ede4",
-                        color: minScore === s ? (s >= 4 ? "white" : "#333") : "#555",
-                        fontWeight: minScore === s ? "bold" : "normal" }}>
+            {/* Quick toggles */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, marginBottom: 14 }}>
+              {[
+                { key: "rnative", label: "Natives only" },
+                { key: "rwinter", label: "❄️ Winter interest" },
+              ].map(({ key, label }) => (
+                <button key={key} onClick={() => onChange({ ...rf, [key]: !rf[key] })}
+                  style={{ padding: "5px 13px", borderRadius: 20, border: "1px solid",
+                    cursor: "pointer", fontSize: 12, fontFamily: "inherit",
+                    background: rf[key] ? "#2d4a2d" : "transparent",
+                    color: rf[key] ? "white" : "#555",
+                    borderColor: rf[key] ? "#2d4a2d" : "#ccc" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Min fit */}
+            {siteKey && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "#aaa", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Minimum fit</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[3, 4, 5].map(s => (
+                    <button key={s} onClick={() => onChange({ ...rf, rscore: s })}
+                      style={{ padding: "4px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                        fontSize: 12, fontFamily: "inherit",
+                        background: rf.rscore === s ? SCORE_COLORS[s] : "#f0ede4",
+                        color: rf.rscore === s ? (s >= 4 ? "white" : "#333") : "#555",
+                        fontWeight: rf.rscore === s ? "bold" : "normal" }}>
                       {SCORE_LABELS[s]}
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setSelectedZone(null)}
-                  style={{ fontSize: 11, color: "#aaa", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                  ✕ clear
-                </button>
-              </>
+              </div>
             )}
-          </div>
 
-          {/* Category panel */}
-          {showCats && (
-            <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
-              padding: "12px 14px", marginBottom: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {categories.map(cat => (
-                <button key={cat} onClick={() => toggleCat(cat)}
-                  style={{ padding: "4px 11px", borderRadius: 20, border: "1px solid", cursor: "pointer",
-                    fontSize: 11, fontFamily: "inherit",
-                    background: filterCats.includes(cat) ? "#2d4a2d" : "transparent",
-                    color: filterCats.includes(cat) ? "white" : "#555",
-                    borderColor: filterCats.includes(cat) ? "#2d4a2d" : "#ccc" }}>
-                  {cat}
+            {/* Flower / foliage color */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: "#aaa", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Color</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {allColors.map(c => {
+                  const sel = rf.rcolors?.includes(c);
+                  return (
+                    <button key={c} onClick={() => toggleColor(c)} title={c}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px",
+                        borderRadius: 20, border: `1px solid ${sel ? "#2d4a2d" : "#ddd"}`,
+                        background: sel ? "#f0faf0" : "white", cursor: "pointer",
+                        fontSize: 11, fontFamily: "inherit" }}>
+                      <div style={{ width: 11, height: 11, borderRadius: "50%", flexShrink: 0,
+                        background: COLOR_MAP[c] || "#ccc", border: c === "white" ? "1px solid #ccc" : "none" }} />
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Plant type */}
+            <div>
+              <div style={{ fontSize: 11, color: "#aaa", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Plant type</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {allCats.map(cat => (
+                  <button key={cat} onClick={() => toggleCat(cat)}
+                    style={{ padding: "3px 10px", borderRadius: 20, border: "1px solid",
+                      cursor: "pointer", fontSize: 11, fontFamily: "inherit",
+                      background: rf.rcats?.includes(cat) ? "#2d4a2d" : "transparent",
+                      color: rf.rcats?.includes(cat) ? "white" : "#555",
+                      borderColor: rf.rcats?.includes(cat) ? "#2d4a2d" : "#ccc" }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Filter summary banner ─────────────────────────────────────────────────────
+
+  function FilterBanner({ urlState, wizardAnswers, onEdit }) {
+    const chips = [];
+
+    if (urlState.label) {
+      chips.push({ label: `📋 ${urlState.label}`, strong: true });
+    }
+
+    if (urlState.mode === "wizard" && urlState.wdone) {
+      WIZARD_STEPS.forEach(step => {
+        const ans = wizardAnswers[step.id];
+        if (!ans || (Array.isArray(ans) && ans.length === 0)) return;
+        const label = Array.isArray(ans)
+          ? ans.map(v => step.options.find(o => o.value === v)?.label).filter(Boolean).join(", ")
+          : step.options.find(o => o.value === ans)?.label;
+        if (label) chips.push({ label });
+      });
+    }
+
+    if (urlState.mode === "browse" && urlState.bzone) {
+      const zone = ALL_WIZARD_SITES.find(z => z.key === urlState.bzone);
+      if (zone) chips.push({ label: `${zone.emoji} ${zone.label}` });
+      if (urlState.bnative) chips.push({ label: "Natives only" });
+    }
+
+    if (!chips.length) return null;
+
+    return (
+      <div style={{ background: "#f0faf0", border: "1px solid #c8e6c9", borderRadius: 10,
+        padding: "12px 14px", marginBottom: 16 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: "#888", marginRight: 2 }}>Showing:</span>
+          {chips.map((chip, i) => (
+            <span key={i} style={{ fontSize: 12, padding: "3px 11px", borderRadius: 20,
+              background: chip.strong ? "#2d4a2d" : "#e8f5e9",
+              color: chip.strong ? "white" : "#2e7d32",
+              fontWeight: chip.strong ? "bold" : "normal" }}>
+              {chip.label}
+            </span>
+          ))}
+          {onEdit && (
+            <button onClick={onEdit} className="no-print"
+              style={{ marginLeft: "auto", fontSize: 11, color: "#2d4a2d", background: "none",
+                border: "1px solid #c8e6c9", borderRadius: 20, padding: "3px 11px",
+                cursor: "pointer", fontFamily: "inherit" }}>
+              ✏️ Adjust
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Share / print toolbar ────────────────────────────────────────────────────
+
+  function ShareBar({ urlState, onLabelChange }) {
+    const [copied,    setCopied]    = useState(false);
+    const [editLabel, setEditLabel] = useState(false);
+    const [labelVal,  setLabelVal]  = useState(urlState.label || "");
+
+    const copy = () => {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    };
+
+    const saveLabel = () => {
+      onLabelChange(labelVal.trim());
+      setEditLabel(false);
+    };
+
+    return (
+      <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+        background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
+        padding: "10px 14px", marginBottom: 12 }}>
+
+        {editLabel ? (
+          <>
+            <input autoFocus value={labelVal} onChange={e => setLabelVal(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") saveLabel(); if (e.key === "Escape") setEditLabel(false); }}
+              placeholder="e.g. Johnson Residence"
+              style={{ flex: 1, minWidth: 160, border: "1px solid #ddd", borderRadius: 6,
+                padding: "5px 10px", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
+            <button onClick={saveLabel}
+              style={{ background: "#2d4a2d", color: "white", border: "none", borderRadius: 6,
+                padding: "5px 14px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+              Save
+            </button>
+            <button onClick={() => setEditLabel(false)}
+              style={{ background: "#f0ede4", color: "#555", border: "none", borderRadius: 6,
+                padding: "5px 10px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setEditLabel(true)}
+              style={{ background: "#f0ede4", color: "#555", border: "none", borderRadius: 6,
+                padding: "6px 13px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+              {urlState.label ? `✏️ ${urlState.label}` : "📋 Name this palette"}
+            </button>
+            <button onClick={copy}
+              style={{ background: copied ? "#e8f5e9" : "#f0ede4", color: copied ? "#2e7d32" : "#555",
+                border: "none", borderRadius: 6, padding: "6px 13px", cursor: "pointer",
+                fontSize: 12, fontFamily: "inherit" }}>
+              {copied ? "✓ Link copied!" : "🔗 Copy shareable link"}
+            </button>
+            <button onClick={() => window.print()}
+              style={{ background: "#f0ede4", color: "#555", border: "none", borderRadius: 6,
+                padding: "6px 13px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+              🖨️ Print / save PDF
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── Browse mode ──────────────────────────────────────────────────────────────
+
+  function BrowseMode({ plants, urlState, onURLChange }) {
+    const [search,     setSearch]     = useState(urlState.bsearch || "");
+    const [zone,       setZone]       = useState(urlState.bzone   || null);
+    const [native,     setNative]     = useState(urlState.bnative || false);
+    const [showZones,  setShowZones]  = useState(false);
+    const [rf,         setRf]         = useState({ rnative: urlState.rnative, rscore: urlState.rscore || 3, rcats: urlState.rcats || [], rcolors: urlState.rcolors || [], rwinter: urlState.rwinter });
+
+    // Sync to URL
+    useEffect(() => {
+      onURLChange({ bzone: zone, bnative: native, bsearch: search, ...rf });
+    }, [zone, native, search, rf]);
+
+    const base = useMemo(() => plants.filter(p => {
+      if (zone && getSiteScore(p, zone) < 1) return false;
+      if (native && !p.status.startsWith("Native")) return false;
+      if (search) { const q = search.toLowerCase(); if (!p.common.toLowerCase().includes(q) && !p.latin.toLowerCase().includes(q)) return false; }
+      return true;
+    }), [plants, zone, native, search]);
+
+    const results = useMemo(() => {
+      let r = applyResultFilters(base, zone, rf);
+      return r.sort((a, b) => {
+        if (zone) {
+          const diff = getSiteScore(b, zone) - getSiteScore(a, zone);
+          if (diff !== 0) return diff;
+        }
+        return a.common.localeCompare(b.common);
+      });
+    }, [base, zone, rf]);
+
+    const zoneInfo = zone ? ALL_WIZARD_SITES.find(z => z.key === zone) : null;
+
+    return (
+      <div>
+        <div style={{ padding: "20px 0 10px" }}>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={`Search ${plants.length} plants by name…`}
+            style={{ width: "100%", border: "1px solid #ddd", borderRadius: 8,
+              padding: "11px 16px", fontSize: 15, fontFamily: "inherit", background: "white", outline: "none" }} />
+        </div>
+
+        {/* Quick filter bar */}
+        <div className="no-print" style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
+          padding: "10px 14px", marginBottom: 10, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 5, cursor: "pointer", fontSize: 13, userSelect: "none" }}>
+            <input type="checkbox" checked={native} onChange={e => setNative(e.target.checked)} style={{ accentColor: "#2d4a2d" }} />
+            Natives only
+          </label>
+
+          <button onClick={() => setShowZones(!showZones)}
+            style={{ background: zone ? "#2d4a2d" : showZones ? "#2d4a2d" : "#f0ede4",
+              color: zone || showZones ? "white" : "#555",
+              border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+              fontSize: 12, fontFamily: "inherit" }}>
+            {zone ? `📍 ${zoneInfo?.label || zone}` : (showZones ? "▲ Site type" : "▼ Site type")}
+          </button>
+
+          {zone && (
+            <button onClick={() => setZone(null)}
+              style={{ fontSize: 11, color: "#aaa", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              ✕ clear
+            </button>
+          )}
+        </div>
+
+        {showZones && (
+          <div className="no-print" style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
+            padding: "14px", marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: "#888", marginBottom: 10, fontStyle: "italic" }}>
+              Choose a site type to sort and filter plants by how well they fit.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 8 }}>
+              {ALL_WIZARD_SITES.map(z => (
+                <button key={z.key} onClick={() => { setZone(z.key); setShowZones(false); }}
+                  style={{ background: zone === z.key ? "#2d4a2d" : "#fafaf7",
+                    color: zone === z.key ? "white" : "#2c2c2c",
+                    border: `2px solid ${zone === z.key ? "#2d4a2d" : "#e0ddd5"}`,
+                    borderRadius: 8, padding: "10px 12px", cursor: "pointer",
+                    textAlign: "left", fontFamily: "inherit" }}>
+                  <div style={{ fontSize: 18, marginBottom: 2 }}>{z.emoji}</div>
+                  <div style={{ fontWeight: "bold", fontSize: 12, marginBottom: 2 }}>{z.label}</div>
+                  <div style={{ fontSize: 10, opacity: 0.65, lineHeight: 1.4 }}>{z.desc}</div>
                 </button>
               ))}
-              {filterCats.length > 0 && (
-                <button onClick={() => setFilterCats([])}
-                  style={{ padding: "4px 11px", borderRadius: 20, border: "1px solid #e57373",
-                    cursor: "pointer", fontSize: 11, background: "transparent", color: "#e57373", fontFamily: "inherit" }}>
-                  Clear all
-                </button>
-              )}
             </div>
-          )}
-
-          {/* Zone panel */}
-          {showZones && (
-            <div style={{ background: "white", border: "1px solid #e0ddd5", borderRadius: 10,
-              padding: "14px", marginBottom: 10 }}>
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 10, fontStyle: "italic" }}>
-                Choose a site type — plants will be sorted by how well they fit that spot.
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 8 }}>
-                {MICROZONES.map(z => (
-                  <button key={z.key} onClick={() => { setSelectedZone(z.key); setShowZones(false); }}
-                    style={{ background: selectedZone === z.key ? "#2d4a2d" : "#fafaf7",
-                      color: selectedZone === z.key ? "white" : "#2c2c2c",
-                      border: `2px solid ${selectedZone === z.key ? "#2d4a2d" : "#e0ddd5"}`,
-                      borderRadius: 8, padding: "10px 12px", cursor: "pointer", textAlign: "left",
-                      fontFamily: "inherit" }}>
-                    <div style={{ fontSize: 18, marginBottom: 2 }}>{z.emoji}</div>
-                    <div style={{ fontWeight: "bold", fontSize: 12, marginBottom: 2 }}>{z.label}</div>
-                    <div style={{ fontSize: 10, opacity: 0.65, lineHeight: 1.4 }}>{z.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Count */}
-          <div style={{ fontSize: 13, color: "#888", marginBottom: 12, fontStyle: "italic" }}>
-            {results.length} plant{results.length !== 1 ? "s" : ""}
-            {selectedZone ? ` rated for ${MICROZONES.find(z => z.key === selectedZone)?.label}` : " in database"}
           </div>
+        )}
 
-          {/* List */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {results.map(plant => (
-              <PlantCard key={plant.latin} plant={plant} selectedZone={selectedZone} />
-            ))}
-            {results.length === 0 && (
-              <div style={{ textAlign: "center", padding: 40, color: "#aaa", fontStyle: "italic" }}>
-                No plants match — try adjusting your filters.
-              </div>
-            )}
-          </div>
+        <ResultFilters plants={base} siteKey={zone} rf={rf} onChange={setRf} />
+
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 12, fontStyle: "italic" }}>
+          {results.length} plant{results.length !== 1 ? "s" : ""}
+          {zone ? ` rated for ${zoneInfo?.label || zone}` : " in database"}
         </div>
-      );
-    }
 
-    // ── Wizard mode ───────────────────────────────────────────────────────────
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {results.map(p => <PlantCard key={p.latin} plant={p} siteKey={zone} />)}
+          {results.length === 0 && (
+            <div style={{ textAlign: "center", padding: 40, color: "#aaa", fontStyle: "italic" }}>
+              No plants match — try adjusting your filters.
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
-    function WizardMode({ plants }) {
-      const [step,    setStep]    = useState(0);
-      const [answers, setAnswers] = useState({});
-      const [done,    setDone]    = useState(false);
+  // ── Wizard mode ──────────────────────────────────────────────────────────────
 
-      const current    = WIZARD_STEPS[step];
-      const totalSteps = WIZARD_STEPS.length;
+  function WizardMode({ plants, urlState, onURLChange }) {
+    const initAnswers = {
+      site:     urlState.wsite     || null,
+      sun:      urlState.wsun      || null,
+      moisture: urlState.wmoisture || null,
+      size:     urlState.wsize     || null,
+      concerns: urlState.wconcerns || [],
+    };
+    const [step,    setStep]    = useState(urlState.wdone ? WIZARD_STEPS.length : 0);
+    const [answers, setAnswers] = useState(initAnswers);
+    const [done,    setDone]    = useState(urlState.wdone || false);
+    const [rf,      setRf]      = useState({ rnative: urlState.rnative, rscore: urlState.rscore || 3, rcats: urlState.rcats || [], rcolors: urlState.rcolors || [], rwinter: urlState.rwinter });
 
-      const advance = () => {
-        if (step < totalSteps - 1) setStep(s => s + 1);
-        else setDone(true);
-      };
+    const current = WIZARD_STEPS[step];
 
-      const selectOption = value => {
-        if (current.type === "single") {
-          setAnswers(prev => ({ ...prev, [current.id]: value }));
-          setTimeout(advance, 200);
-        } else {
-          setAnswers(prev => {
-            const existing = prev[current.id] || [];
-            const updated  = existing.includes(value)
-              ? existing.filter(v => v !== value)
-              : [...existing, value];
-            return { ...prev, [current.id]: updated };
-          });
-        }
-      };
+    // Sync to URL
+    useEffect(() => {
+      onURLChange({
+        wsite: answers.site, wsun: answers.sun, wmoisture: answers.moisture,
+        wsize: answers.size, wconcerns: answers.concerns, wdone: done, ...rf,
+      });
+    }, [answers, done, rf]);
 
-      const isSelected = value =>
-        current.type === "single"
-          ? answers[current.id] === value
-          : (answers[current.id] || []).includes(value);
+    const advance = () => {
+      if (step < WIZARD_STEPS.length - 1) setStep(s => s + 1);
+      else setDone(true);
+    };
 
-      const results = useMemo(() => {
-        if (!done) return [];
-        return applyWizardFilters(plants, answers).sort((a, b) => {
-          if (answers.site) {
-            const diff = (b.scores[answers.site] || 0) - (a.scores[answers.site] || 0);
-            if (diff !== 0) return diff;
-          }
-          return a.common.localeCompare(b.common);
+    const select = value => {
+      if (current.type === "single") {
+        setAnswers(prev => ({ ...prev, [current.id]: value }));
+        setTimeout(advance, 180);
+      } else {
+        setAnswers(prev => {
+          const ex = prev[current.id] || [];
+          return { ...prev, [current.id]: ex.includes(value) ? ex.filter(v => v !== value) : [...ex, value] };
         });
-      }, [done, plants, answers]);
-
-      const reset = () => { setStep(0); setAnswers({}); setDone(false); };
-
-      // Results view
-      if (done) {
-        return (
-          <div>
-            <div style={{ padding: "20px 0 14px", display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: "bold", fontSize: 20, color: "#2d4a2d" }}>Your plant palette</div>
-                <div style={{ fontSize: 13, color: "#888", marginTop: 3 }}>
-                  {results.length} plant{results.length !== 1 ? "s" : ""} matched your site
-                </div>
-              </div>
-              <button onClick={reset}
-                style={{ background: "#f0ede4", border: "none", borderRadius: 8, padding: "8px 16px",
-                  cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#555" }}>
-                ↩ Start over
-              </button>
-            </div>
-
-            {/* Answer summary chips */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 18 }}>
-              {WIZARD_STEPS.map(ws => {
-                const ans = answers[ws.id];
-                if (!ans || (Array.isArray(ans) && ans.length === 0)) return null;
-                const label = Array.isArray(ans)
-                  ? ans.map(v => ws.options.find(o => o.value === v)?.label).filter(Boolean).join(", ")
-                  : ws.options.find(o => o.value === ans)?.label;
-                if (!label) return null;
-                return (
-                  <span key={ws.id}
-                    style={{ fontSize: 11, padding: "3px 11px", borderRadius: 20,
-                      background: "#e8f5e9", color: "#2e7d32", fontWeight: "bold" }}>
-                    {label}
-                  </span>
-                );
-              })}
-            </div>
-
-            {results.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: "#888" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🤔</div>
-                <div style={{ fontStyle: "italic", marginBottom: 16 }}>
-                  No plants matched all of those criteria. Try loosening a filter or two.
-                </div>
-                <button onClick={reset}
-                  style={{ background: "#2d4a2d", color: "white", border: "none", borderRadius: 8,
-                    padding: "10px 22px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
-                  Start over
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {results.map(plant => (
-                  <PlantCard key={plant.latin} plant={plant} selectedZone={answers.site || null} />
-                ))}
-              </div>
-            )}
-          </div>
-        );
       }
+    };
 
-      // Question view
+    const isSelected = v => current.type === "single"
+      ? answers[current.id] === v
+      : (answers[current.id] || []).includes(v);
+
+    const reset = () => { setStep(0); setAnswers({ site: null, sun: null, moisture: null, size: null, concerns: [] }); setDone(false); setRf({ rnative: false, rscore: 3, rcats: [], rcolors: [], rwinter: false }); };
+
+    const wizardResults = useMemo(() => {
+      if (!done) return [];
+      return applyWizardFilters(plants, answers).sort((a, b) => {
+        if (answers.site) { const d = getSiteScore(b, answers.site) - getSiteScore(a, answers.site); if (d !== 0) return d; }
+        return a.common.localeCompare(b.common);
+      });
+    }, [done, plants, answers]);
+
+    const filteredResults = useMemo(() => applyResultFilters(wizardResults, answers.site, rf), [wizardResults, answers.site, rf]);
+
+    if (done) {
       return (
-        <div style={{ paddingTop: 24 }}>
-
-          {/* Progress bar */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 28 }}>
-            {WIZARD_STEPS.map((_, i) => (
-              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2,
-                background: i <= step ? "#2d4a2d" : "#e0ddd5", transition: "background 0.3s" }} />
-            ))}
-          </div>
-
-          {/* Question */}
-          <div style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: 21, fontWeight: "bold", color: "#2c2c2c", lineHeight: 1.3, marginBottom: 5 }}>
-              {current.question}
+        <div>
+          <div style={{ padding: "20px 0 14px", display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: "bold", fontSize: 20, color: "#2d4a2d" }}>Your plant palette</div>
+              <div style={{ fontSize: 13, color: "#888", marginTop: 3 }}>
+                {filteredResults.length} of {wizardResults.length} plants shown
+              </div>
             </div>
-            {current.subtext && (
-              <div style={{ fontSize: 13, color: "#999", fontStyle: "italic" }}>{current.subtext}</div>
-            )}
+            <button onClick={reset} className="no-print"
+              style={{ background: "#f0ede4", border: "none", borderRadius: 8, padding: "8px 16px",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#555" }}>
+              ↩ Start over
+            </button>
           </div>
 
-          {/* Options */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {current.options.map(opt => {
-              const sel = isSelected(opt.value);
-              return (
-                <button key={opt.value} onClick={() => selectOption(opt.value)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px",
-                    borderRadius: 12, border: `2px solid ${sel ? "#2d4a2d" : "#e0ddd5"}`,
-                    background: sel ? "#f0faf0" : "white", cursor: "pointer",
-                    textAlign: "left", transition: "all 0.15s", fontFamily: "inherit" }}>
-                  <span style={{ fontSize: 26, flexShrink: 0 }}>{opt.emoji}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "bold", fontSize: 15, color: sel ? "#2d4a2d" : "#2c2c2c" }}>
-                      {opt.label}
-                    </div>
-                    {opt.desc && (
-                      <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{opt.desc}</div>
-                    )}
-                  </div>
-                  {current.type === "multi" && (
-                    <div style={{ width: 22, height: 22, borderRadius: 5, flexShrink: 0,
-                      border: `2px solid ${sel ? "#2d4a2d" : "#ccc"}`,
-                      background: sel ? "#2d4a2d" : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {sel && <span style={{ color: "white", fontSize: 13, lineHeight: 1 }}>✓</span>}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <FilterBanner urlState={{ ...urlState, mode: "wizard", wdone: true }} wizardAnswers={answers}
+            onEdit={() => { setDone(false); setStep(0); }} />
 
-          {/* Nav */}
-          <div style={{ display: "flex", gap: 10, marginTop: 22, alignItems: "center" }}>
-            {step > 0 && (
-              <button onClick={() => setStep(s => s - 1)}
-                style={{ background: "#f0ede4", border: "none", borderRadius: 8, padding: "10px 18px",
-                  cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#555" }}>
-                ← Back
-              </button>
-            )}
-            <div style={{ flex: 1 }} />
-            {current.type === "multi" && (
-              <button onClick={advance}
+          <ResultFilters plants={wizardResults} siteKey={answers.site} rf={rf} onChange={setRf} />
+
+          {filteredResults.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#888" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🤔</div>
+              <div style={{ fontStyle: "italic", marginBottom: 16 }}>No plants matched all of those criteria. Try loosening a filter.</div>
+              <button onClick={reset}
                 style={{ background: "#2d4a2d", color: "white", border: "none", borderRadius: 8,
-                  padding: "10px 24px", cursor: "pointer", fontSize: 14, fontFamily: "inherit", fontWeight: "bold" }}>
-                {step === totalSteps - 1 ? "See my plants →" : "Next →"}
+                  padding: "10px 22px", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
+                Start over
               </button>
-            )}
-            {current.skippable && (
-              <button onClick={advance}
-                style={{ background: "none", border: "none", cursor: "pointer",
-                  fontSize: 13, fontFamily: "inherit", color: "#bbb" }}>
-                Skip →
-              </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {filteredResults.map(p => <PlantCard key={p.latin} plant={p} siteKey={answers.site} />)}
+            </div>
+          )}
         </div>
       );
     }
 
-    // ── Root App ──────────────────────────────────────────────────────────────
+    return (
+      <div style={{ paddingTop: 24 }}>
+        {/* Progress */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 28 }}>
+          {WIZARD_STEPS.map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 3, borderRadius: 2,
+              background: i <= step ? "#2d4a2d" : "#e0ddd5", transition: "background 0.3s",
+              cursor: i < step ? "pointer" : "default" }}
+              onClick={() => { if (i < step) setStep(i); }} />
+          ))}
+        </div>
 
-    function App() {
-      const [plants,  setPlants]  = useState([]);
-      const [loading, setLoading] = useState(true);
-      const [error,   setError]   = useState(null);
-      const [mode,    setMode]    = useState("browse");
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontSize: 21, fontWeight: "bold", color: "#2c2c2c", lineHeight: 1.3, marginBottom: 5 }}>{current.question}</div>
+          {current.subtext && <div style={{ fontSize: 13, color: "#999", fontStyle: "italic" }}>{current.subtext}</div>}
+        </div>
 
-      useEffect(() => {
-        fetch(SHEET_CSV_URL)
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-          .then(text => {
-            setPlants(parseCSV(text).map(rowToPlant).filter(Boolean));
-            setLoading(false);
-          })
-          .catch(err => { setError(err.message); setLoading(false); });
-      }, []);
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          {current.options.map(opt => {
+            const sel = isSelected(opt.value);
+            return (
+              <button key={opt.value} onClick={() => select(opt.value)}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px",
+                  borderRadius: 12, border: `2px solid ${sel ? "#2d4a2d" : "#e0ddd5"}`,
+                  background: sel ? "#f0faf0" : "white", cursor: "pointer",
+                  textAlign: "left", transition: "all 0.15s", fontFamily: "inherit" }}>
+                <span style={{ fontSize: 24, flexShrink: 0, width: 32, textAlign: "center" }}>{opt.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "bold", fontSize: 15, color: sel ? "#2d4a2d" : "#2c2c2c" }}>{opt.label}</div>
+                  {opt.desc && <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{opt.desc}</div>}
+                </div>
+                {current.type === "multi" && (
+                  <div style={{ width: 22, height: 22, borderRadius: 5, flexShrink: 0,
+                    border: `2px solid ${sel ? "#2d4a2d" : "#ccc"}`,
+                    background: sel ? "#2d4a2d" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {sel && <span style={{ color: "white", fontSize: 13 }}>✓</span>}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      return (
-        <div style={{ fontFamily: "'Georgia', serif", background: "#fafaf7", minHeight: "100vh", color: "#2c2c2c" }}>
+        <div style={{ display: "flex", gap: 10, marginTop: 20, alignItems: "center" }}>
+          {step > 0 && (
+            <button onClick={() => setStep(s => s - 1)}
+              style={{ background: "#f0ede4", border: "none", borderRadius: 8, padding: "10px 18px",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "#555" }}>
+              ← Back
+            </button>
+          )}
+          <div style={{ flex: 1 }} />
+          {current.type === "multi" && (
+            <button onClick={advance}
+              style={{ background: "#2d4a2d", color: "white", border: "none", borderRadius: 8,
+                padding: "10px 24px", cursor: "pointer", fontSize: 14, fontFamily: "inherit", fontWeight: "bold" }}>
+              {step === WIZARD_STEPS.length - 1 ? "See my plants →" : "Next →"}
+            </button>
+          )}
+          {current.skippable && (
+            <button onClick={advance}
+              style={{ background: "none", border: "none", cursor: "pointer",
+                fontSize: 13, fontFamily: "inherit", color: "#bbb" }}>
+              Skip →
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
-          {/* Header + mode tabs */}
-          <div style={{ background: "#2d4a2d", color: "#f0ede4", padding: "24px 24px 0", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, width: 200, height: 200,
-              background: "rgba(255,255,255,0.03)", borderRadius: "0 0 0 100%" }} />
-            <div style={{ maxWidth: 800, margin: "0 auto" }}>
-              <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", opacity: 0.55, marginBottom: 5 }}>
-                Summers Gardening
+  // ── Root App ─────────────────────────────────────────────────────────────────
+
+  function App() {
+    const [plants,  setPlants]  = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error,   setError]   = useState(null);
+    const [urlState, setURLState] = useState(readURL);
+
+    const setMode = mode => {
+      const next = { ...urlState, mode };
+      setURLState(next);
+      pushURL(next);
+    };
+
+    const handleURLChange = useCallback(partial => {
+      setURLState(prev => {
+        const next = { ...prev, ...partial };
+        pushURL(next);
+        return next;
+      });
+    }, []);
+
+    const handleLabelChange = useCallback(label => {
+      setURLState(prev => {
+        const next = { ...prev, label };
+        pushURL(next);
+        return next;
+      });
+    }, []);
+
+    useEffect(() => {
+      fetch(SHEET_CSV_URL)
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+        .then(text => { setPlants(parseCSV(text).map(rowToPlant).filter(Boolean)); setLoading(false); })
+        .catch(err => { setError(err.message); setLoading(false); });
+    }, []);
+
+    const showShareBar = !loading && !error && (urlState.mode === "browse" || urlState.wdone);
+
+    return (
+      <div style={{ fontFamily: "Georgia, serif", background: "#fafaf7", minHeight: "100vh", color: "#2c2c2c" }}>
+
+        {/* Header */}
+        <div style={{ background: "#2d4a2d", color: "#f0ede4", padding: "24px 24px 0", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, right: 0, width: 200, height: 200,
+            background: "rgba(255,255,255,0.03)", borderRadius: "0 0 0 100%" }} />
+          <div style={{ maxWidth: 820, margin: "0 auto" }}>
+            {urlState.label && (
+              <div className="no-print" style={{ fontSize: 12, background: "rgba(255,255,255,0.12)", display: "inline-block",
+                borderRadius: 20, padding: "2px 12px", marginBottom: 8, color: "#c8e6c9" }}>
+                📋 {urlState.label}
               </div>
-              <h1 style={{ margin: 0, fontSize: 26, fontWeight: "normal", letterSpacing: "-0.5px" }}>
-                Plant Palette Finder
-              </h1>
-              <p style={{ margin: "6px 0 22px", opacity: 0.65, fontSize: 14, fontStyle: "italic" }}>
-                Match your site conditions to the right plants
-              </p>
+            )}
+            <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", opacity: 0.55, marginBottom: 5 }}>
+              Summers Gardening
+            </div>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: "normal", letterSpacing: "-0.5px" }}>
+              Plant Palette Finder
+            </h1>
+            <p style={{ margin: "6px 0 22px", opacity: 0.65, fontSize: 14, fontStyle: "italic" }}>
+              Match your site conditions to the right plants
+            </p>
 
-              {/* Mode tabs */}
-              <div style={{ display: "flex", gap: 4, width: "fit-content" }}>
-                {[
-                  { key: "browse", label: "Browse all plants" },
-                  { key: "wizard", label: "Get a plant palette ✨" },
-                ].map(tab => (
-                  <button key={tab.key} onClick={() => setMode(tab.key)}
-                    style={{ padding: "10px 20px", border: "none", cursor: "pointer",
-                      fontSize: 13, fontFamily: "inherit", fontWeight: "bold",
-                      borderRadius: "8px 8px 0 0",
-                      background: mode === tab.key ? "#fafaf7" : "rgba(255,255,255,0.1)",
-                      color: mode === tab.key ? "#2d4a2d" : "rgba(240,237,228,0.75)",
-                      transition: "all 0.2s" }}>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+            <div className="no-print" style={{ display: "flex", gap: 4, width: "fit-content" }}>
+              {[
+                { key: "browse", label: "Browse all plants" },
+                { key: "wizard", label: "Get a plant palette ✨" },
+              ].map(tab => (
+                <button key={tab.key} onClick={() => setMode(tab.key)}
+                  style={{ padding: "10px 20px", border: "none", cursor: "pointer",
+                    fontSize: 13, fontFamily: "inherit", fontWeight: "bold",
+                    borderRadius: "8px 8px 0 0",
+                    background: urlState.mode === tab.key ? "#fafaf7" : "rgba(255,255,255,0.1)",
+                    color: urlState.mode === tab.key ? "#2d4a2d" : "rgba(240,237,228,0.75)",
+                    transition: "all 0.2s" }}>
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-
-          <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 16px 60px" }}>
-
-            {loading && (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#888" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
-                <div style={{ fontStyle: "italic" }}>Loading plant data…</div>
-              </div>
-            )}
-
-            {error && (
-              <div style={{ textAlign: "center", padding: "60px 20px" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
-                <div style={{ fontWeight: "bold", color: "#b71c1c", marginBottom: 8 }}>Could not load plant data</div>
-                <div style={{ fontSize: 12, color: "#888", maxWidth: 400, margin: "0 auto" }}>
-                  Make sure the Google Sheet is shared as "Anyone with the link can view." Error: {error}
-                </div>
-              </div>
-            )}
-
-            {!loading && !error && mode === "browse" && <BrowseMode plants={plants} />}
-            {!loading && !error && mode === "wizard" && <WizardMode plants={plants} />}
-
-          </div>
-
-          <div style={{ textAlign: "center", padding: 16, color: "#aaa", fontSize: 11, borderTop: "1px solid #e0ddd5" }}>
-            <a href="https://www.summersgardening.com" target="_blank" rel="noopener noreferrer"
-              style={{ color: "#2d4a2d", textDecoration: "none" }}>summersgardening.com</a>
-            {" · "}Plant data compiled by Rachel Summers · Images via iNaturalist
-          </div>
         </div>
-      );
-    }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 16px 60px" }}>
+
+          {showShareBar && (
+            <div style={{ marginTop: 16 }}>
+              <ShareBar urlState={urlState} onLabelChange={handleLabelChange} />
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#888" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🌱</div>
+              <div style={{ fontStyle: "italic" }}>Loading plant data…</div>
+            </div>
+          )}
+
+          {error && (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
+              <div style={{ fontWeight: "bold", color: "#b71c1c", marginBottom: 8 }}>Could not load plant data</div>
+              <div style={{ fontSize: 12, color: "#888", maxWidth: 400, margin: "0 auto" }}>
+                Make sure the Google Sheet is published as CSV (File → Share → Publish to web). Error: {error}
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && urlState.mode === "browse" && (
+            <BrowseMode plants={plants} urlState={urlState} onURLChange={handleURLChange} />
+          )}
+          {!loading && !error && urlState.mode === "wizard" && (
+            <WizardMode plants={plants} urlState={urlState} onURLChange={handleURLChange} />
+          )}
+
+        </div>
+
+        <div style={{ textAlign: "center", padding: 16, color: "#aaa", fontSize: 11, borderTop: "1px solid #e0ddd5" }}>
+          <a href="https://www.summersgardening.com" target="_blank" rel="noopener noreferrer"
+            style={{ color: "#2d4a2d", textDecoration: "none" }}>summersgardening.com</a>
+          {" · "}Plant data by Rachel Summers · Photos via iNaturalist (CC BY-NC)
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
 </html>
