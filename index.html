@@ -36,9 +36,8 @@
   const ZONE_KEYS = MICROZONES.map(z => z.key);
 
   const EXTENDED_SITES = [
-    { key: "white-pine",        label: "Under white pines",  emoji: "🌲", desc: "Dry, acidic, needle-carpeted understory" },
-    { key: "norway-maple",      label: "Under Norway maple", emoji: "🍁", desc: "Dense dry shade with allelopathic roots" },
-    { key: "post-construction", label: "Post-construction",  emoji: "🏗️", desc: "Compacted, disturbed, or fill soil" },
+    { key: "white-pine",   label: "Under white pines",  emoji: "🌲", desc: "Dry, acidic, needle-carpeted understory" },
+    { key: "norway-maple", label: "Under Norway maple", emoji: "🍁", desc: "Dense dry shade with allelopathic roots" },
   ];
   const ALL_WIZARD_SITES = [...MICROZONES, ...EXTENDED_SITES];
 
@@ -97,7 +96,7 @@
         {value:"Woodland Edge",           emoji:"🌳", label:"Edge of trees",       desc:"Where the lawn meets the woods, dappled light"},
         {value:"white-pine",             emoji:"🌲", label:"Under white pines",   desc:"Dry, acidic, needle-carpeted understory"},
         {value:"norway-maple",           emoji:"🍁", label:"Under Norway maple",  desc:"Dense dry shade with allelopathic roots"},
-        {value:"post-construction",      emoji:"🏗️",label:"Post-construction",   desc:"Compacted or disturbed soil"},
+
         {value:"Conifer Shade",           emoji:"🌲", label:"Under other conifers",desc:"Under hemlock, spruce, or fir"},
         {value:"Dry Slope",              emoji:"⛰️",label:"Sloped and dry",      desc:"Grades downhill, drains fast, lean soil"},
       ]},
@@ -128,6 +127,7 @@
         {value:"cats",    emoji:"🐈",label:"Cats in the garden",      desc:"Exclude plants toxic to cats"},
         {value:"children",emoji:"👶",label:"Young children play here",desc:"Exclude plants with toxic parts"},
         {value:"spread",  emoji:"🚫",label:"No aggressive spreaders", desc:"Skip plants flagged as vigorous"},
+        {value:"postconstruction",emoji:"🏗️",label:"Post-construction or disturbed soil",desc:"Compacted fill soil — favor tough, adaptable plants"},
       ]},
   ];
 
@@ -234,6 +234,7 @@
       if(c.includes("deer")&&p.deerPressure==="high")return false;if(c.includes("rabbits")&&p.rabbitDamage==="high")return false;
       if(c.includes("dogs")&&p.toxicDogs==="yes")return false;if(c.includes("cats")&&p.toxicCats==="yes")return false;
       if(c.includes("children")&&p.toxicChildren==="yes")return false;if(c.includes("spread")&&p.aggressive==="Y")return false;
+      if(c.includes("postconstruction")&&(getSiteScore(p,"post-construction")||0)<3)return false;
       return true;
     });
   }
@@ -278,26 +279,76 @@
   }
 
   // ── iNaturalist gallery ────────────────────────────────────────────────────
-  function taxonQ(latin){return latin.replace(/['''][^''']*[''']/g,"").replace(/\bcultivars?\b/ig,"").replace(/\bhybrids?\b/ig,"").replace(/\bspp?\b/ig,"").replace(/\bvar\b.*/ig,"").replace(/[×x]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");}
+  function taxonQ(latin){
+    return latin.replace(/['''][^''']*[''']/g,"").replace(/\bcultivars?\b/ig,"")
+      .replace(/\bhybrids?\b/ig,"").replace(/\bspp?\b/ig,"").replace(/\bvar\b.*/ig,"")
+      .replace(/[×x]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");
+  }
+
   function PhotoGallery({latin,fallbackImage}){
-    const[photos,setPhotos]=useState(null);const[idx,setIdx]=useState(0);
+    const[photos,setPhotos]=useState(null);
+    const[idx,setIdx]=useState(0);
     useEffect(()=>{
-      if(photos!==null)return;const q=taxonQ(latin);if(!q){setPhotos([]);return;}
-      fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(q)}&rank=species&per_page=1`)
-        .then(r=>r.json()).then(d=>{
-          const imgs=(d.results?.[0]?.taxon_photos||[]).slice(0,6).map(tp=>({thumb:(tp.photo?.url||""),medium:(tp.photo?.url||"").replace("square","medium"),credit:(tp.photo?.attribution||"").replace(/\(c\)/g,"©")})).filter(p=>p.medium?.includes("http"));
-          if(!imgs.length&&fallbackImage)imgs.push({thumb:fallbackImage,medium:fallbackImage,credit:""});
+      if(photos!==null)return;
+      const name=taxonQ(latin);
+      if(!name){setPhotos([]);return;}
+      fetch(`https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(name)}&quality_grade=research&photos=true&per_page=5&order_by=votes`)
+        .then(r=>r.json())
+        .then(d=>{
+          const imgs=[];
+          (d.results||[]).forEach(obs=>{
+            (obs.photos||[]).forEach(ph=>{
+              if(imgs.length>=5)return;
+              const medium=(ph.url||"").replace("square","medium");
+              if(!medium.includes("http"))return;
+              imgs.push({
+                thumb:ph.url||"",
+                medium,
+                large:(ph.url||"").replace("square","large"),
+                credit:(ph.attribution||"").replace(/\(c\)/g,"©"),
+              });
+            });
+          });
+          if(!imgs.length&&fallbackImage)
+            imgs.push({thumb:fallbackImage,medium:fallbackImage,large:fallbackImage,credit:""});
           setPhotos(imgs);setIdx(0);
-        }).catch(()=>setPhotos(fallbackImage?[{thumb:fallbackImage,medium:fallbackImage,credit:""}]:[]));
+        })
+        .catch(()=>setPhotos(fallbackImage?[{thumb:fallbackImage,medium:fallbackImage,large:fallbackImage,credit:""}]:[]));
     },[latin]);
-    if(photos===null)return <div style={{width:200,height:160,borderRadius:10,background:"#f0ede4",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Loading photos…</span></div>;
+
+    if(photos===null)return(
+      <div style={{width:220,height:180,borderRadius:10,background:"#f0ede4",flexShrink:0,
+        display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Loading photos…</span>
+      </div>
+    );
     if(!photos.length)return <PlantImage plant={{image:"",common:latin,category:""}} size={120} radius={10} />;
     const cur=photos[idx];
     return(
-      <div style={{flexShrink:0,maxWidth:240}}>
-        <img src={cur.medium} alt={latin} onError={e=>{e.target.src=cur.thumb;}} style={{width:"100%",height:180,objectFit:"cover",borderRadius:10,display:"block"}} />
-        {photos.length>1&&<div style={{display:"flex",gap:5,marginTop:6,overflowX:"auto"}}>{photos.map((ph,i)=><img key={i} src={ph.thumb} alt="" onClick={()=>setIdx(i)} style={{width:38,height:38,borderRadius:5,objectFit:"cover",flexShrink:0,cursor:"pointer",border:`2px solid ${i===idx?"#2d4a2d":"transparent"}`,opacity:i===idx?1:0.6}} />)}</div>}
-        {cur.credit&&<div style={{fontSize:9,color:"#bbb",marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cur.credit.length>70?cur.credit.slice(0,70)+"…":cur.credit}</div>}
+      <div style={{flexShrink:0,width:220}}>
+        <a href={cur.large} target="_blank" rel="noopener noreferrer" style={{display:"block",borderRadius:10,overflow:"hidden"}}>
+          <img src={cur.medium} alt={latin} onError={e=>{e.target.src=cur.thumb;}}
+            style={{width:"100%",height:180,objectFit:"cover",display:"block",cursor:"zoom-in"}} />
+        </a>
+        {photos.length>1&&(
+          <div style={{display:"flex",gap:5,marginTop:6,overflowX:"auto",paddingBottom:2}}>
+            {photos.map((ph,i)=>(
+              <img key={i} src={ph.thumb} alt="" onClick={()=>setIdx(i)}
+                onError={e=>e.target.style.opacity="0.2"}
+                style={{width:36,height:36,borderRadius:5,objectFit:"cover",flexShrink:0,
+                  cursor:"pointer",border:`2px solid ${i===idx?"#2d4a2d":"transparent"}`,
+                  opacity:i===idx?1:0.55,transition:"opacity 0.15s"}} />
+            ))}
+          </div>
+        )}
+        {cur.credit&&(
+          <div style={{fontSize:9,color:"#bbb",marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            {cur.credit.length>72?cur.credit.slice(0,72)+"…":cur.credit}
+          </div>
+        )}
+        <div style={{fontSize:9,color:"#ccc",marginTop:1}}>
+          via iNaturalist · {photos.length} photo{photos.length!==1?"s":""}
+        </div>
       </div>
     );
   }
