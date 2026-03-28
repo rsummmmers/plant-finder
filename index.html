@@ -126,7 +126,7 @@
         {value:"dogs",    emoji:"🐕",label:"Dogs use this area",      desc:"Exclude plants toxic to dogs"},
         {value:"cats",    emoji:"🐈",label:"Cats in the garden",      desc:"Exclude plants toxic to cats"},
         {value:"children",emoji:"👶",label:"Young children play here",desc:"Exclude plants with toxic parts"},
-        {value:"spread",  emoji:"🚫",label:"No aggressive spreaders", desc:"Skip plants flagged as vigorous"},
+        {value:"spread",  emoji:"🚫",label:"Limit plants that fill space aggressively", desc:"Skip plants that spread vigorously — good near lawns or tidy borders"},
         {value:"postconstruction",emoji:"🏗️",label:"Post-construction or disturbed soil",desc:"Compacted fill soil — favor tough, adaptable plants"},
       ]},
   ];
@@ -270,7 +270,7 @@
     const b=[];
     if(plant.deerPressure==="high")b.push({t:"🦌 High deer pressure",bg:"#fff3e0",fg:"#e65100"});
     if(plant.rabbitDamage==="high")b.push({t:"🐇 High rabbit damage",bg:"#fff3e0",fg:"#bf360c"});
-    if(plant.aggressive==="Y")b.push({t:"⚠️ Spreads vigorously",bg:"#fff8e1",fg:"#f57f17"});
+    if(plant.aggressive==="Y")b.push({t:"🌿 Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
     if(plant.toxicDogs==="yes")b.push({t:"🐕 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
     if(plant.toxicCats==="yes")b.push({t:"🐈 Toxic to cats",bg:"#fce4ec",fg:"#c62828"});
     if(plant.toxicChildren==="yes")b.push({t:"👶 Toxic to children",bg:"#fce4ec",fg:"#c62828"});
@@ -387,6 +387,7 @@
                   {plant.bloom&&plant.bloom!=="N/A"&&<div><span style={{color:"#888"}}>Bloom: </span>{plant.bloom}</div>}
                   {plant.seasonal&&<div><span style={{color:"#888"}}>Interest: </span>{plant.seasonal}</div>}
                   {plant.role&&<div><span style={{color:"#888"}}>Role: </span>{plant.role}</div>}
+                  {plant.aggressive&&<div><span style={{color:"#888"}}>Spreads: </span>{plant.aggressive==="Y"?"🌿 Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"}</div>}
                   {plant.deerPressure&&<div><span style={{color:"#888"}}>Deer: </span>{plant.deerPressure}</div>}
                   {plant.rabbitDamage&&<div><span style={{color:"#888"}}>Rabbit: </span>{plant.rabbitDamage}</div>}
                   {plant.flowerColor&&<div style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:"#888"}}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={11} /></div>}
