@@ -128,6 +128,7 @@
         {value:"children",emoji:"👶",label:"Young children play here",desc:"Exclude plants with toxic parts"},
         {value:"spread",  emoji:"🚫",label:"Limit plants that fill space aggressively", desc:"Skip plants that spread vigorously — good near lawns or tidy borders"},
         {value:"postconstruction",emoji:"🏗️",label:"Post-construction or disturbed soil",desc:"Compacted fill soil — favor tough, adaptable plants"},
+        {value:"blackwalnut",emoji:"🌰",label:"Near black walnut",desc:"Exclude plants sensitive to juglone from walnut roots"},
       ]},
   ];
 
@@ -149,6 +150,9 @@
       hheight:p.get("hheight")||"any", hsun:p.get("hsun")||null,
       hmoisture:p.get("hmoisture")||null, hnearnat:p.get("hnearnat")==="1",
       hwpine:p.get("hwpine")==="1", hnorway:p.get("hnorway")==="1",
+      hwalnut:p.get("hwalnut")==="1",
+      // Browse challenge modifiers
+      bwpine:p.get("bwpine")==="1", bnorway:p.get("bnorway")==="1", bwalnut:p.get("bwalnut")==="1",
     };
   }
   function pushURL(s) {
@@ -171,6 +175,10 @@
     if(s.hnearnat) p.set("hnearnat","1");
     if(s.hwpine)   p.set("hwpine","1");
     if(s.hnorway)  p.set("hnorway","1");
+    if(s.hwalnut)  p.set("hwalnut","1");
+    if(s.bwpine)   p.set("bwpine","1");
+    if(s.bnorway)  p.set("bnorway","1");
+    if(s.bwalnut)  p.set("bwalnut","1");
     const str=p.toString();
     window.history.replaceState(null,"",str?`${window.location.pathname}?${str}`:window.location.pathname);
   }
@@ -213,6 +221,13 @@
       toxicChildren:row["toxic_children"]||"",
       whitePine:row["white_pine_tolerance"]||"",
       norwayMaple:row["norway_maple_tolerance"]||"",
+      juglone:row["juglone_sensitivity"]||"",
+      seedStart:row["seed_ripe_start"]||"",
+      seedEnd:row["seed_ripe_end"]||"",
+      seedNotes:row["seed_notes"]||"",
+      propagNotes:row["propagation_notes"]||"",
+      caterpillars:parseInt(row["caterpillar_species"])||0,
+      insectConf:row["insect_data_confidence"]||"",
       scores, isWoody:WOODY_CATS.has(row["Category"]||""),
     };
   }
@@ -221,6 +236,7 @@
     if(ZONE_KEYS.includes(key))return plant.scores[key]||0;
     if(key==="white-pine"){if(plant.whitePine==="avoid"||!plant.whitePine)return 0;const b=plant.scores["Conifer Shade"]||0;return plant.whitePine==="tolerant"?Math.min(5,b+1):b;}
     if(key==="norway-maple"){if(plant.norwayMaple==="avoid"||!plant.norwayMaple)return 0;const b=plant.scores["Conifer Shade"]||0;return plant.norwayMaple==="tolerant"?Math.min(5,b+1):b;}
+    if(key==="black-walnut"){if(plant.juglone==="sensitive")return 0;return Math.max(plant.scores["Mid-Slope Mesic"]||0,plant.scores["Woodland Edge"]||0);}
     if(key==="post-construction")return Math.max(plant.scores["Dry Upper Slope"]||0,plant.scores["Dry Slope"]||0);
     return 0;
   }
@@ -235,6 +251,7 @@
       if(c.includes("dogs")&&p.toxicDogs==="yes")return false;if(c.includes("cats")&&p.toxicCats==="yes")return false;
       if(c.includes("children")&&p.toxicChildren==="yes")return false;if(c.includes("spread")&&p.aggressive==="Y")return false;
       if(c.includes("postconstruction")&&(getSiteScore(p,"post-construction")||0)<3)return false;
+      if(c.includes("blackwalnut")&&p.juglone==="sensitive")return false;
       return true;
     });
   }
@@ -353,6 +370,44 @@
     );
   }
 
+  // ── Seed & propagation section ─────────────────────────────────────────────
+  function SeedSection({plant}){
+    const[open,setOpen]=useState(false);
+    const hasSeed=plant.seedStart||plant.seedNotes||plant.propagNotes;
+    if(!hasSeed)return null;
+    return(
+      <div style={{marginTop:10}}>
+        <button onClick={e=>{e.stopPropagation();setOpen(!open);}}
+          style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",
+            cursor:"pointer",fontSize:12,color:"#2d4a2d",fontFamily:"inherit",padding:0}}>
+          <span style={{fontSize:14}}>🌱</span>
+          <span style={{fontWeight:"bold"}}>{open?"▲ Hide":"▼ Seed & propagation"}</span>
+        </button>
+        {open&&(
+          <div style={{marginTop:8,padding:"10px 12px",background:"#f0faf0",
+            borderRadius:8,fontSize:12,lineHeight:1.6,color:"#444"}}>
+            {plant.seedStart&&plant.seedEnd&&(
+              <div style={{marginBottom:6}}>
+                <span style={{color:"#888"}}>Seeds ripe: </span>
+                <span style={{fontWeight:"bold"}}>{plant.seedStart}–{plant.seedEnd}</span>
+              </div>
+            )}
+            {plant.seedNotes&&(
+              <div style={{marginBottom:plant.propagNotes?8:0}}>
+                <span style={{color:"#888"}}>Collecting: </span>{plant.seedNotes}
+              </div>
+            )}
+            {plant.propagNotes&&(
+              <div>
+                <span style={{color:"#888"}}>Propagation: </span>{plant.propagNotes}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ── Plant card ─────────────────────────────────────────────────────────────
   function PlantCard({plant,siteKey}){
     const[open,setOpen]=useState(false);
@@ -392,8 +447,15 @@
                   {plant.rabbitDamage&&<div><span style={{color:"#888"}}>Rabbit: </span>{plant.rabbitDamage}</div>}
                   {plant.flowerColor&&<div style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:"#888"}}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={11} /></div>}
                   {plant.foliageColor&&<div style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:"#888"}}>Foliage: </span><ColorDots colorStr={plant.foliageColor} size={11} /></div>}
+                  {plant.caterpillars>0&&(()=>{
+                    const n=plant.caterpillars;
+                    const label=plant.insectConf==="estimated"?`~${n}`:`${n}`;
+                    const color=n>=100?"#2e7d32":n>=20?"#f57f17":"#999";
+                    return <div style={{gridColumn:"1/-1"}}><span style={{color:"#888"}}>🦋 Caterpillar host: </span><span style={{color,fontWeight:"bold"}}>{label} species</span>{plant.insectConf==="estimated"&&<span style={{color:"#ccc",fontSize:10}}> est.</span>}</div>;
+                  })()}
                 </div>
                 <RiskBadges plant={plant} />
+                <SeedSection plant={plant} />
               </div>
             </div>
             {siteKey&&ZONE_KEYS.includes(siteKey)&&(
@@ -499,22 +561,51 @@
     const[search,setSearch]=useState(urlState.bsearch||"");
     const[zone,setZone]=useState(urlState.bzone||null);
     const[showZones,setShowZones]=useState(false);
+    const[wpine,setWpine]=useState(urlState.bwpine||false);
+    const[norway,setNorway]=useState(urlState.bnorway||false);
+    const[walnut,setWalnut]=useState(urlState.bwalnut||false);
     const[rf,setRf]=useState({rnative:urlState.rnative,rscore:urlState.rscore||3,rcats:urlState.rcats||[],rflower:urlState.rflower||[],rfoliage:urlState.rfoliage||[],rwinter:urlState.rwinter});
-    useEffect(()=>{onURLChange({bzone:zone,bsearch:search,...rf});},[zone,search,rf]);
-    const base=useMemo(()=>plants.filter(p=>{if(zone&&getSiteScore(p,zone)<1)return false;if(search){const q=search.toLowerCase();if(!p.common.toLowerCase().includes(q)&&!p.latin.toLowerCase().includes(q))return false;}return true;}),[plants,zone,search]);
+    useEffect(()=>{onURLChange({bzone:zone,bsearch:search,bwpine:wpine,bnorway:norway,bwalnut:walnut,...rf});},[zone,search,wpine,norway,walnut,rf]);
+    const base=useMemo(()=>plants.filter(p=>{
+      if(zone&&getSiteScore(p,zone)<1)return false;
+      if(wpine&&(p.whitePine==="avoid"||!p.whitePine))return false;
+      if(norway&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
+      if(walnut&&p.juglone==="sensitive")return false;
+      if(search){const q=search.toLowerCase();if(!p.common.toLowerCase().includes(q)&&!p.latin.toLowerCase().includes(q))return false;}
+      return true;
+    }),[plants,zone,search,wpine,norway,walnut]);
     const results=useMemo(()=>applyResultFilters(base,zone,rf).sort((a,b)=>{if(zone){const d=getSiteScore(b,zone)-getSiteScore(a,zone);if(d!==0)return d;}return a.common.localeCompare(b.common);}),[base,zone,rf]);
     const zoneInfo=zone?ALL_WIZARD_SITES.find(z=>z.key===zone):null;
+    const activeChallenges=[wpine&&"🌲 White pines",norway&&"🍁 Norway maple",walnut&&"🌰 Black walnut"].filter(Boolean);
     return(
       <div>
-        <div style={{padding:"20px 0 10px"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={`Search ${plants.length} plants by name…`} style={{width:"100%",border:"1px solid #ddd",borderRadius:8,padding:"11px 16px",fontSize:15,fontFamily:"inherit",background:"white",outline:"none"}} />
+        <div style={{padding:"20px 0 10px",position:"relative"}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder={`Search ${plants.length} plants by name…`}
+            style={{width:"100%",border:"1px solid #ddd",borderRadius:8,padding:"11px 40px 11px 16px",fontSize:15,fontFamily:"inherit",background:"white",outline:"none"}} />
+          {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa",lineHeight:1}}>✕</button>}
         </div>
         <div className="no-print" style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"10px 14px",marginBottom:10,display:"flex",flexWrap:"wrap",gap:8,alignItems:"center"}}>
-          <button onClick={()=>setShowZones(!showZones)} style={{background:zone?"#2d4a2d":showZones?"#2d4a2d":"#f0ede4",color:zone||showZones?"white":"#555",border:"none",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
+          <button onClick={()=>setShowZones(!showZones)}
+            style={{background:zone?"#2d4a2d":showZones?"#2d4a2d":"#f0ede4",color:zone||showZones?"white":"#555",border:"none",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
             {zone?`📍 ${zoneInfo?.label||zone}`:(showZones?"▲ Site type":"▼ Site type")}
           </button>
           {zone&&<button onClick={()=>setZone(null)} style={{fontSize:11,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>✕ clear</button>}
+          <div style={{width:1,height:18,background:"#e0ddd5"}} />
+          {[{val:wpine,set:setWpine,emoji:"🌲",label:"White pines"},{val:norway,set:setNorway,emoji:"🍁",label:"Norway maple"},{val:walnut,set:setWalnut,emoji:"🌰",label:"Black walnut"}].map(({val,set,emoji,label})=>(
+            <button key={label} onClick={()=>set(!val)}
+              style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,
+                border:`1px solid ${val?"#2d4a2d":"#e0ddd5"}`,background:val?"#f0faf0":"transparent",
+                cursor:"pointer",fontSize:11,fontFamily:"inherit",color:val?"#2d4a2d":"#666"}}>
+              {emoji} {label}
+            </button>
+          ))}
         </div>
+        {activeChallenges.length>0&&(
+          <div style={{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:12,color:"#5d4037"}}>
+            Showing plants that grow under or near: {activeChallenges.join(", ")}
+          </div>
+        )}
         {showZones&&(
           <div className="no-print" style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"14px",marginBottom:10}}>
             <div style={{fontSize:12,color:"#888",marginBottom:10,fontStyle:"italic"}}>Choose a site type to sort plants by how well they fit.</div>
@@ -653,7 +744,9 @@
     const[nearNat,setNearNat]=useState(urlState.hnearnat||false);
     const[wpine,setWpine]=useState(urlState.hwpine||false);
     const[norway,setNorway]=useState(urlState.hnorway||false);
-    useEffect(()=>{onURLChange({hheight:height,hsun:sun,hmoisture:moisture,hnearnat:nearNat,hwpine:wpine,hnorway:norway});},[height,sun,moisture,nearNat,wpine,norway]);
+    const[walnut,setWalnut]=useState(urlState.hwalnut||false);
+    const[sortBy,setSortBy]=useState("alpha");
+    useEffect(()=>{onURLChange({hheight:height,hsun:sun,hmoisture:moisture,hnearnat:nearNat,hwpine:wpine,hnorway:norway,hwalnut:walnut});},[height,sun,moisture,nearNat,wpine,norway,walnut]);
 
     const results=useMemo(()=>{
       return plants.filter(p=>{
@@ -661,14 +754,15 @@
         if(nearNat&&!p.status.startsWith("Native")&&p.status!=="Near-Native"&&p.status!=="Near Native")return false;
         if(wpine&&(p.whitePine==="avoid"||!p.whitePine))return false;
         if(norway&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
+        if(walnut&&p.juglone==="sensitive")return false;
         const hft=p.heightFt||0;
         if(height==="8"&&hft>8)return false;
         if(height==="25"&&hft>25)return false;
         if(sun){const s=(p.sun||"").toLowerCase();if(sun==="full"&&!s.startsWith("full sun"))return false;if(sun==="shade"&&!s.includes("shade"))return false;if(sun==="part"&&!s.includes("part"))return false;}
         if(moisture){const m=(p.moisture||"").toLowerCase();if(moisture==="dry"&&!m.includes("dry")&&m!=="mesic")return false;if(moisture==="moist"&&!m.includes("moist")&&!m.includes("wet"))return false;if(moisture==="mesic"&&!m.includes("mesic"))return false;}
         return true;
-      }).sort((a,b)=>a.common.localeCompare(b.common));
-    },[plants,height,sun,moisture,nearNat,wpine,norway]);
+      }).sort((a,b)=>sortBy==="wildlife"?(b.caterpillars||0)-(a.caterpillars||0):a.common.localeCompare(b.common));
+    },[plants,height,sun,moisture,nearNat,wpine,norway,walnut,sortBy]);
 
     const woody=results.filter(p=>p.isWoody);
     const herby=results.filter(p=>!p.isWoody);
@@ -742,6 +836,7 @@
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               <Chk value={wpine}  onChange={setWpine}  emoji="🌲" label="Under white pines" desc="Dry, acidic, needle-carpeted" />
               <Chk value={norway} onChange={setNorway} emoji="🍁" label="Under Norway maple" desc="Allelopathic dry shade" />
+              <Chk value={walnut} onChange={setWalnut} emoji="🌰" label="Near black walnut"  desc="Exclude juglone-sensitive plants" />
             </div>
           </div>
           <div>
@@ -756,8 +851,19 @@
           </div>
         )}
 
-        <div style={{fontSize:13,color:"#888",marginBottom:16,fontStyle:"italic"}}>
-          {results.length} native plants match · {woody.length} woody · {herby.length} herbaceous
+        <div style={{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"#888",marginBottom:16,flexWrap:"wrap"}}>
+          <span style={{fontStyle:"italic"}}>{results.length} native plants match · {woody.length} woody · {herby.length} herbaceous</span>
+          <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
+            <span style={{fontSize:11,color:"#aaa"}}>Sort:</span>
+            {[{val:"alpha",label:"A–Z"},{val:"wildlife",label:"🦋 Wildlife value"}].map(({val,label})=>(
+              <button key={val} onClick={()=>setSortBy(val)}
+                style={{padding:"3px 10px",borderRadius:20,border:`1px solid ${sortBy===val?"#2d4a2d":"#e0ddd5"}`,
+                  background:sortBy===val?"#2d4a2d":"transparent",color:sortBy===val?"white":"#666",
+                  cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <Group title="Woody plants"      emoji="🌳" group={woody} />
