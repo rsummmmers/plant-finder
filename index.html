@@ -118,8 +118,8 @@ const MONTHS_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct",
 
 // ── localStorage ───────────────────────────────────────────────────────────
 const LS_KEY="ppb_hearts_v2";
-function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch{return[];}}
-function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch{}}
+function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(e){return[];}}
+function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch(e){}}
 
 // ── URL ────────────────────────────────────────────────────────────────────
 function readURL(){
@@ -226,7 +226,7 @@ function matchStatus(plant,statuses){
   const s=plant.status.toLowerCase().replace(/-/g,"").replace(/ /g,"");
   if(statuses.includes("native")&&s==="native")return true;
   if(statuses.includes("cultivar")&&s.includes("cultivar"))return true;
-  if(statuses.includes("nearnative")&&(s==="nearnative"||s==="nearnative"))return true;
+  if(statuses.includes("nearnative")&&(s==="nearnative"||s==="near native"))return true;
   if(statuses.includes("nonnative")&&(s==="safenonnative"||s.includes("hybrid")))return true;
   return false;
 }
@@ -671,6 +671,64 @@ function HabitatView({plants,concerns,heightCap,patchSize,hearts,onHeart,onLoose
   );
 }
 
+// ── Seed Card ──────────────────────────────────────────────────────────────
+function SeedCard({plant,status,monthIdx}){
+  const[open,setOpen]=useState(false);
+  const ss=STATUS_COLORS[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  const statusColor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
+  const statusBg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
+  const statusLabel=status==="now"?"🟢 Ripe now":status==="soon"?"🟡 Coming soon":"⚫ Just passed";
+  return(
+    <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}}>
+      <div onClick={()=>setOpen(!open)} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer"}}>
+        <PlantThumb plant={plant} size={48} radius={8} />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:500,fontSize:16,marginBottom:2}}>{plant.common}</div>
+          <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:5}}>{plant.latin}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            <span style={{background:statusBg,color:statusColor,fontSize:12,padding:"2px 10px",borderRadius:20,fontWeight:500}}>{statusLabel}</span>
+            {plant.seedStart&&plant.seedEnd&&<span style={{fontSize:12,color:"#888"}}>{plant.seedStart}–{plant.seedEnd}</span>}
+            <span style={{background:ss.bg,color:ss.text,fontSize:11,padding:"1px 7px",borderRadius:10,fontWeight:"bold"}}>{ss.label}</span>
+          </div>
+        </div>
+        <span style={{color:"#aaa",fontSize:14,flexShrink:0}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&(
+        <div style={{padding:"0 16px 16px",borderTop:"1px solid #f0ede4"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+            <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
+              <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌰 Collecting</div>
+              <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.seedNotes||"No collecting notes yet."}</div>
+            </div>
+            <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
+              <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌱 Propagation</div>
+              <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.propagNotes||"No propagation notes yet."}</div>
+            </div>
+          </div>
+          {plant.seedStartIdx>=0&&plant.seedEndIdx>=0&&(
+            <div style={{marginTop:12}}>
+              <div style={{fontSize:11,color:"#aaa",marginBottom:5}}>Seed window</div>
+              <div style={{display:"flex",gap:2}}>
+                {MONTHS_SHORT.map((m,i)=>{
+                  let s=plant.seedStartIdx,e=plant.seedEndIdx;
+                  if(e<s)e+=12;
+                  const mAdj=i<s?i+12:i;
+                  const active=mAdj>=s&&mAdj<=e;
+                  const cur=i===monthIdx;
+                  return <div key={i} style={{flex:1,height:6,borderRadius:2,background:cur?"#2d4a2d":active?"#8aab8a":"#e0e0e0"}} title={m} />;
+                })}
+              </div>
+              <div style={{display:"flex",gap:2,marginTop:2}}>
+                {MONTHS_SHORT.map((m,i)=><div key={i} style={{flex:1,fontSize:8,color:i===monthIdx?"#2d4a2d":"#ccc",textAlign:"center"}}>{m[0]}</div>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Seed Calendar ──────────────────────────────────────────────────────────
 function SeedCalendar({plants,onBack}){
   const now=new Date();
@@ -721,64 +779,6 @@ function SeedCalendar({plants,onBack}){
   }),[eligible,monthIdx]);
 
   const toggleStatus=k=>setStatuses(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
-
-  function SeedCard({plant,status}){
-    const[open,setOpen]=useState(false);
-    const ss=STATUS_COLORS[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
-    const statusColor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
-    const statusBg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
-    const statusLabel=status==="now"?"🟢 Ripe now":status==="soon"?"🟡 Coming soon":"⚫ Just passed";
-    return(
-      <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}}>
-        <div onClick={()=>setOpen(!open)} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer"}}>
-          <PlantThumb plant={plant} size={48} radius={8} />
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:500,fontSize:16,marginBottom:2}}>{plant.common}</div>
-            <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:5}}>{plant.latin}</div>
-            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-              <span style={{background:statusBg,color:statusColor,fontSize:12,padding:"2px 10px",borderRadius:20,fontWeight:500}}>{statusLabel}</span>
-              {plant.seedStart&&plant.seedEnd&&<span style={{fontSize:12,color:"#888"}}>{plant.seedStart}–{plant.seedEnd}</span>}
-              <span style={{background:ss.bg,color:ss.text,fontSize:11,padding:"1px 7px",borderRadius:10,fontWeight:"bold"}}>{ss.label}</span>
-            </div>
-          </div>
-          <span style={{color:"#aaa",fontSize:14,flexShrink:0}}>{open?"▲":"▼"}</span>
-        </div>
-        {open&&(
-          <div style={{padding:"0 16px 16px",borderTop:"1px solid #f0ede4"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
-              <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
-                <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌰 Collecting</div>
-                <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.seedNotes||"No collecting notes yet."}</div>
-              </div>
-              <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
-                <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌱 Propagation</div>
-                <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.propagNotes||"No propagation notes yet."}</div>
-              </div>
-            </div>
-            {/* Per-plant month bar */}
-            {plant.seedStartIdx>=0&&plant.seedEndIdx>=0&&(
-              <div style={{marginTop:12}}>
-                <div style={{fontSize:11,color:"#aaa",marginBottom:5}}>Seed window</div>
-                <div style={{display:"flex",gap:2}}>
-                  {MONTHS_SHORT.map((m,i)=>{
-                    let s=plant.seedStartIdx,e=plant.seedEndIdx;
-                    if(e<s)e+=12;
-                    const mAdj=i<s?i+12:i;
-                    const active=mAdj>=s&&mAdj<=e;
-                    const cur=i===monthIdx;
-                    return <div key={i} style={{flex:1,height:6,borderRadius:2,background:cur?"#2d4a2d":active?"#8aab8a":"#e0e0e0"}} title={m} />;
-                  })}
-                </div>
-                <div style={{display:"flex",gap:2,marginTop:2}}>
-                  {MONTHS_SHORT.map((m,i)=><div key={i} style={{flex:1,fontSize:8,color:i===monthIdx?"#2d4a2d":"#ccc",textAlign:"center"}}>{m[0]}</div>)}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return(
     <div style={{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}}>
@@ -847,7 +847,7 @@ function SeedCalendar({plants,onBack}){
               <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{ripeNow.length}</div>
               <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Collect this month</div>
             </div>
-            {ripeNow.map(p=><SeedCard key={p.latin} plant={p} status="now" />)}
+            {ripeNow.map(p=><SeedCard key={p.latin} plant={p} status="now" monthIdx={monthIdx} />)}
           </>
         )}
         {/* Coming soon */}
@@ -859,7 +859,7 @@ function SeedCalendar({plants,onBack}){
               <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{comingSoon.length}</div>
               <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Seeds ripening in {MONTHS[(monthIdx+1)%12]}</div>
             </div>
-            {comingSoon.map(p=><SeedCard key={p.latin} plant={p} status="soon" />)}
+            {comingSoon.map(p=><SeedCard key={p.latin} plant={p} status="soon" monthIdx={monthIdx} />)}
           </>
         )}
         {/* Just passed */}
@@ -871,7 +871,7 @@ function SeedCalendar({plants,onBack}){
               <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{justPassed.length}</div>
               <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Seeds ripe in {MONTHS[(monthIdx+11)%12]} — did you collect?</div>
             </div>
-            {justPassed.map(p=><SeedCard key={p.latin} plant={p} status="past" />)}
+            {justPassed.map(p=><SeedCard key={p.latin} plant={p} status="past" monthIdx={monthIdx} />)}
           </>
         )}
         {ripeNow.length===0&&comingSoon.length===0&&justPassed.length===0&&(
