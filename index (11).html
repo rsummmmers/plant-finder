@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Palette Builder — for Massachusetts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    :root {
+      --forest:#2d4a2d; --leaf:#4a7c59; --sage:#8aab8a;
+      --mist:#f0ede4; --cream:#fafaf7; --bark:#2c2c2c;
+      --stone:#888; --border:#e0ddd5; --radius:12px;
+      --shadow:0 2px 12px rgba(0,0,0,0.08);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:16px;}
+    body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--bark);font-size:1rem;}
+    @media print{.no-print{display:none!important;}.print-card{break-inside:avoid;}body{background:white;}}
+    .tip-wrap{position:relative;display:inline-flex;}
+    .tip-wrap .tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#333;color:white;font-size:11px;padding:5px 9px;border-radius:6px;z-index:400;pointer-events:none;font-family:'DM Sans',sans-serif;max-width:220px;white-space:normal;text-align:center;line-height:1.4;}
+    .tip-wrap:hover .tip{display:block;}
+    /* Mobile filter drawer */
+    .filter-drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;}
+    .filter-drawer-overlay.open{display:block;}
+    .filter-drawer{display:none;position:fixed;left:0;right:0;bottom:0;background:white;border-radius:16px 16px 0 0;z-index:200;max-height:85vh;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom);}
+    .filter-drawer.open{display:block;}
+    .drawer-handle{width:40px;height:4px;background:#ccc;border-radius:2px;margin:12px auto 16px;}
+    /* Swipe lightbox */
+    .lightbox{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.94);flex-direction:column;align-items:center;justify-content:center;}
+    .lightbox.open{display:flex;}
+    .lb-img{max-width:90vw;max-height:75vh;border-radius:12px;object-fit:contain;user-select:none;}
+    .lb-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:20px;border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:white;font-size:22px;border-radius:50%;width:48px;height:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .lb-nav:hover{background:rgba(255,255,255,0.28);}
+    .lb-prev{left:16px;} .lb-next{right:16px;}
+    .lb-dots{display:flex;gap:7px;margin-top:14px;}
+    .lb-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;}
+    .lb-dot.on{background:white;}
+    .lb-credit{color:rgba(255,255,255,0.4);font-size:11px;margin-top:8px;max-width:80vw;text-align:center;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState,useMemo,useEffect,useCallback,useRef,useLayoutEffect} = React;
+
+const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRiUGIg_9Eqv8Uwgp__RzcAJqNcB5vq7MHTbY1ZMqoEVtgNVlxo4CtocWgvztvQwUEzXOmMvjgP5UGA/pub?output=csv&gid=1137105758";
+const SHEET_VIEW_URL="https://docs.google.com/spreadsheets/d/1W1CL_Q4guXnsLfCoPmM61rYXzBwHKB765L_rSAocjEY/edit?usp=sharing";
+
+const MICROZONES=[
+  {key:"Mesic South- Facing Heat",label:"South-facing / Hot",emoji:"☀️",desc:"Hot, dry, south-facing slope or pavement edge",impliesSun:"full"},
+  {key:"Dry Upper Slope",label:"High and exposed",emoji:"🏔️",desc:"Top of a slope, drains fast after rain",impliesSun:"full"},
+  {key:"Mid-Slope Mesic",label:"Typical yard",emoji:"🌿",desc:"Average suburban yard, moderate moisture"},
+  {key:"Moist Lower Area",label:"Low or soggy",emoji:"💧",desc:"Low spot, rain garden, holds moisture"},
+  {key:"Woodland Edge",label:"Woodland edge",emoji:"🌳",desc:"Where lawn meets trees; dappled light",impliesSun:"part"},
+  {key:"Conifer Shade",label:"Under conifers",emoji:"🌲",desc:"Under hemlock, spruce, or fir",impliesSun:"shade"},
+  {key:"Dry Slope",label:"Sloped and dry",emoji:"⛰️",desc:"Grades downhill, drains fast, lean soil",impliesSun:"full"},
+];
+const ZONE_KEYS=MICROZONES.map(z=>z.key);
+
+const SCORE_LABELS=["","Don't Use","Marginal","OK","Strong","Best Fit"];
+const SCORE_COLORS=["#ccc","#ef5350","#ff9800","#fdd835","#66bb6a","#2e7d32"];
+
+const STATUS_OPTS=[
+  {key:"native",    label:"Native to MA",   bg:"#e8f5e9",fg:"#2e7d32"},
+  {key:"nearnative",label:"Near-Native",    bg:"#e3f2fd",fg:"#1565c0"},
+  {key:"cultivar",  label:"Native Cultivar",bg:"#f3e5f5",fg:"#6a1b9a"},
+  {key:"nonnative", label:"Safe Non-Native",bg:"#fff8e1",fg:"#f57f17"},
+];
+const STATUS_COLORS={
+  "Native":                   {bg:"#e8f5e9",text:"#2e7d32",label:"Native to MA"},
+  "Native Cultivar":          {bg:"#f3e5f5",text:"#6a1b9a",label:"Native Cultivar"},
+  "Near-Native":              {bg:"#e3f2fd",text:"#1565c0",label:"Near-Native"},
+  "Near Native":              {bg:"#e3f2fd",text:"#1565c0",label:"Near-Native"},
+  "Safe Non-Native":          {bg:"#fff8e1",text:"#f57f17",label:"Safe Non-Native"},
+  "Safe Non Native":          {bg:"#fff8e1",text:"#f57f17",label:"Safe Non-Native"},
+  "Native/Non-Native Hybrid": {bg:"#fce4ec",text:"#880e4f",label:"Hybrid"},
+  "Native / Nonnative Hybrid":{bg:"#fce4ec",text:"#880e4f",label:"Hybrid"},
+};
+
+const PLANT_TYPES=[
+  {key:"woody",    label:"Woody",           emoji:"🌳",tip:"Trees & shrubs — plants with permanent stems",
+   cats:new Set(["Tree - Large","Tree - Small","Tall Canopy Tree","Midstory Tree","Shrub","Shrub – Large","Shrub – Small","Flowering Shrub","Broadleaf Evergreen"])},
+  {key:"perennial",label:"Perennials",      emoji:"🌼",cats:new Set(["Flowering Perennial","Foliage Perennial","Annual"])},
+  {key:"grass",   label:"Grasses & sedges", emoji:"🌾",cats:new Set(["Grass"])},
+  {key:"fern",    label:"Ferns",            emoji:"🌿",cats:new Set(["Fern"])},
+  {key:"ground",  label:"Groundcovers",     emoji:"🍀",cats:new Set(["Groundcover"])},
+  {key:"vine",    label:"Vines",            emoji:"🌿",cats:new Set(["Vine"])},
+];
+
+const CONCERN_OPTS=[
+  {key:"shadedby_norway", emoji:"🍁",label:"Norway maple",  tip:"Allelopathic roots and dense shade — one of the hardest sites for plants",group:"shaded"},
+  {key:"shadedby_pine",   emoji:"🌲",label:"White pines",   tip:"Dry acidic needle duff; very few plants tolerate this well",group:"shaded"},
+  {key:"shadedby_conifer",emoji:"🌲",label:"Other conifers",tip:"Under hemlock, spruce, or fir — dry, dark, acidic",group:"shaded"},
+  {key:"near_walnut",     emoji:"🌰",label:"Black walnut",  tip:"Produces juglone, a chemical toxic to many plants",group:"near"},
+  {key:"postconstruction",emoji:"🏗️",label:"Post-construction",tip:"Compacted or disturbed fill soil — favor tough, adaptable pioneers",group:"site"},
+  {key:"deer",    emoji:"🦌",label:"Deer",        tip:"Excludes plants frequently browsed to the ground",group:"concern"},
+  {key:"rabbits", emoji:"🐇",label:"Rabbits",     tip:"Excludes plants vulnerable to rabbit chewing, especially young woody stems",group:"concern"},
+  {key:"dogs",    emoji:"🐕",label:"Dogs",        tip:"Excludes plants toxic to dogs",group:"safety"},
+  {key:"cats",    emoji:"🐈",label:"Cats",        tip:"Excludes plants toxic to cats",group:"safety"},
+  {key:"children",emoji:"👶",label:"Children",   tip:"Excludes plants with parts toxic to children",group:"safety"},
+  {key:"nospread",emoji:"🚫",label:"No spreaders",tip:"Excludes plants that fill space aggressively",group:"concern"},
+];
+
+const CATEGORY_ICONS={"Tree - Large":"🌳","Tree - Small":"🌲","Tall Canopy Tree":"🌳","Midstory Tree":"🌿","Shrub":"🌾","Shrub – Large":"🌾","Shrub – Small":"🌾","Flowering Shrub":"🌸","Flowering Perennial":"🌼","Foliage Perennial":"🍃","Groundcover":"🌿","Grass":"🌾","Fern":"🌿","Broadleaf Evergreen":"🍀","Vine":"🌿","Annual":"🌻"};
+const CAT_STYLES={"Tree - Large":{bg:"#e8f5e9",fg:"#2e7d32"},"Tree - Small":{bg:"#e8f5e9",fg:"#388e3c"},"Tall Canopy Tree":{bg:"#e8f5e9",fg:"#1b5e20"},"Midstory Tree":{bg:"#f1f8e9",fg:"#558b2f"},"Shrub":{bg:"#fff8e1",fg:"#f57f17"},"Shrub – Large":{bg:"#fff8e1",fg:"#e65100"},"Shrub – Small":{bg:"#fff8e1",fg:"#f57f17"},"Flowering Shrub":{bg:"#fce4ec",fg:"#c2185b"},"Flowering Perennial":{bg:"#fffde7",fg:"#f9a825"},"Foliage Perennial":{bg:"#e8f5e9",fg:"#388e3c"},"Groundcover":{bg:"#e8f5e9",fg:"#2e7d32"},"Grass":{bg:"#f9fbe7",fg:"#827717"},"Fern":{bg:"#e0f2f1",fg:"#00695c"},"Broadleaf Evergreen":{bg:"#e8f5e9",fg:"#1b5e20"},"Vine":{bg:"#f3e5f5",fg:"#6a1b9a"},"Annual":{bg:"#fff8e1",fg:"#f57f17"}};
+const COLOR_MAP={white:"#ffffff",cream:"#fffdd0",yellow:"#fdd835",orange:"#ff9800",red:"#ef5350",pink:"#f48fb1",rose:"#e91e63",magenta:"#e040fb",purple:"#9c27b0",lavender:"#ce93d8",blue:"#42a5f5",violet:"#7e57c2",maroon:"#880e4f",green:"#66bb6a","yellow-green":"#cddc39","blue-gray":"#90a4ae",silver:"#cfd8dc","dark green":"#1b5e20","lime green":"#cddc39",burgundy:"#6d1f1f",bronze:"#cd7f32",gold:"#ffc107","blue-green":"#00695c"};
+
+const WOODY_CATS=new Set(["Tree - Large","Tree - Small","Tall Canopy Tree","Midstory Tree","Shrub","Shrub – Large","Shrub – Small","Flowering Shrub","Broadleaf Evergreen","Vine"]);
+const CANOPY_CATS=new Set(["Tree - Large","Tall Canopy Tree"]);
+
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTHS_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ── localStorage ───────────────────────────────────────────────────────────
+const LS_KEY="ppb_hearts_v2";
+function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch{return[];}}
+function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch{}}
+
+// ── URL ────────────────────────────────────────────────────────────────────
+function readURL(){
+  const p=new URLSearchParams(window.location.search);
+  return{
+    view:       p.get("view")||"main",
+    search:     p.get("q")||"",
+    zone:       p.get("zone")||null,
+    ptypes:     p.get("pt")?p.get("pt").split(","):[],
+    statuses:   p.get("st")?p.get("st").split(","):["native","nearnative"],
+    concerns:   p.get("cx")?p.get("cx").split(","):[],
+    heightCap:  p.get("hc")?parseFloat(p.get("hc")):null,
+    moisture:   p.get("mo")||null,
+    sun:        p.get("su")||null,
+    irrigated:  p.get("ir")==="1",
+    rflower:    p.get("fl")?p.get("fl").split(","):[],
+    rwinter:    p.get("wi")==="1",
+    sortBy:     p.get("sb")||"fit",
+    label:      p.get("label")||"",
+    sharedHearts:p.get("hearts")?p.get("hearts").split(","):[],
+  };
+}
+function pushURL(s){
+  const p=new URLSearchParams();
+  if(s.view&&s.view!=="main") p.set("view",s.view);
+  if(s.search) p.set("q",s.search);
+  if(s.zone)   p.set("zone",s.zone);
+  if(s.ptypes?.length)   p.set("pt",s.ptypes.join(","));
+  const def=["native","nearnative"];
+  if(JSON.stringify([...s.statuses].sort())!==JSON.stringify([...def].sort())) p.set("st",s.statuses.join(","));
+  if(s.concerns?.length) p.set("cx",s.concerns.join(","));
+  if(s.heightCap) p.set("hc",String(s.heightCap));
+  if(s.moisture)  p.set("mo",s.moisture);
+  if(s.sun)       p.set("su",s.sun);
+  if(s.irrigated) p.set("ir","1");
+  if(s.rflower?.length) p.set("fl",s.rflower.join(","));
+  if(s.rwinter)   p.set("wi","1");
+  if(s.sortBy&&s.sortBy!=="fit") p.set("sb",s.sortBy);
+  if(s.label)     p.set("label",s.label);
+  const str=p.toString();
+  window.history.replaceState(null,"",str?`${location.pathname}?${str}`:location.pathname);
+}
+
+// ── Data ───────────────────────────────────────────────────────────────────
+function parseCSV(text){
+  const lines=text.split(/\r?\n/);
+  function pl(line){const out=[];let f="";let q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){f+='"';i++;}else q=!q;}else if(c===','&&!q){out.push(f);f="";}else f+=c;}out.push(f);return out;}
+  const headers=pl(lines[0]);const rows=[];
+  for(let i=1;i<lines.length;i++){if(!lines[i].trim())continue;const vals=pl(lines[i]);const row={};headers.forEach((h,idx)=>{row[h.trim()]=(vals[idx]||"").trim();});rows.push(row);}
+  return rows;
+}
+function getTypeKey(cat){for(const g of PLANT_TYPES)if(g.cats.has(cat))return g.key;return"perennial";}
+function monthIndex(s){const m=MONTHS_SHORT.findIndex(x=>s?.toLowerCase().startsWith(x.toLowerCase()));return m>=0?m:MONTHS.findIndex(x=>s?.toLowerCase().startsWith(x.toLowerCase()));}
+
+function rowToPlant(row){
+  const scores={};
+  ZONE_KEYS.forEach(k=>{const m=(row[k]||"").match(/\d/);scores[k]=m?parseInt(m[0]):0;});
+  if(!Object.values(scores).some(s=>s>0))return null;
+  const cur=row["curated image url"]||"";
+  const inat=row["inaturalist image url"]||"";
+  const status=row["Ecological Status"]||"";
+  const seedStartIdx=monthIndex(row["seed_ripe_start"]||"");
+  const seedEndIdx=monthIndex(row["seed_ripe_end"]||"");
+  return{
+    common:row["Common Name"]||"",latin:row["Latin Name"]||"",
+    category:row["Category"]||"",status,
+    bloom:row["Bloom Period"]||"",seasonal:row["Seasonal Interest"]||"",
+    evergreen:row["Evergreen"]||"",height:row["Height Class"]||"",
+    heightFt:parseFloat(row["Max Height (ft)"])||0,
+    sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
+    notes:row["Notes"]||"",
+    image:cur||inat,curatedImage:cur,inatImage:inat,
+    role:row["Habitat Patch Role"]||"",aggressive:row["Aggressive"]||"",
+    flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",
+    deerPressure:row["deer_pressure"]||"",rabbitDamage:row["rabbit_damage"]||"",
+    toxicDogs:row["toxic_dogs"]||"",toxicCats:row["toxic_cats"]||"",toxicChildren:row["toxic_children"]||"",
+    juglone:row["juglone_sensitivity"]||"",whitePine:row["white_pine_tolerance"]||"",norwayMaple:row["norway_maple_tolerance"]||"",
+    seedStart:row["seed_ripe_start"]||"",seedEnd:row["seed_ripe_end"]||"",
+    seedStartIdx,seedEndIdx,
+    seedNotes:row["seed_notes"]||"",propagNotes:row["propagation_notes"]||"",
+    caterpillars:parseInt(row["caterpillar_species"])||0,
+    insectConf:row["insect_data_confidence"]||"",
+    isCultivar:status.includes("Cultivar"),
+    isWoody:WOODY_CATS.has(row["Category"]||""),
+    isCanopy:CANOPY_CATS.has(row["Category"]||""),
+    typeKey:getTypeKey(row["Category"]||""),
+    scores,
+  };
+}
+
+function getSiteScore(plant,key){
+  if(!key)return null;
+  if(ZONE_KEYS.includes(key))return plant.scores[key]||0;
+  if(key==="shadedby_norway"||key==="norway-maple"){if(plant.norwayMaple==="avoid"||!plant.norwayMaple)return 0;const b=plant.scores["Conifer Shade"]||0;return plant.norwayMaple==="tolerant"?Math.min(5,b+1):b;}
+  if(key==="shadedby_pine"||key==="white-pine"){if(plant.whitePine==="avoid"||!plant.whitePine)return 0;const b=plant.scores["Conifer Shade"]||0;return plant.whitePine==="tolerant"?Math.min(5,b+1):b;}
+  if(key==="shadedby_conifer")return plant.scores["Conifer Shade"]||0;
+  if(key==="near_walnut"){if(plant.juglone==="sensitive")return 0;return Math.max(plant.scores["Mid-Slope Mesic"]||0,plant.scores["Woodland Edge"]||0);}
+  if(key==="postconstruction")return Math.max(plant.scores["Dry Upper Slope"]||0,plant.scores["Dry Slope"]||0);
+  return 0;
+}
+
+function matchStatus(plant,statuses){
+  if(!statuses?.length)return true;
+  const s=plant.status.toLowerCase().replace(/-/g,"").replace(/ /g,"");
+  if(statuses.includes("native")&&s==="native")return true;
+  if(statuses.includes("cultivar")&&s.includes("cultivar"))return true;
+  if(statuses.includes("nearnative")&&(s==="nearnative"||s==="nearnative"))return true;
+  if(statuses.includes("nonnative")&&(s==="safenonnative"||s.includes("hybrid")))return true;
+  return false;
+}
+
+function applyFilters(plants,f,siteKey){
+  return plants.filter(p=>{
+    if(!matchStatus(p,f.statuses))return false;
+    if(f.ptypes?.length&&!f.ptypes.includes(p.typeKey))return false;
+    if(f.heightCap&&p.heightFt>f.heightCap)return false;
+    if(f.search){const q=f.search.toLowerCase();if(!p.common.toLowerCase().includes(q)&&!p.latin.toLowerCase().includes(q))return false;}
+    if(siteKey&&ZONE_KEYS.includes(siteKey)&&(p.scores[siteKey]||0)<1)return false;
+    const cx=f.concerns||[];
+    if(cx.includes("shadedby_norway")&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
+    if(cx.includes("shadedby_pine")&&(p.whitePine==="avoid"||!p.whitePine))return false;
+    if(cx.includes("shadedby_conifer")&&(p.scores["Conifer Shade"]||0)<2)return false;
+    if(cx.includes("near_walnut")&&p.juglone==="sensitive")return false;
+    if(cx.includes("postconstruction")&&(getSiteScore(p,"postconstruction")||0)<3)return false;
+    if(cx.includes("deer")&&p.deerPressure==="high")return false;
+    if(cx.includes("rabbits")&&p.rabbitDamage==="high")return false;
+    if(cx.includes("dogs")&&p.toxicDogs==="yes")return false;
+    if(cx.includes("cats")&&p.toxicCats==="yes")return false;
+    if(cx.includes("children")&&p.toxicChildren==="yes")return false;
+    if(cx.includes("nospread")&&p.aggressive==="Y")return false;
+    if(f.sun){const sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&!sun.startsWith("full sun"))return false;if(f.sun==="shade"&&!sun.includes("shade"))return false;if(f.sun==="part"&&!sun.includes("part"))return false;}
+    if(f.moisture){const m=(p.moisture||"").toLowerCase();const eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&!m.includes("dry")&&!m.includes("mesic"))return false;if(eff==="moist"&&!m.includes("moist")&&!m.includes("wet"))return false;if(eff==="average"&&!m.includes("mesic"))return false;}
+    if(f.rflower?.length){const cols=p.flowerColor.split(/\s*[|]\s*/).map(c=>c.trim().toLowerCase());if(!f.rflower.some(rc=>cols.includes(rc)))return false;}
+    if(f.rwinter){const w=(p.seasonal||"").toLowerCase().includes("winter")||(p.evergreen||"").toLowerCase()==="yes";if(!w)return false;}
+    return true;
+  });
+}
+
+function sortPlants(plants,sortBy,siteKey){
+  return[...plants].sort((a,b)=>{
+    if(sortBy==="wildlife")return(b.caterpillars||0)-(a.caterpillars||0);
+    if(sortBy==="fit"&&siteKey){const d=(getSiteScore(b,siteKey)||0)-(getSiteScore(a,siteKey)||0);if(d!==0)return d;}
+    return a.common.localeCompare(b.common);
+  });
+}
+
+// ── Lightbox (React-managed) ───────────────────────────────────────────────
+function Lightbox({photos,startIdx,onClose}){
+  const[idx,setIdx]=useState(startIdx||0);
+  const touchX=useRef(null);
+
+  useEffect(()=>{
+    setIdx(startIdx||0);
+    const onKey=e=>{
+      if(e.key==="ArrowLeft")setIdx(i=>Math.max(0,i-1));
+      if(e.key==="ArrowRight")setIdx(i=>Math.min(photos.length-1,i+1));
+      if(e.key==="Escape")onClose();
+    };
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey);
+  },[startIdx,photos.length]);
+
+  const onTouchStart=e=>touchX.current=e.touches[0].clientX;
+  const onTouchEnd=e=>{
+    if(touchX.current===null)return;
+    const dx=e.changedTouches[0].clientX-touchX.current;
+    if(dx<-50)setIdx(i=>Math.min(photos.length-1,i+1));
+    if(dx>50) setIdx(i=>Math.max(0,i-1));
+    touchX.current=null;
+  };
+
+  if(!photos.length)return null;
+  const cur=photos[idx];
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.94)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:20,borderRadius:"50%",width:44,height:44,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      {idx>0&&<button onClick={()=>setIdx(i=>i-1)} style={{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:22,borderRadius:"50%",width:48,height:48,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>}
+      {idx<photos.length-1&&<button onClick={()=>setIdx(i=>i+1)} style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:22,borderRadius:"50%",width:48,height:48,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>}
+      <img src={cur.large||cur.medium} alt="" style={{maxWidth:"90vw",maxHeight:"75vh",borderRadius:12,objectFit:"contain"}} />
+      {photos.length>1&&(
+        <div style={{display:"flex",gap:7,marginTop:14}}>
+          {photos.map((_,i)=>(
+            <div key={i} onClick={()=>setIdx(i)} style={{width:8,height:8,borderRadius:"50%",background:i===idx?"white":"rgba(255,255,255,0.3)",cursor:"pointer"}} />
+          ))}
+        </div>
+      )}
+      {cur.credit&&<div style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:8,maxWidth:"80vw",textAlign:"center"}}>{cur.credit}</div>}
+      <div style={{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:4}}>Tap outside or press Esc to close · swipe to browse</div>
+    </div>
+  );
+}
+
+// ── Tip wrapper ────────────────────────────────────────────────────────────
+function Tip({text,children}){
+  return <span className="tip-wrap">{children}<span className="tip">{text}</span></span>;
+}
+
+// ── Plant thumb ────────────────────────────────────────────────────────────
+function PlantThumb({plant,size=48,radius=8}){
+  const[failed,setFailed]=useState(false);
+  const st=CAT_STYLES[plant.category]||{bg:"#f0ede4",fg:"#4a7c59"};
+  const em=CATEGORY_ICONS[plant.category]||"🌿";
+  if(!plant.image||failed)return(
+    <div style={{width:size,height:size,borderRadius:radius,flexShrink:0,background:st.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <div style={{fontSize:size*0.38,lineHeight:1}}>{em}</div>
+      <div style={{fontSize:size*0.18,fontWeight:"bold",color:st.fg}}>{plant.common.charAt(0)}</div>
+    </div>
+  );
+  return <img src={plant.image} alt={plant.common} onError={()=>setFailed(true)} style={{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}} />;
+}
+
+function ColorDots({colorStr,size=9}){
+  if(!colorStr)return null;
+  return <div style={{display:"flex",gap:3,flexWrap:"wrap",alignItems:"center"}}>{colorStr.split(/\s*[|]\s*/).map(c=>c.trim()).filter(Boolean).map((c,i)=><div key={i} title={c} style={{width:size,height:size,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none",flexShrink:0}} />)}</div>;
+}
+
+function RiskBadges({plant}){
+  const b=[];
+  if(plant.deerPressure==="high") b.push({t:"🦌 High deer pressure",bg:"#fff3e0",fg:"#e65100"});
+  if(plant.rabbitDamage==="high") b.push({t:"🐇 High rabbit damage",bg:"#fff3e0",fg:"#bf360c"});
+  if(plant.aggressive==="Y")      b.push({t:"🌿 Fills space well",  bg:"#e8f5e9",fg:"#2e7d32"});
+  if(plant.toxicDogs==="yes")     b.push({t:"🐕 Toxic to dogs",     bg:"#fce4ec",fg:"#c62828"});
+  if(plant.toxicCats==="yes")     b.push({t:"🐈 Toxic to cats",     bg:"#fce4ec",fg:"#c62828"});
+  if(plant.toxicChildren==="yes") b.push({t:"👶 Toxic to children", bg:"#fce4ec",fg:"#c62828"});
+  if(!b.length)return null;
+  return <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>{b.map((x,i)=><span key={i} style={{fontSize:11,padding:"2px 8px",borderRadius:10,background:x.bg,color:x.fg,fontWeight:"bold"}}>{x.t}</span>)}</div>;
+}
+
+// ── Photo gallery ──────────────────────────────────────────────────────────
+function taxonQ(latin){return latin.replace(/['''][^''']*[''']/g,"").replace(/\bcultivars?\b/ig,"").replace(/\bhybrids?\b/ig,"").replace(/\bspp?\b/ig,"").replace(/\bvar\b.*/ig,"").replace(/[×x]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");}
+
+function PhotoGallery({plant}){
+  const[photos,setPhotos]=useState(null);
+  const[lbIdx,setLbIdx]=useState(null);
+
+  useEffect(()=>{
+    if(photos!==null)return;
+    const name=taxonQ(plant.latin);
+    const cur=plant.curatedImage;
+    if(!name){setPhotos(cur?[{medium:cur,large:cur,thumb:cur,credit:""}]:[]);return;}
+    fetch(`https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(name)}&quality_grade=research&photos=true&per_page=5&order_by=votes`)
+      .then(r=>r.json())
+      .then(d=>{
+        const imgs=[];
+        if(cur)imgs.push({medium:cur,large:cur,thumb:cur,credit:""});
+        (d.results||[]).forEach(obs=>{(obs.photos||[]).forEach(ph=>{if(imgs.length>=5)return;const med=(ph.url||"").replace("square","medium");if(!med.includes("http")||med===cur)return;imgs.push({thumb:ph.url||"",medium:med,large:(ph.url||"").replace("square","large"),credit:(ph.attribution||"").replace(/\(c\)/g,"©")});});});
+        if(!imgs.length&&plant.inatImage)imgs.push({medium:plant.inatImage,large:plant.inatImage,thumb:plant.inatImage,credit:""});
+        setPhotos(imgs);
+      })
+      .catch(()=>{const fb=cur||plant.inatImage;setPhotos(fb?[{medium:fb,large:fb,thumb:fb,credit:""}]:[]);});
+  },[plant.latin]);
+
+  if(photos===null)return <div style={{width:200,height:165,borderRadius:10,background:"#f0ede4",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Loading…</span></div>;
+  if(!photos.length)return <PlantThumb plant={plant} size={120} radius={10} />;
+
+  const cur=photos[0];
+  return(
+    <>
+      {lbIdx!==null&&<Lightbox photos={photos} startIdx={lbIdx} onClose={()=>setLbIdx(null)} />}
+      <div style={{flexShrink:0,width:200}}>
+        <img src={cur.medium} alt={plant.common} onClick={()=>setLbIdx(0)} onError={e=>{e.target.src=cur.thumb||"";}}
+          style={{width:200,height:165,objectFit:"cover",borderRadius:10,display:"block",cursor:"zoom-in"}} />
+        {photos.length>1&&(
+          <div style={{display:"flex",gap:5,marginTop:6,overflowX:"auto",paddingBottom:2}}>
+            {photos.map((ph,i)=>(
+              <img key={i} src={ph.thumb} alt="" onClick={()=>setLbIdx(i)} onError={e=>e.target.style.opacity="0.2"}
+                style={{width:34,height:34,borderRadius:5,objectFit:"cover",flexShrink:0,cursor:"pointer",
+                  border:`2px solid ${i===0?"#2d4a2d":"transparent"}`,opacity:i===0?1:0.55,transition:"opacity 0.15s"}} />
+            ))}
+          </div>
+        )}
+        {cur.credit&&<div style={{fontSize:9,color:"#bbb",marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cur.credit.length>70?cur.credit.slice(0,70)+"…":cur.credit}</div>}
+        <div style={{fontSize:9,color:"#ccc",marginTop:1}}>via iNaturalist · {photos.length} photo{photos.length!==1?"s":""} · click to enlarge</div>
+      </div>
+    </>
+  );
+}
+
+// ── Seed section ───────────────────────────────────────────────────────────
+function SeedSection({plant}){
+  const[open,setOpen]=useState(false);
+  if(!plant.seedStart&&!plant.seedNotes&&!plant.propagNotes)return null;
+  return(
+    <div style={{marginTop:10}}>
+      <button onClick={e=>{e.stopPropagation();setOpen(!open);}} style={{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}}>
+        <span>🌱</span><span style={{fontWeight:"bold"}}>{open?"▲ Hide":"▼ Seed & propagation"}</span>
+      </button>
+      {open&&(
+        <div style={{marginTop:8,padding:"10px 12px",background:"#f0faf0",borderRadius:8,fontSize:13,lineHeight:1.6,color:"#444"}}>
+          {plant.seedStart&&plant.seedEnd&&<div style={{marginBottom:5}}><span style={{color:"#888"}}>Seeds ripe: </span><strong>{plant.seedStart}–{plant.seedEnd}</strong></div>}
+          {plant.seedNotes&&<div style={{marginBottom:plant.propagNotes?7:0}}><span style={{color:"#888"}}>Collecting: </span>{plant.seedNotes}</div>}
+          {plant.propagNotes&&<div><span style={{color:"#888"}}>Propagation: </span>{plant.propagNotes}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Plant card ─────────────────────────────────────────────────────────────
+function PlantCard({plant,siteKey,hearted,onHeart}){
+  const[open,setOpen]=useState(false);
+  const score=siteKey?(getSiteScore(plant,siteKey)||0):null;
+  const ss=STATUS_COLORS[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  const cats=plant.caterpillars||0;
+  const insectColor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
+  const insectLabel=plant.insectConf==="estimated"?`~${cats}`:`${cats}`;
+
+  return(
+    <div className="print-card" style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 16px rgba(0,0,0,0.08)":"none",marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}}>
+        {score!==null&&(
+          <div style={{background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:8,minWidth:52,textAlign:"center",padding:"4px 5px",flexShrink:0}}>
+            <div style={{fontSize:13,fontWeight:"bold",letterSpacing:-1}}>{"●".repeat(score)}</div>
+            <div style={{fontSize:8,opacity:0.85,lineHeight:1}}>{SCORE_LABELS[score]}</div>
+          </div>
+        )}
+        <div onClick={()=>setOpen(!open)} style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}}>
+          <PlantThumb plant={plant} size={50} radius={8} />
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:"bold",fontSize:16}}>{plant.common}</div>
+            <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:4}}>{plant.latin}</div>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 7px",borderRadius:10,fontWeight:"bold"}}>{ss.label}</span>
+              <span style={{background:"#f0ede4",color:"#666",fontSize:11,padding:"2px 7px",borderRadius:10}}>{plant.category}</span>
+              {plant.flowerColor&&<ColorDots colorStr={plant.flowerColor} size={9} />}
+              {cats>0&&<span style={{fontSize:11,color:insectColor,fontWeight:"bold"}}>🦋{insectLabel}</span>}
+            </div>
+          </div>
+          <span className="no-print" style={{color:"#aaa",fontSize:14,flexShrink:0}}>{open?"▲":"▼"}</span>
+        </div>
+        <button onClick={e=>{e.stopPropagation();onHeart(plant.latin);}}
+          style={{background:"none",border:"none",cursor:"pointer",fontSize:24,color:hearted?"#e57373":"#ddd",flexShrink:0,padding:"4px",lineHeight:1}}
+          onMouseEnter={e=>e.currentTarget.style.transform="scale(1.2)"}
+          onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+          {hearted?"♥":"♡"}
+        </button>
+      </div>
+      {open&&(
+        <div style={{padding:"0 14px 16px",borderTop:"1px solid #f0ede4"}}>
+          <div style={{display:"flex",gap:16,marginTop:14,flexWrap:"wrap"}}>
+            <PhotoGallery plant={plant} />
+            <div style={{flex:1,minWidth:180}}>
+              {plant.notes&&<p style={{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}}>{plant.notes}</p>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}}>
+                {plant.sun&&<div><span style={{color:"#888"}}>Sun: </span>{plant.sun}</div>}
+                {plant.moisture&&<div><span style={{color:"#888"}}>Moisture: </span>{plant.moisture}</div>}
+                {plant.heightFt?<div><span style={{color:"#888"}}>Height: </span>{plant.heightFt} ft</div>:null}
+                {plant.bloom&&plant.bloom!=="N/A"&&<div><span style={{color:"#888"}}>Bloom: </span>{plant.bloom}</div>}
+                {plant.seasonal&&<div><span style={{color:"#888"}}>Interest: </span>{plant.seasonal}</div>}
+                {plant.aggressive&&<div><span style={{color:"#888"}}>Spreads: </span>{plant.aggressive==="Y"?"🌿 Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"}</div>}
+                {plant.deerPressure&&<div><span style={{color:"#888"}}>Deer: </span>{plant.deerPressure}</div>}
+                {plant.rabbitDamage&&<div><span style={{color:"#888"}}>Rabbit: </span>{plant.rabbitDamage}</div>}
+                {plant.flowerColor&&<div style={{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}}><span style={{color:"#888"}}>Flower: </span><ColorDots colorStr={plant.flowerColor} size={12} /></div>}
+                {cats>0&&<div style={{gridColumn:"1/-1"}}><span style={{color:"#888"}}>🦋 Caterpillar host: </span><span style={{color:insectColor,fontWeight:"bold"}}>{insectLabel} species</span>{plant.insectConf==="estimated"&&<span style={{color:"#ccc",fontSize:11}}> est.</span>}</div>}
+              </div>
+              <RiskBadges plant={plant} />
+              <SeedSection plant={plant} />
+            </div>
+          </div>
+          {siteKey&&ZONE_KEYS.includes(siteKey)&&(
+            <div style={{marginTop:14}}>
+              <div style={{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}}>Suitability across zones</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                {MICROZONES.map(z=>{const s=plant.scores[z.key]||0;return(
+                  <div key={z.key} style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:11,width:148,color:z.key===siteKey?"#2d4a2d":"#666",fontWeight:z.key===siteKey?"bold":"normal"}}>{z.emoji} {z.label}</div>
+                    <div style={{flex:1,height:5,background:"#f0ede4",borderRadius:3,overflow:"hidden"}}><div style={{width:`${(s/5)*100}%`,height:"100%",background:SCORE_COLORS[s],borderRadius:3}} /></div>
+                    <div style={{fontSize:11,color:"#aaa",width:54}}>{SCORE_LABELS[s]}</div>
+                  </div>
+                );})}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Hearts panel ───────────────────────────────────────────────────────────
+function HeartsPanel({hearts,plants,open,onClose,isHabitat}){
+  const[label,setLabel]=useState("");
+  const[copied,setCopied]=useState(false);
+  const hearted=useMemo(()=>plants.filter(p=>hearts.includes(p.latin)),[plants,hearts]);
+  const mix=useMemo(()=>{const c={woody:0,perennial:0,grass:0,fern:0,ground:0,vine:0};hearted.forEach(p=>{if(c[p.typeKey]!==undefined)c[p.typeKey]++;});return c;},[hearted]);
+  const tips=[];
+  if(isHabitat){if(mix.woody<5)tips.push("Add more woody plants for habitat structure");if(mix.grass<2)tips.push("Consider adding grasses or sedges");if(mix.ground<1)tips.push("A groundcover layer helps close the canopy");}
+  else{if(mix.grass===0&&hearted.length>3)tips.push("Consider adding grasses or sedges for texture");if(mix.woody===0&&hearted.length>3)tips.push("A shrub or small tree adds structure");}
+  const copyLink=()=>{const p=new URLSearchParams(window.location.search);p.set("hearts",hearts.join(","));if(label)p.set("label",label);navigator.clipboard.writeText(`${location.origin}${location.pathname}?${p.toString()}`).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});};
+  if(!open)return null;
+  return(
+    <>
+      <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:199}} />
+      <div style={{position:"fixed",right:0,top:0,bottom:0,width:Math.min(320,window.innerWidth),background:"white",boxShadow:"-4px 0 24px rgba(0,0,0,0.12)",zIndex:200,display:"flex",flexDirection:"column"}}>
+        <div style={{background:"#2d4a2d",color:"white",padding:"18px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:20}}>My palette</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer"}}>✕</button>
+        </div>
+        <div style={{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}}>
+          <input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Name this palette (e.g. Johnson Residence)"
+            style={{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}} />
+        </div>
+        <div style={{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}}>
+          <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Mix</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+            {[{k:"woody",e:"🌳",l:"Woody"},{k:"perennial",e:"🌼",l:"Perennial"},{k:"grass",e:"🌾",l:"Grass"},{k:"ground",e:"🍀",l:"Groundcover"}].map(({k,e,l})=>(
+              <div key={k} style={{background:"#f0ede4",borderRadius:8,padding:"8px 10px"}}>
+                <div style={{fontSize:22,fontWeight:600,color:mix[k]>0?"#2d4a2d":"#aaa",lineHeight:1.1}}>{mix[k]}</div>
+                <div style={{fontSize:11,color:"#888",marginTop:1}}>{e} {l}</div>
+              </div>
+            ))}
+          </div>
+          {tips.map((t,i)=><div key={i} style={{fontSize:12,color:"#f57f17",marginTop:6,fontStyle:"italic"}}>💡 {t}</div>)}
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
+          {hearted.length===0&&<div style={{textAlign:"center",padding:"30px 0",color:"#aaa",fontStyle:"italic",fontSize:14}}>Heart plants to build your palette</div>}
+          {hearted.map(p=>(
+            <div key={p.latin} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f5f3ef"}}>
+              <PlantThumb plant={p} size={38} radius={7} />
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:500}}>{p.common}</div>
+                <div style={{fontSize:12,color:"#888",fontStyle:"italic"}}>{p.latin}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
+          <button onClick={copyLink} style={{background:copied?"#e8f5e9":"#2d4a2d",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:12,fontFamily:"inherit",fontSize:14,cursor:"pointer",fontWeight:500}}>{copied?"✓ Link copied!":"🔗 Copy shareable link"}</button>
+          <button onClick={()=>window.print()} style={{background:"#f0ede4",color:"#2c2c2c",border:"none",borderRadius:8,padding:12,fontFamily:"inherit",fontSize:14,cursor:"pointer"}}>🖨️ Print / save PDF</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Suggest palette panel ──────────────────────────────────────────────────
+function SuggestPanel({plants,siteKey,count,hearts,onHeart,onClose}){
+  // count: total plants requested; proportional to default 20
+  const scale=count/20;
+  const TARGETS={woody:Math.max(1,Math.round(5*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:0,vine:0};
+  const suggested=useMemo(()=>{
+    const byType={};
+    PLANT_TYPES.forEach(g=>{byType[g.key]=[];});
+    const scored=[...plants].sort((a,b)=>(getSiteScore(b,siteKey)||0)*10+(b.caterpillars||0)/10-(getSiteScore(a,siteKey)||0)*10-(a.caterpillars||0)/10);
+    scored.forEach(p=>{const t=TARGETS[p.typeKey]||0;if(t>0&&(byType[p.typeKey]||[]).length<t)byType[p.typeKey].push(p);});
+    return byType;
+  },[plants,siteKey,count]);
+  const total=Object.values(suggested).flat().length;
+  return(
+    <div style={{background:"white",border:"2px solid #2d4a2d",borderRadius:12,padding:20,marginBottom:16}}>
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}}>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#2d4a2d"}}>Suggested palette — {total} plants</div>
+        <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:0,lineHeight:1}}>✕</button>
+      </div>
+      <div style={{fontSize:13,color:"#888",marginBottom:16}}>Best-fit plants for your site · ranked by wildlife value + suitability · tap ♡ to save</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12,marginBottom:16}}>
+        {PLANT_TYPES.filter(g=>TARGETS[g.key]>0&&suggested[g.key]?.length>0).map(g=>(
+          <div key={g.key}>
+            <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
+              {g.emoji} {g.label}
+              <span style={{background:"#e8f5e9",color:"#2e7d32",borderRadius:10,padding:"0 7px",fontSize:10}}>{suggested[g.key].length}</span>
+            </div>
+            {suggested[g.key].map(p=>(
+              <div key={p.latin} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,border:"1px solid #e0ddd5",marginBottom:5,background:"#fafaf7"}}>
+                <PlantThumb plant={p} size={32} radius={6} />
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.common}</div>
+                  <div style={{fontSize:11,color:"#888",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.latin}</div>
+                </div>
+                <button onClick={()=>onHeart(p.latin)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:hearts.includes(p.latin)?"#e57373":"#ddd",flexShrink:0,lineHeight:1}}>{hearts.includes(p.latin)?"♥":"♡"}</button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button onClick={()=>{Object.values(suggested).flat().forEach(p=>{if(!hearts.includes(p.latin))onHeart(p.latin);});onClose();}}
+          style={{background:"#2d4a2d",color:"white",border:"none",borderRadius:8,padding:"9px 16px",fontFamily:"inherit",fontSize:14,cursor:"pointer",fontWeight:500}}>♥ Save all to my palette</button>
+        <button onClick={onClose} style={{background:"#f0ede4",color:"#2c2c2c",border:"none",borderRadius:8,padding:"9px 16px",fontFamily:"inherit",fontSize:14,cursor:"pointer"}}>Browse all matches below ↓</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Habitat view ───────────────────────────────────────────────────────────
+function HabitatView({plants,concerns,heightCap,patchSize,hearts,onHeart,onLoosen}){
+  const scale=patchSize/20;
+  const HTARGETS={canopy:Math.max(1,Math.round(10*scale)),woody:Math.max(1,Math.round(10*scale)),perennial:Math.max(1,Math.round(10*scale)),grass:Math.max(1,Math.round(6*scale)),ground:Math.max(1,Math.round(4*scale))};
+  const[sortBy,setSortBy]=useState("wildlife");
+  const base=useMemo(()=>plants.filter(p=>{
+    if(p.isCultivar)return false;
+    const s=p.status;
+    if(!s.startsWith("Native")&&s!=="Near-Native"&&s!=="Near Native")return false;
+    return true;
+  }),[plants]);
+  const layers=useMemo(()=>{
+    const scored=[...base].sort((a,b)=>sortBy==="wildlife"?(b.caterpillars||0)-(a.caterpillars||0):a.common.localeCompare(b.common));
+    return{
+      trees:   scored.filter(p=>p.isCanopy).slice(0,HTARGETS.canopy),
+      woody:   scored.filter(p=>p.isWoody&&!p.isCanopy).slice(0,HTARGETS.woody),
+      perennial:scored.filter(p=>p.typeKey==="perennial").slice(0,HTARGETS.perennial),
+      grass:   scored.filter(p=>p.typeKey==="grass").slice(0,HTARGETS.grass),
+      ground:  scored.filter(p=>p.typeKey==="ground").slice(0,HTARGETS.ground),
+    };
+  },[base,sortBy,HTARGETS.canopy]);
+
+  const total=Object.values(layers).flat().length;
+  const thinLayers=Object.entries(layers).filter(([k,v])=>v.length<(HTARGETS[k]||0)/2);
+  const activeStatuses=[...new Set(base.map(p=>p.status))];
+  const statusNote=activeStatuses.includes("Near-Native")||activeStatuses.includes("Near Native")?"natives + near-natives":"natives only";
+
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+        <div style={{fontSize:14,color:"#888",fontStyle:"italic"}}>{total} plants · Massachusetts {statusNote} · straight species only</div>
+        <div style={{marginLeft:"auto",display:"flex",gap:5,alignItems:"center"}}>
+          <span style={{fontSize:12,color:"#aaa"}}>Sort:</span>
+          {[{v:"wildlife",l:"🦋 Wildlife value"},{v:"alpha",l:"A–Z"}].map(({v,l})=>(
+            <button key={v} onClick={()=>setSortBy(v)} style={{padding:"3px 10px",borderRadius:16,border:`1px solid ${sortBy===v?"#2d4a2d":"#e0ddd5"}`,background:sortBy===v?"#2d4a2d":"transparent",color:sortBy===v?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {thinLayers.length>0&&(
+        <div style={{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:14,color:"#5d4037"}}>
+          <strong style={{display:"block",marginBottom:6}}>⚠️ Some layers have limited options</strong>
+          Try loosening one of these:
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+            {concerns.some(c=>c.startsWith("shadedby"))&&<button onClick={()=>onLoosen("shadedby")} style={{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}}>Remove shade filter</button>}
+            {concerns.includes("near_walnut")&&<button onClick={()=>onLoosen("near_walnut")} style={{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}}>Remove black walnut filter</button>}
+            {heightCap&&<button onClick={()=>onLoosen("height")} style={{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}}>Raise height cap</button>}
+          </div>
+        </div>
+      )}
+      {[{key:"trees",title:"Canopy trees",emoji:"🌳",plants:layers.trees},{key:"woody",title:"Shrubs & understory",emoji:"🌿",plants:layers.woody},{key:"perennial",title:"Flowering perennials",emoji:"🌼",plants:layers.perennial},{key:"grass",title:"Grasses & sedges",emoji:"🌾",plants:layers.grass},{key:"ground",title:"Groundcovers",emoji:"🍀",plants:layers.ground}].map(({key,title,emoji,plants:lp})=>{
+        if(!lp.length)return null;
+        return(
+          <div key={key} style={{marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <span style={{fontSize:22}}>{emoji}</span>
+              <span style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:"#2d4a2d"}}>{title}</span>
+              <span style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{lp.length}</span>
+            </div>
+            {lp.map(p=><PlantCard key={p.latin} plant={p} siteKey={null} hearted={hearts.includes(p.latin)} onHeart={onHeart} />)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Seed Calendar ──────────────────────────────────────────────────────────
+function SeedCalendar({plants,onBack}){
+  const now=new Date();
+  const[monthIdx,setMonthIdx]=useState(now.getMonth());
+  const[statuses,setStatuses]=useState(["native","nearnative"]);
+  const[typeFilter,setTypeFilter]=useState(null);
+
+  const eligible=useMemo(()=>plants.filter(p=>{
+    if(!p.seedStart&&!p.seedNotes&&!p.propagNotes)return false;
+    if(!matchStatus(p,statuses))return false;
+    if(typeFilter&&p.typeKey!==typeFilter)return false;
+    return true;
+  }),[plants,statuses,typeFilter]);
+
+  // Month counts for overview
+  const monthCounts=useMemo(()=>{
+    const c=Array(12).fill(0);
+    eligible.forEach(p=>{
+      if(p.seedStartIdx<0||p.seedEndIdx<0)return;
+      let s=p.seedStartIdx,e=p.seedEndIdx;
+      if(e<s)e+=12; // wraps year
+      for(let i=s;i<=e;i++)c[i%12]++;
+    });
+    return c;
+  },[eligible]);
+
+  function seedStatus(p,mi){
+    if(p.seedStartIdx<0||p.seedEndIdx<0)return null;
+    let s=p.seedStartIdx,e=p.seedEndIdx;
+    if(e<s)e+=12;
+    const mAdj=mi<s?mi+12:mi;
+    if(mAdj>=s&&mAdj<=e)return"now";
+    if(mAdj===e+1||(mAdj+12===e+1))return"soon";
+    if(mAdj===s-1||(mAdj-12===s-1))return"past";
+    return null;
+  }
+
+  const ripeNow=useMemo(()=>eligible.filter(p=>seedStatus(p,monthIdx)==="now"),[eligible,monthIdx]);
+  const comingSoon=useMemo(()=>eligible.filter(p=>{
+    if(seedStatus(p,monthIdx)==="now")return false;
+    const next=(monthIdx+1)%12;
+    return seedStatus(p,next)==="now";
+  }),[eligible,monthIdx]);
+  const justPassed=useMemo(()=>eligible.filter(p=>{
+    if(seedStatus(p,monthIdx)==="now")return false;
+    const prev=(monthIdx+11)%12;
+    return seedStatus(p,prev)==="now";
+  }),[eligible,monthIdx]);
+
+  const toggleStatus=k=>setStatuses(prev=>prev.includes(k)?prev.filter(x=>x!==k):[...prev,k]);
+
+  function SeedCard({plant,status}){
+    const[open,setOpen]=useState(false);
+    const ss=STATUS_COLORS[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+    const statusColor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
+    const statusBg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
+    const statusLabel=status==="now"?"🟢 Ripe now":status==="soon"?"🟡 Coming soon":"⚫ Just passed";
+    return(
+      <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}}>
+        <div onClick={()=>setOpen(!open)} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer"}}>
+          <PlantThumb plant={plant} size={48} radius={8} />
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:500,fontSize:16,marginBottom:2}}>{plant.common}</div>
+            <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:5}}>{plant.latin}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+              <span style={{background:statusBg,color:statusColor,fontSize:12,padding:"2px 10px",borderRadius:20,fontWeight:500}}>{statusLabel}</span>
+              {plant.seedStart&&plant.seedEnd&&<span style={{fontSize:12,color:"#888"}}>{plant.seedStart}–{plant.seedEnd}</span>}
+              <span style={{background:ss.bg,color:ss.text,fontSize:11,padding:"1px 7px",borderRadius:10,fontWeight:"bold"}}>{ss.label}</span>
+            </div>
+          </div>
+          <span style={{color:"#aaa",fontSize:14,flexShrink:0}}>{open?"▲":"▼"}</span>
+        </div>
+        {open&&(
+          <div style={{padding:"0 16px 16px",borderTop:"1px solid #f0ede4"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+              <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
+                <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌰 Collecting</div>
+                <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.seedNotes||"No collecting notes yet."}</div>
+              </div>
+              <div style={{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}}>
+                <div style={{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>🌱 Propagation</div>
+                <div style={{fontSize:13,lineHeight:1.6,color:"#444"}}>{plant.propagNotes||"No propagation notes yet."}</div>
+              </div>
+            </div>
+            {/* Per-plant month bar */}
+            {plant.seedStartIdx>=0&&plant.seedEndIdx>=0&&(
+              <div style={{marginTop:12}}>
+                <div style={{fontSize:11,color:"#aaa",marginBottom:5}}>Seed window</div>
+                <div style={{display:"flex",gap:2}}>
+                  {MONTHS_SHORT.map((m,i)=>{
+                    let s=plant.seedStartIdx,e=plant.seedEndIdx;
+                    if(e<s)e+=12;
+                    const mAdj=i<s?i+12:i;
+                    const active=mAdj>=s&&mAdj<=e;
+                    const cur=i===monthIdx;
+                    return <div key={i} style={{flex:1,height:6,borderRadius:2,background:cur?"#2d4a2d":active?"#8aab8a":"#e0e0e0"}} title={m} />;
+                  })}
+                </div>
+                <div style={{display:"flex",gap:2,marginTop:2}}>
+                  {MONTHS_SHORT.map((m,i)=><div key={i} style={{flex:1,fontSize:8,color:i===monthIdx?"#2d4a2d":"#ccc",textAlign:"center"}}>{m[0]}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return(
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}}>
+      {/* Header */}
+      <div style={{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}}>
+        <div style={{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+          <button onClick={onBack} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}}>← Plant Palette Builder</button>
+          <div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:400}}>🌱 Seed & Propagation Calendar</div>
+            <div style={{fontSize:11,opacity:0.6,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}}>Massachusetts · What to collect and when</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky month nav */}
+      <div style={{position:"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"14px 20px"}}>
+        <div style={{maxWidth:900,margin:"0 auto"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <button onClick={()=>setMonthIdx(i=>(i+11)%12)} style={{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:15}}>◀</button>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,flex:1}}>{MONTHS[monthIdx]}</div>
+            <button onClick={()=>setMonthIdx(now.getMonth())} style={{background:"#2d4a2d",color:"white",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}}>Today</button>
+            <button onClick={()=>setMonthIdx(i=>(i+1)%12)} style={{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:15}}>▶</button>
+          </div>
+          {/* Month overview */}
+          <div style={{display:"flex",gap:3}}>
+            {MONTHS_SHORT.map((m,i)=>(
+              <div key={i} onClick={()=>setMonthIdx(i)}
+                style={{flex:1,textAlign:"center",fontSize:10,cursor:"pointer",padding:"3px 1px",borderRadius:4,background:i===monthIdx?"#2d4a2d":"transparent",color:i===monthIdx?"white":"#888"}}>
+                {m}
+                <div style={{height:4,borderRadius:2,marginTop:3,background:i===monthIdx?"rgba(255,255,255,0.4)":monthCounts[i]>0?"#8aab8a":"#e0e0e0"}} />
+                <div style={{fontSize:9,marginTop:1,color:i===monthIdx?"rgba(255,255,255,0.7)":"#ccc"}}>{monthCounts[i]||""}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
+        {STATUS_OPTS.slice(0,2).map(opt=>(
+          <button key={opt.key} onClick={()=>toggleStatus(opt.key)}
+            style={{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:`1.5px solid ${statuses.includes(opt.key)?opt.fg+"44":"#e0ddd5"}`,background:statuses.includes(opt.key)?opt.bg:"transparent",color:statuses.includes(opt.key)?opt.fg:"#666"}}>
+            {opt.label}
+          </button>
+        ))}
+        <button onClick={()=>toggleStatus("cultivar")} style={{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:`1.5px solid ${statuses.includes("cultivar")?"#6a1b9a44":"#e0ddd5"}`,background:statuses.includes("cultivar")?"#f3e5f5":"transparent",color:statuses.includes("cultivar")?"#6a1b9a":"#666"}}>Native Cultivar</button>
+        <button onClick={()=>toggleStatus("nonnative")} style={{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:`1.5px solid ${statuses.includes("nonnative")?"#f57f1744":"#e0ddd5"}`,background:statuses.includes("nonnative")?"#fff8e1":"transparent",color:statuses.includes("nonnative")?"#f57f17":"#666"}}>Safe Non-Native</button>
+        <div style={{width:1,height:18,background:"#e0ddd5"}} />
+        {[{k:"woody",e:"🌳"},{k:"perennial",e:"🌼"},{k:"grass",e:"🌾"}].map(({k,e})=>(
+          <button key={k} onClick={()=>setTypeFilter(typeFilter===k?null:k)}
+            style={{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:`1.5px solid ${typeFilter===k?"#2d4a2d":"#e0ddd5"}`,background:typeFilter===k?"#f0faf0":"transparent",color:typeFilter===k?"#2d4a2d":"#666"}}>
+            {e} {PLANT_TYPES.find(g=>g.key===k).label}
+          </button>
+        ))}
+        <span style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>{ripeNow.length} plants with seeds ready in {MONTHS[monthIdx]}</span>
+      </div>
+
+      {/* Results */}
+      <div style={{maxWidth:900,margin:"0 auto",padding:"16px 20px 80px"}}>
+        {/* Ripe now */}
+        {ripeNow.length>0&&(
+          <>
+            <div style={{display:"flex",alignItems:"center",gap:10,margin:"8px 0 10px",paddingBottom:8,borderBottom:"2px solid #e0ddd5"}}>
+              <div style={{width:12,height:12,borderRadius:"50%",background:"#2e7d32",flexShrink:0}} />
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20}}>Ripe now</div>
+              <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{ripeNow.length}</div>
+              <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Collect this month</div>
+            </div>
+            {ripeNow.map(p=><SeedCard key={p.latin} plant={p} status="now" />)}
+          </>
+        )}
+        {/* Coming soon */}
+        {comingSoon.length>0&&(
+          <>
+            <div style={{display:"flex",alignItems:"center",gap:10,margin:"24px 0 10px",paddingBottom:8,borderBottom:"2px solid #e0ddd5"}}>
+              <div style={{width:12,height:12,borderRadius:"50%",background:"#f57f17",flexShrink:0}} />
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20}}>Coming up</div>
+              <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{comingSoon.length}</div>
+              <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Seeds ripening in {MONTHS[(monthIdx+1)%12]}</div>
+            </div>
+            {comingSoon.map(p=><SeedCard key={p.latin} plant={p} status="soon" />)}
+          </>
+        )}
+        {/* Just passed */}
+        {justPassed.length>0&&(
+          <>
+            <div style={{display:"flex",alignItems:"center",gap:10,margin:"24px 0 10px",paddingBottom:8,borderBottom:"2px solid #e0ddd5"}}>
+              <div style={{width:12,height:12,borderRadius:"50%",background:"#999",flexShrink:0}} />
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20}}>Just passed</div>
+              <div style={{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}}>{justPassed.length}</div>
+              <div style={{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}}>Seeds ripe in {MONTHS[(monthIdx+11)%12]} — did you collect?</div>
+            </div>
+            {justPassed.map(p=><SeedCard key={p.latin} plant={p} status="past" />)}
+          </>
+        )}
+        {ripeNow.length===0&&comingSoon.length===0&&justPassed.length===0&&(
+          <div style={{textAlign:"center",padding:"60px 20px",color:"#888"}}>
+            <div style={{fontSize:40,marginBottom:12}}>🌱</div>
+            <div style={{fontStyle:"italic",fontSize:16}}>No seed collection activity around {MONTHS[monthIdx]}.</div>
+            <div style={{fontSize:13,marginTop:8}}>Try browsing other months using the timeline above.</div>
+          </div>
+        )}
+      </div>
+
+      <div style={{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5"}}>
+        Seed timing is approximate — observe your plants for best results.
+      </div>
+    </div>
+  );
+}
+
+// ── Share bar ──────────────────────────────────────────────────────────────
+function ShareBar({label,onLabelChange}){
+  const[editing,setEditing]=useState(false);
+  const[val,setVal]=useState(label||"");
+  const[copied,setCopied]=useState(false);
+  const save=()=>{onLabelChange(val.trim());setEditing(false);};
+  const copy=()=>navigator.clipboard.writeText(window.location.href).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});
+  return(
+    <div className="no-print" style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center",background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"9px 14px",marginTop:10,marginBottom:4}}>
+      {editing?(
+        <>
+          <input autoFocus value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")save();if(e.key==="Escape")setEditing(false);}} placeholder="Name this palette…"
+            style={{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}} />
+          <button onClick={save} style={{background:"#2d4a2d",color:"white",border:"none",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Save</button>
+          <button onClick={()=>setEditing(false)} style={{background:"#f0ede4",color:"#555",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Cancel</button>
+        </>
+      ):(
+        <>
+          <button onClick={()=>setEditing(true)} style={{background:"#f0ede4",color:"#555",border:"none",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>{label?`✏️ ${label}`:"📋 Name this palette"}</button>
+          <button onClick={copy} style={{background:copied?"#e8f5e9":"#f0ede4",color:copied?"#2e7d32":"#555",border:"none",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>{copied?"✓ Copied!":"🔗 Copy link"}</button>
+          <button onClick={()=>window.print()} style={{background:"#f0ede4",color:"#555",border:"none",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>🖨️ Print</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Mobile filter drawer ───────────────────────────────────────────────────
+function FilterDrawer({open,onClose,filters,onFiltersChange,flowerColors,inferredSun,zone}){
+  if(!open)return null;
+  const{statuses,concerns,ptypes,heightCap,moisture,sun,irrigated,rflower,rwinter}=filters;
+  const set=patch=>onFiltersChange({...filters,...patch});
+  const toggleStatus=k=>set({statuses:statuses.includes(k)?statuses.filter(x=>x!==k):[...statuses,k]});
+  const toggleConcern=k=>set({concerns:concerns.includes(k)?concerns.filter(x=>x!==k):[...concerns,k]});
+  const togglePtype=k=>set({ptypes:ptypes.includes(k)?ptypes.filter(x=>x!==k):[...ptypes,k]});
+  const toggleFlower=c=>set({rflower:rflower.includes(c)?rflower.filter(x=>x!==c):[...rflower,c]});
+  const pill=(label,active,onClick,bg,fg)=>(
+    <button onClick={onClick} style={{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:`1.5px solid ${active?fg||"#2d4a2d":"#e0ddd5"}`,background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2d4a2d":"#666",fontWeight:active?"500":"normal"}}>
+      {label}
+    </button>
+  );
+  return(
+    <>
+      <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199}} />
+      <div style={{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",overflowY:"auto",padding:"0 0 env(safe-area-inset-bottom)"}}>
+        <div style={{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}} />
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}}>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:18}}>Filters</div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}}>✕</button>
+        </div>
+        <div style={{padding:"16px 20px 30px",display:"flex",flexDirection:"column",gap:20}}>
+          {/* Status */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Include</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {STATUS_OPTS.map(opt=>pill(opt.label,statuses.includes(opt.key),()=>toggleStatus(opt.key),opt.bg,opt.fg))}
+            </div>
+          </div>
+          {/* Plant type */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Plant type</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {PLANT_TYPES.map(g=>pill(`${g.emoji} ${g.label}`,ptypes.includes(g.key),()=>togglePtype(g.key)))}
+            </div>
+          </div>
+          {/* Height */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Max height</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <input type="number" min="1" max="120" value={heightCap||""} onChange={e=>{const v=parseFloat(e.target.value);set({heightCap:v>0?v:null});}}
+                placeholder="e.g. 8 for shrubs, 25 for small trees"
+                style={{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",flex:1}} />
+              {heightCap&&<>
+                <span style={{fontSize:14,color:"#888"}}>ft</span>
+                <button onClick={()=>set({heightCap:null})} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}}>✕</button>
+              </>}
+            </div>
+          </div>
+          {/* Sun */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Sun {inferredSun&&<span style={{color:"#2d4a2d",textTransform:"none"}}> — inferred from site ✓</span>}</div>
+            {inferredSun?(
+              <div style={{fontSize:15,color:"#2d4a2d",fontWeight:500,padding:"6px 0"}}>{inferredSun==="full"?"☀️ Full sun":inferredSun==="shade"?"🌥️ Shade":"⛅ Part shade"}</div>
+            ):(
+              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                {[{v:"full",l:"☀️ Full sun"},{v:"part",l:"⛅ Part shade"},{v:"shade",l:"🌥️ Shade"}].map(o=>pill(o.l,sun===o.v,()=>set({sun:sun===o.v?null:o.v})))}
+              </div>
+            )}
+          </div>
+          {/* Moisture */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Moisture</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {[{v:"dry",l:"🏜️ Dry"},{v:"average",l:"🌱 Average"},{v:"moist",l:"💧 Moist"}].map(o=>pill(o.l,moisture===o.v,()=>set({moisture:moisture===o.v?null:o.v})))}
+            </div>
+            <label style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:8}}>
+              <input type="checkbox" checked={irrigated} onChange={e=>set({irrigated:e.target.checked})} style={{accentColor:"#2d4a2d",width:16,height:16}} />
+              💦 Will be irrigated
+            </label>
+          </div>
+          {/* Conditions shaded by */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Shaded by</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {CONCERN_OPTS.filter(c=>c.group==="shaded").map(c=>pill(`${c.emoji} ${c.label}`,concerns.includes(c.key),()=>toggleConcern(c.key)))}
+            </div>
+          </div>
+          {/* Near */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Near</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {CONCERN_OPTS.filter(c=>c.group==="near"||c.group==="site").map(c=>pill(`${c.emoji} ${c.label}`,concerns.includes(c.key),()=>toggleConcern(c.key)))}
+            </div>
+          </div>
+          {/* Concerns */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Concerns</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {CONCERN_OPTS.filter(c=>c.group==="concern"||c.group==="safety").map(c=>pill(`${c.emoji} ${c.label}`,concerns.includes(c.key),()=>toggleConcern(c.key)))}
+            </div>
+          </div>
+          {/* Flower color */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Flower color</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+              {flowerColors.map(c=>(
+                <button key={c} onClick={()=>toggleFlower(c)} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:`1.5px solid ${rflower.includes(c)?"#2d4a2d":"#e0ddd5"}`,background:rflower.includes(c)?"#f0faf0":"transparent",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:rflower.includes(c)?"#2d4a2d":"#666"}}>
+                  <div style={{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}} />{c}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Other */}
+          <div>
+            <div style={{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Other</div>
+            <label style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}}>
+              <input type="checkbox" checked={rwinter} onChange={e=>set({rwinter:e.target.checked})} style={{accentColor:"#2d4a2d",width:16,height:16}} />
+              ❄️ Winter interest only
+            </label>
+          </div>
+          <button onClick={onClose} style={{background:"#2d4a2d",color:"white",border:"none",borderRadius:10,padding:"13px",fontFamily:"inherit",fontSize:15,cursor:"pointer",fontWeight:500,marginTop:4}}>
+            Show results
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Root App ───────────────────────────────────────────────────────────────
+function App(){
+  const[plants,setPlants]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[error,setError]=useState(null);
+  const initURL=useMemo(readURL,[]);
+  const[view,setView]=useState(initURL.view);
+
+  const[search,setSearch]=useState(initURL.search);
+  const[zone,setZone]=useState(initURL.zone);
+  const[showZones,setShowZones]=useState(false);
+  const[filters,setFilters]=useState({
+    statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,
+    concerns:initURL.concerns,moisture:initURL.moisture,sun:initURL.sun,
+    irrigated:initURL.irrigated,rflower:initURL.rflower,rwinter:initURL.rwinter,
+  });
+  const[sortBy,setSortBy]=useState(initURL.sortBy);
+  const[label,setLabel]=useState(initURL.label);
+  const[showMore,setShowMore]=useState(false);
+  const[showSuggest,setShowSuggest]=useState(false);
+  const[habitatMode,setHabitatMode]=useState(false);
+  const[patchSize,setPatchSize]=useState(20);
+  const[panelOpen,setPanelOpen]=useState(false);
+  const[drawerOpen,setDrawerOpen]=useState(false);
+  const[isMobile,setIsMobile]=useState(window.innerWidth<700);
+
+  const[hearts,setHearts]=useState(()=>initURL.sharedHearts.length?initURL.sharedHearts:loadHearts());
+  const toggleHeart=useCallback(latin=>setHearts(prev=>{const next=prev.includes(latin)?prev.filter(x=>x!==latin):[...prev,latin];saveHearts(next);return next;}),[]);
+
+  useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<700);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+
+  useEffect(()=>{
+    pushURL({view,search,zone,...filters,sortBy,label});
+  },[view,search,zone,filters,sortBy,label]);
+
+  useEffect(()=>{
+    fetch(SHEET_URL).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text();})
+      .then(text=>{setPlants(parseCSV(text).map(rowToPlant).filter(Boolean));setLoading(false);})
+      .catch(err=>{setError(err.message);setLoading(false);});
+  },[]);
+
+  const inferredSun=useMemo(()=>MICROZONES.find(z=>z.key===zone)?.impliesSun||null,[zone]);
+  const effectiveSun=inferredSun||filters.sun;
+  const effectiveFilters={...filters,sun:effectiveSun,search};
+
+  const filtered=useMemo(()=>applyFilters(plants,effectiveFilters,zone),[plants,JSON.stringify(effectiveFilters),zone]);
+  const results=useMemo(()=>sortPlants(filtered,sortBy,zone),[filtered,sortBy,zone]);
+
+  const zoneInfo=MICROZONES.find(z=>z.key===zone);
+  const flowerColors=useMemo(()=>{const c={};plants.forEach(p=>p.flowerColor.split(/\s*[|]\s*/).forEach(x=>{const t=x.trim().toLowerCase();if(t&&COLOR_MAP[t])c[t]=(c[t]||0)+1;}));return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([x])=>x);},[plants]);
+
+  const activeFilterCount=[zone,..filters.concerns,...filters.ptypes,filters.heightCap,filters.moisture,filters.sun&&!inferredSun,...filters.rflower,filters.rwinter].filter(Boolean).length;
+  const moreCount=[filters.moisture,filters.sun&&!inferredSun,filters.irrigated,...filters.rflower,filters.rwinter].filter(Boolean).length;
+
+  const ps=(active,dark=false)=>({display:"inline-flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,whiteSpace:"nowrap",border:`1.5px solid ${active?"#2d4a2d":"#e0ddd5"}`,background:active?(dark?"#2d4a2d":"#f0faf0"):"transparent",color:active?(dark?"white":"#2d4a2d"):"#555",fontWeight:active?"500":"normal"});
+
+  const toggleStatus=k=>setFilters(f=>({...f,statuses:f.statuses.includes(k)?f.statuses.filter(x=>x!==k):[...f.statuses,k]}));
+  const toggleConcern=k=>setFilters(f=>({...f,concerns:f.concerns.includes(k)?f.concerns.filter(x=>x!==k):[...f.concerns,k]}));
+  const togglePtype=k=>setFilters(f=>({...f,ptypes:f.ptypes.includes(k)?f.ptypes.filter(x=>x!==k):[...f.ptypes,k]}));
+  const toggleFlower=c=>setFilters(f=>({...f,rflower:f.rflower.includes(c)?f.rflower.filter(x=>x!==c):[...f.rflower,c]}));
+
+  if(view==="seeds")return <SeedCalendar plants={plants} onBack={()=>setView("main")} />;
+
+  const noFiltersSet=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search;
+
+  return(
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}}>
+
+      {/* Header */}
+      <div style={{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}}>
+        <div style={{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+          <div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:400,letterSpacing:"-0.3px"}}>Plant Palette Builder</div>
+            <div style={{fontSize:13,opacity:0.75,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}}>for Massachusetts</div>
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+            <button onClick={()=>setView("seeds")} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}}>🌱 Seed calendar</button>
+            <button onClick={()=>setPanelOpen(true)} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.12)",borderRadius:24,padding:"8px 16px",border:"none",color:"#f0ede4",cursor:"pointer",fontSize:14,flexShrink:0}}>
+              ♥ My palette
+              <span style={{background:"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500}}>{hearts.length}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky bar: preset buttons + search + filters */}
+      <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5",padding:"10px 20px 0"}}>
+        <div style={{maxWidth:900,margin:"0 auto"}}>
+
+          {/* Preset buttons — always visible, above everything */}
+          <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+            <button onClick={()=>{setShowSuggest(!showSuggest);setHabitatMode(false);}}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:`2px solid ${showSuggest?"#2d4a2d":"#2d4a2d"}`,background:showSuggest?"#2d4a2d":"white",color:showSuggest?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}}>
+              ✨ Suggest a palette
+            </button>
+            <button onClick={()=>{setHabitatMode(!habitatMode);setShowSuggest(false);}}
+              style={{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:`2px solid ${habitatMode?"#2d4a2d":"#2d4a2d"}`,background:habitatMode?"#2d4a2d":"white",color:habitatMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}}>
+              🌿 Habitat patch {habitatMode?"✓":""}
+            </button>
+            {habitatMode&&(
+              <div style={{display:"flex",alignItems:"center",gap:6,padding:"0 4px"}}>
+                <span style={{fontSize:13,color:"#888"}}>Size:</span>
+                {[{n:10,l:"Small"},{n:20,l:"Medium"},{n:40,l:"Large"}].map(({n,l})=>(
+                  <button key={n} onClick={()=>setPatchSize(n)} style={{padding:"5px 10px",borderRadius:16,border:`1px solid ${patchSize===n?"#2d4a2d":"#e0ddd5"}`,background:patchSize===n?"#2d4a2d":"white",color:patchSize===n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{l}</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search */}
+          <div style={{position:"relative",marginBottom:8}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder={loading?`Loading plants…`:`Search ${plants.length} Massachusetts native plants…`}
+              style={{width:"100%",padding:"12px 44px 12px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}} />
+            {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}}>✕</button>}
+          </div>
+
+          {/* Mobile: single filter button */}
+          {isMobile?(
+            <div style={{paddingBottom:10,display:"flex",gap:8,alignItems:"center"}}>
+              <button onClick={()=>setDrawerOpen(true)}
+                style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:`1.5px solid ${activeFilterCount>0?"#2d4a2d":"#e0ddd5"}`,background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2d4a2d":"#555",fontWeight:activeFilterCount>0?"500":"normal"}}>
+                ⚙️ Filters {activeFilterCount>0&&<span style={{background:"#2d4a2d",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}}>{activeFilterCount}</span>}
+              </button>
+              {zone&&<button onClick={()=>{setZone(null);setShowZones(false);}} style={{display:"flex",alignItems:"center",gap:5,padding:"10px 14px",borderRadius:10,border:"1.5px solid #2d4a2d",background:"#2d4a2d",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13}}>📍 {zoneInfo?.label||zone} ✕</button>}
+            </div>
+          ):(
+            <>
+              {/* Row 1: Status + plant type + height */}
+              <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",paddingBottom:8}}>
+                <span style={{fontSize:12,color:"#888",marginRight:2}}>Include:</span>
+                {STATUS_OPTS.map(opt=>(
+                  <button key={opt.key} onClick={()=>toggleStatus(opt.key)}
+                    style={{...ps(filters.statuses.includes(opt.key)),background:filters.statuses.includes(opt.key)?opt.bg:"transparent",color:filters.statuses.includes(opt.key)?opt.fg:"#666",border:`1.5px solid ${filters.statuses.includes(opt.key)?opt.fg+"44":"#e0ddd5"}`}}>
+                    {opt.label}
+                  </button>
+                ))}
+                <div style={{width:1,height:18,background:"#e0ddd5",flexShrink:0}} />
+                <span style={{fontSize:12,color:"#888"}}>Type:</span>
+                {PLANT_TYPES.map(g=>(
+                  <Tip key={g.key} text={g.tip||g.label}>
+                    <button onClick={()=>togglePtype(g.key)} style={ps(filters.ptypes.includes(g.key))}>{g.emoji} {g.label}</button>
+                  </Tip>
+                ))}
+                <div style={{width:1,height:18,background:"#e0ddd5",flexShrink:0}} />
+                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                  <span style={{fontSize:12,color:"#888"}}>Max height:</span>
+                  <div style={{position:"relative"}}>
+                    <input type="number" min="1" max="120" value={filters.heightCap||""} onChange={e=>{const v=parseFloat(e.target.value);setFilters(f=>({...f,heightCap:v>0?v:null}));}}
+                      placeholder="e.g. 8 for shrubs, 25 for small trees"
+                      style={{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"5px 8px",fontFamily:"inherit",fontSize:13,outline:"none",color:"#2c2c2c",background:"white",width:filters.heightCap?75:240}} />
+                    {filters.heightCap&&<button onClick={()=>setFilters(f=>({...f,heightCap:null}))} style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#aaa"}}>✕</button>}
+                  </div>
+                  {filters.heightCap&&<span style={{fontSize:12,color:"#aaa"}}>ft</span>}
+                </div>
+              </div>
+
+              {/* Row 2: Site + conditions + more */}
+              <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",paddingBottom:10}}>
+                <span style={{fontSize:12,color:"#888"}}>Site:</span>
+                <button onClick={()=>setShowZones(!showZones)} style={{...ps(!!zone,!!zone),position:"relative"}}>
+                  {zone?`📍 ${zoneInfo?.label||zone}`:"▼ Choose site type"}
+                  {zone&&<span onClick={e=>{e.stopPropagation();setZone(null);}} style={{marginLeft:4,opacity:0.7,fontSize:14}}>×</span>}
+                </button>
+                <div style={{width:1,height:18,background:"#e0ddd5",flexShrink:0}} />
+                <span style={{fontSize:12,color:"#888"}}>Shaded by:</span>
+                {CONCERN_OPTS.filter(c=>c.group==="shaded").map(c=>(
+                  <Tip key={c.key} text={c.tip}><button onClick={()=>toggleConcern(c.key)} style={ps(filters.concerns.includes(c.key))}>{c.emoji} {c.label}</button></Tip>
+                ))}
+                <span style={{fontSize:12,color:"#888",marginLeft:2}}>Near:</span>
+                {CONCERN_OPTS.filter(c=>c.group==="near").map(c=>(
+                  <Tip key={c.key} text={c.tip}><button onClick={()=>toggleConcern(c.key)} style={ps(filters.concerns.includes(c.key))}>{c.emoji} {c.label}</button></Tip>
+                ))}
+                <div style={{width:1,height:18,background:"#e0ddd5",flexShrink:0}} />
+                {CONCERN_OPTS.filter(c=>c.group==="site"||c.group==="concern"||c.group==="safety").map(c=>(
+                  <Tip key={c.key} text={c.tip}><button onClick={()=>toggleConcern(c.key)} style={ps(filters.concerns.includes(c.key))}>{c.emoji} {c.label}</button></Tip>
+                ))}
+                <div style={{width:1,height:18,background:"#e0ddd5",flexShrink:0}} />
+                <button onClick={()=>setShowMore(!showMore)} style={{...ps(moreCount>0),padding:"5px 12px",borderRadius:8}}>
+                  More {moreCount>0&&<span style={{background:"#2d4a2d",color:"white",borderRadius:10,padding:"0 6px",fontSize:10,marginLeft:2}}>{moreCount}</span>} {showMore?"▲":"▼"}
+                </button>
+              </div>
+
+              {/* Zone picker */}
+              {showZones&&(
+                <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:14,marginBottom:10}}>
+                  <div style={{fontSize:13,color:"#888",marginBottom:10,fontStyle:"italic"}}>Choose a site type to sort plants by how well they fit there.</div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
+                    {MICROZONES.map(z=>(
+                      <button key={z.key} onClick={()=>{setZone(z.key===zone?null:z.key);setShowZones(false);}}
+                        style={{background:zone===z.key?"#2d4a2d":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:`2px solid ${zone===z.key?"#2d4a2d":"#e0ddd5"}`,borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+                        <div style={{fontSize:18,marginBottom:2}}>{z.emoji}</div>
+                        <div style={{fontWeight:500,fontSize:13,marginBottom:2}}>{z.label}</div>
+                        <div style={{fontSize:11,opacity:0.6,lineHeight:1.4}}>{z.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* More filters */}
+              {showMore&&(
+                <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:16,marginBottom:10}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                    <div>
+                      <div style={{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Moisture</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {[{v:"dry",l:"🏜️ Dry"},{v:"average",l:"🌱 Average"},{v:"moist",l:"💧 Moist"}].map(o=>(
+                          <button key={o.v} onClick={()=>setFilters(f=>({...f,moisture:f.moisture===o.v?null:o.v}))} style={ps(filters.moisture===o.v)}>{o.l}</button>
+                        ))}
+                        <label style={{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:13,padding:"0 4px"}}>
+                          <input type="checkbox" checked={filters.irrigated} onChange={e=>setFilters(f=>({...f,irrigated:e.target.checked}))} style={{accentColor:"#2d4a2d"}} />
+                          💦 Irrigated
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>
+                        Sun {inferredSun&&<span style={{color:"#2d4a2d",textTransform:"none",fontWeight:500}}> — inferred ✓</span>}
+                      </div>
+                      {inferredSun?(
+                        <div style={{fontSize:14,color:"#2d4a2d",fontWeight:500,padding:"5px 0"}}>{inferredSun==="full"?"☀️ Full sun":inferredSun==="shade"?"🌥️ Shade":"⛅ Part shade"}</div>
+                      ):(
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                          {[{v:"full",l:"☀️ Full"},{v:"part",l:"⛅ Part"},{v:"shade",l:"🌥️ Shade"}].map(o=>(
+                            <button key={o.v} onClick={()=>setFilters(f=>({...f,sun:f.sun===o.v?null:o.v}))} style={ps(filters.sun===o.v)}>{o.l}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Flower color</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                        {flowerColors.map(c=>(
+                          <button key={c} onClick={()=>toggleFlower(c)} style={{...ps(filters.rflower.includes(c)),display:"inline-flex",alignItems:"center",gap:4}}>
+                            <div style={{width:10,height:10,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}} />{c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Other</div>
+                      <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}}>
+                        <input type="checkbox" checked={filters.rwinter} onChange={e=>setFilters(f=>({...f,rwinter:e.target.checked}))} style={{accentColor:"#2d4a2d"}} />
+                        ❄️ Winter interest only
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      <FilterDrawer open={drawerOpen} onClose={()=>setDrawerOpen(false)} filters={filters} onFiltersChange={setFilters} flowerColors={flowerColors} inferredSun={inferredSun} zone={zone} />
+
+      {/* Mobile zone picker (when drawer closed) */}
+      {isMobile&&showZones&&(
+        <div style={{padding:"10px 20px",maxWidth:900,margin:"0 auto"}}>
+          <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:14}}>
+            <div style={{fontSize:13,color:"#888",marginBottom:10,fontStyle:"italic"}}>Choose a site type</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:8}}>
+              {MICROZONES.map(z=>(
+                <button key={z.key} onClick={()=>{setZone(z.key===zone?null:z.key);setShowZones(false);}}
+                  style={{background:zone===z.key?"#2d4a2d":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:`2px solid ${zone===z.key?"#2d4a2d":"#e0ddd5"}`,borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+                  <div style={{fontSize:18,marginBottom:2}}>{z.emoji}</div>
+                  <div style={{fontWeight:500,fontSize:12,marginBottom:2}}>{z.label}</div>
+                  <div style={{fontSize:10,opacity:0.6,lineHeight:1.4}}>{z.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div style={{maxWidth:900,margin:"0 auto",padding:"0 20px 80px"}}>
+        <ShareBar label={label} onLabelChange={setLabel} />
+
+        {/* Active filter chips */}
+        {activeFilterCount>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}}>
+            {zone&&<div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}}>📍 {zoneInfo?.label||zone}<span onClick={()=>setZone(null)} style={{cursor:"pointer",opacity:0.5,fontSize:14}}>×</span></div>}
+            {filters.concerns.map(c=>{const opt=CONCERN_OPTS.find(o=>o.key===c);return opt?<div key={c} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}}>{opt.emoji} {opt.label}<span onClick={()=>toggleConcern(c)} style={{cursor:"pointer",opacity:0.5,fontSize:14}}>×</span></div>:null;})}
+            {filters.ptypes.map(k=>{const g=PLANT_TYPES.find(t=>t.key===k);return g?<div key={k} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}}>{g.emoji} {g.label}<span onClick={()=>togglePtype(k)} style={{cursor:"pointer",opacity:0.5,fontSize:14}}>×</span></div>:null;})}
+            {filters.heightCap&&<div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}}>Under {filters.heightCap} ft<span onClick={()=>setFilters(f=>({...f,heightCap:null}))} style={{cursor:"pointer",opacity:0.5,fontSize:14}}>×</span></div>}
+            <button onClick={()=>{setSearch("");setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false});}} style={{fontSize:12,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Clear all</button>
+          </div>
+        )}
+
+        {/* Loading / error */}
+        {loading&&<div style={{textAlign:"center",padding:"60px 20px",color:"#888"}}><div style={{fontSize:40,marginBottom:12}}>🌱</div><div style={{fontStyle:"italic",fontSize:16}}>Loading plant data…</div></div>}
+        {error&&<div style={{textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:40,marginBottom:12}}>⚠️</div><div style={{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}}>Could not load plant data</div><div style={{fontSize:13,color:"#888"}}>{error}</div></div>}
+
+        {!loading&&!error&&(
+          <>
+            {/* Suggest palette panel */}
+            {showSuggest&&<SuggestPanel plants={filtered} siteKey={zone} count={patchSize} hearts={hearts} onHeart={toggleHeart} onClose={()=>setShowSuggest(false)} />}
+
+            {/* No filters prompt */}
+            {noFiltersSet&&!showSuggest&&!habitatMode&&(
+              <div style={{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+                <span style={{fontSize:28,flexShrink:0}}>🌱</span>
+                <div>
+                  <div style={{fontWeight:500,fontSize:15,marginBottom:3}}>Set your site conditions to find the best plants for your spot</div>
+                  <div style={{fontSize:13,color:"#888"}}>Choose a site type, add filters, or tap <strong>Suggest a palette</strong> to get a curated starting point.</div>
+                </div>
+              </div>
+            )}
+
+            {/* Habitat view */}
+            {habitatMode?(
+              <HabitatView plants={filtered} concerns={filters.concerns} heightCap={filters.heightCap} patchSize={patchSize} hearts={hearts} onHeart={toggleHeart}
+                onLoosen={type=>{
+                  if(type==="shadedby")setFilters(f=>({...f,concerns:f.concerns.filter(c=>!c.startsWith("shadedby"))}));
+                  if(type==="near_walnut")setFilters(f=>({...f,concerns:f.concerns.filter(c=>c!=="near_walnut")}));
+                  if(type==="height")setFilters(f=>({...f,heightCap:null}));
+                }} />
+            ):(
+              <>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                  <div style={{fontSize:14,color:"#888",fontStyle:"italic"}}>{results.length} plant{results.length!==1?"s":""}{zone?` for ${zoneInfo?.label}`:""} · Massachusetts</div>
+                  <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                    <span style={{fontSize:12,color:"#aaa"}}>Sort:</span>
+                    {[{v:"fit",l:"📍 Best fit"},{v:"wildlife",l:"🦋 Wildlife"},{v:"alpha",l:"A–Z"}].map(({v,l})=>(
+                      <button key={v} onClick={()=>setSortBy(v)} style={{padding:"3px 10px",borderRadius:16,fontSize:12,fontFamily:"inherit",cursor:"pointer",border:`1px solid ${sortBy===v?"#2d4a2d":"#e0ddd5"}`,background:sortBy===v?"#2d4a2d":"transparent",color:sortBy===v?"white":"#666"}}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+                {results.map(p=><PlantCard key={p.latin} plant={p} siteKey={zone} hearted={hearts.includes(p.latin)} onHeart={toggleHeart} />)}
+                {results.length===0&&(
+                  <div style={{textAlign:"center",padding:"50px 20px",color:"#888"}}>
+                    <div style={{fontSize:40,marginBottom:12}}>🤔</div>
+                    <div style={{fontStyle:"italic",marginBottom:10,fontSize:16}}>No plants match all your filters.</div>
+                    <div style={{fontSize:13}}>Try loosening the height cap, removing a concern, or broadening moisture or sun settings.</div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Hearts panel */}
+      <HeartsPanel hearts={hearts} plants={plants} open={panelOpen} onClose={()=>setPanelOpen(false)} isHabitat={habitatMode} />
+
+      {/* Footer */}
+      <div style={{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5",lineHeight:2}}>
+        <div>Created by <a href="https://www.summersgardening.com" target="_blank" rel="noopener noreferrer" style={{color:"#2d4a2d",textDecoration:"none"}}>Rachel Noack Summers / Summers EcoScaping</a> · Built with Claude (Anthropic)</div>
+        <div>Images from iNaturalist and other Creative Commons sources · Plant data compiled from publicly available sources</div>
+        <div>Native plant designations specific to Massachusetts per <a href="https://gobotany.nativeplanttrust.org" target="_blank" rel="noopener noreferrer" style={{color:"#2d4a2d",textDecoration:"none"}}>Go Botany / Native Plant Trust</a></div>
+        <div><a href={SHEET_VIEW_URL} target="_blank" rel="noopener noreferrer" style={{color:"#2d4a2d",textDecoration:"none"}}>View source data →</a> · Edits, suggestions, additions and corrections are welcome</div>
+        <div>Questions, suggestions, collaboration: <a href="mailto:rsummmmers@gmail.com" style={{color:"#2d4a2d",textDecoration:"none"}}>rsummmmers@gmail.com</a></div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
