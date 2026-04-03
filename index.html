@@ -241,6 +241,7 @@ function rowToPlant(row){
     caterpillars:parseInt(row["caterpillar_species"])||0,
     edible:!!(row["edible_medicinal_human"]||"").trim().match(/^(yes|true|with caveats)/i),
     edibleNotes:row["edible_medicinal_notes"]||"",
+    edibleValue:(row["edible_medicinal_human"]||"").trim().toLowerCase(),
     isCultivar:status.indexOf("Cultivar")>=0,
     isWoody:!!WOODY_SET[cat],isCanopy:!!CANOPY_SET[cat],
     typeKey:getTypeKey(cat),scores:scores,
@@ -475,6 +476,25 @@ function PhotoGallery(props){
   );
 }
 
+// ── EdibleSection ─────────────────────────────────────────────────────────
+function EdibleSection(props){
+  var plant=props.plant;
+  var _s=useState(false),open=_s[0],setOpen=_s[1];
+  if(!plant.edible&&!plant.edibleNotes)return null;
+  var raw=(plant.edibleNotes||"").trim();
+  var label=plant.edibleValue&&plant.edibleValue.indexOf("caveats")>=0?"with caveats":"edible";
+  return h("div",{style:{marginTop:10}},
+    h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}},
+      h("span",null,"\ud83c\udf4e"),
+      h("span",{style:{fontWeight:"bold"}},open?"\u25b2 Hide":"\u25bc Edible / medicinal")
+    ),
+    open&&h("div",{style:{marginTop:8,padding:"10px 12px",background:"#f0faf0",borderRadius:8,fontSize:13,lineHeight:1.6,color:"#444"}},
+      h("div",{style:{marginBottom:raw?5:0}},h("span",{style:{color:"#888"}},"Status: "),h("strong",null,label)),
+      raw&&h("div",null,h("span",{style:{color:"#888"}},"Notes: "),raw)
+    )
+  );
+}
+
 // ── SeedSection ───────────────────────────────────────────────────────────
 function SeedSection(props){
   var plant=props.plant;
@@ -549,7 +569,8 @@ function PlantCard(props){
             cats>0&&h("div",{style:{gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species"))
           ),
           h(RiskBadges,{plant:plant}),
-          h(SeedSection,{plant:plant})
+          h(SeedSection,{plant:plant}),
+          h(EdibleSection,{plant:plant})
         )
       ),
       siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&h("div",{style:{marginTop:14}},
