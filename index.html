@@ -239,7 +239,7 @@ function rowToPlant(row){
     seedEndIdx:monthIdx(row["seed_ripe_end"]||""),
     seedNotes:row["seed_notes"]||"",propagNotes:row["propagation_notes"]||"",
     caterpillars:parseInt(row["caterpillar_species"])||0,
-    edible:!!(row["edible_medicinal_human"]||"").trim().match(/^(yes|true)$/i),
+    edible:!!(row["edible_medicinal_human"]||"").trim().match(/^(yes|true|with caveats)/i),
     edibleNotes:row["edible_medicinal_notes"]||"",
     isCultivar:status.indexOf("Cultivar")>=0,
     isWoody:!!WOODY_SET[cat],isCanopy:!!CANOPY_SET[cat],
@@ -1111,11 +1111,11 @@ function FilterDrawer(props){
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
             h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
-            "\u2744\ufe0f Winter interest only"
+            "\u2744\ufe0f Winter interest"
           ),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:10}},
             h("input",{type:"checkbox",checked:f.edibleOnly||false,onChange:function(ev){set({edibleOnly:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
-            "\ud83c\udf4e Edible / medicinal only"
+            "\ud83c\udf4e Edible / medicinal"
           )
         ),
         h("button",{onClick:onClose,style:btn("#2d4a2d","white",{borderRadius:10,padding:"13px",fontSize:15,marginTop:4})},"Show results")
@@ -1383,11 +1383,11 @@ function App(){
                 h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
                 h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},
                   h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
-                  "\u2744\ufe0f Winter interest only"
+                  "\u2744\ufe0f Winter interest"
                 ),
               h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
                   h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
-                  "\ud83c\udf4e Edible / medicinal only"
+                  "\ud83c\udf4e Edible / medicinal"
                 )
               )
             )
