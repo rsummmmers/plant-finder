@@ -65,8 +65,10 @@ var STATUS_COLORS_MAP={
 };
 
 var PLANT_TYPES=[
-  {key:"woody",    label:"Woody",           emoji:"\ud83c\udf33",tip:"Trees & shrubs — plants with permanent stems",
-   cats:{"Tree - Large":1,"Tree - Small":1,"Tall Canopy Tree":1,"Midstory Tree":1,"Shrub":1,"Shrub \u2013 Large":1,"Shrub \u2013 Small":1,"Flowering Shrub":1,"Broadleaf Evergreen":1}},
+{key:"tree",   label:"Trees",  emoji:"🌳", tip:"Large & understory trees — plants with a single woody trunk",
+ cats:{"Tree - Large":1,"Tree - Small":1,"Tall Canopy Tree":1,"Midstory Tree":1}},
+{key:"shrub",  label:"Shrubs", emoji:"🌿", tip:"Shrubs of all sizes — multi-stemmed woody plants",
+ cats:{"Shrub":1,"Shrub \u2013 Large":1,"Shrub \u2013 Small":1,"Flowering Shrub":1,"Broadleaf Evergreen":1}},
   {key:"perennial",label:"Perennials",      emoji:"\ud83c\udf3c",cats:{"Flowering Perennial":1,"Foliage Perennial":1,"Annual":1}},
   {key:"grass",   label:"Grasses & sedges", emoji:"\ud83c\udf3e",cats:{"Grass":1}},
   {key:"fern",    label:"Ferns",            emoji:"\ud83c\udf3f",cats:{"Fern":1}},
