@@ -128,6 +128,11 @@ var MONTHS_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","N
 var WOODY_SET={"Tree - Large":1,"Tree - Small":1,"Tall Canopy Tree":1,"Midstory Tree":1,"Shrub":1,"Shrub \u2013 Large":1,"Shrub \u2013 Small":1,"Flowering Shrub":1,"Broadleaf Evergreen":1,"Vine":1};
 var CANOPY_SET={"Tree - Large":1,"Tall Canopy Tree":1};
 
+function dedupePlants(plants){
+  var seen={};
+  return plants.filter(function(p){if(seen[p.latin])return false;seen[p.latin]=true;return true;});
+}
+
 // ── localStorage ──────────────────────────────────────────────────────────
 var LS_KEY="ppb_hearts_v2";
 function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(err){return[];}}
@@ -602,14 +607,14 @@ function HeartsPanel(props){
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
   var mix=useMemo(function(){
-    var c={woody:0,perennial:0,grass:0,fern:0,ground:0,vine:0};
+    var c={tree:0,shrub:0,perennial:0,grass:0,fern:0,ground:0,vine:0};
     hearted.forEach(function(p){if(c[p.typeKey]!==undefined)c[p.typeKey]++;});
     return c;
   },[hearted]);
 
   var tips=[];
-  if(isHabitat){if(mix.woody<5)tips.push("Add more woody plants for habitat structure");if(mix.grass<2)tips.push("Consider adding grasses or sedges");}
-  else{if(mix.grass===0&&hearted.length>3)tips.push("Consider adding grasses or sedges");if(mix.woody===0&&hearted.length>3)tips.push("A shrub or small tree adds structure");}
+  if(isHabitat){if((mix.tree||0)+(mix.shrub||0)<5)tips.push("Add more trees or shrubs for habitat structure");if(mix.grass<2)tips.push("Consider adding grasses or sedges");}
+  else{if(mix.grass===0&&hearted.length>3)tips.push("Consider adding grasses or sedges");if((mix.tree||0)+(mix.shrub||0)===0&&hearted.length>3)tips.push("A shrub or small tree adds structure");}
 
   function copyLink(){
     var p=new URLSearchParams(window.location.search);
@@ -634,7 +639,7 @@ function HeartsPanel(props){
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Mix"),
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
-          [{k:"woody",e:"\ud83c\udf33",l:"Woody"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennial"},{k:"grass",e:"\ud83c\udf3e",l:"Grass"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"}].map(function(x){
+          [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennial"},{k:"grass",e:"\ud83c\udf3e",l:"Grass"}].map(function(x){
             return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"8px 10px"}},
               h("div",{style:{fontSize:22,fontWeight:600,color:mix[x.k]>0?"#2d4a2d":"#aaa",lineHeight:1.1}},mix[x.k]),
               h("div",{style:{fontSize:11,color:"#888",marginTop:1}},x.e+" "+x.l)
@@ -667,7 +672,7 @@ function HeartsPanel(props){
 function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
   var scale=count/20;
-  var TARGETS={woody:Math.max(1,Math.round(5*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:0,vine:0};
+  var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:0,vine:0};
 
   var suggested=useMemo(function(){
     var byType={};
@@ -1009,7 +1014,7 @@ function SeedCalendar(props){
         return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666"}},opt.label);
       }),
       h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
-      [{k:"woody",e:"\ud83c\udf33"},{k:"perennial",e:"\ud83c\udf3c"},{k:"grass",e:"\ud83c\udf3e"}].map(function(x){
+      [{k:"tree",e:"\ud83c\udf33"},{k:"perennial",e:"\ud83c\udf3c"},{k:"grass",e:"\ud83c\udf3e"}].map(function(x){
         var g=PLANT_TYPES.find(function(g){return g.key===x.k;});
         return h("button",{key:x.k,onClick:function(){setTypeFilter(typeFilter===x.k?null:x.k);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(typeFilter===x.k?"#2d4a2d":"#e0ddd5"),background:typeFilter===x.k?"#f0faf0":"transparent",color:typeFilter===x.k?"#2d4a2d":"#666"}},x.e+" "+g.label);
       }),
@@ -1199,11 +1204,11 @@ function App(){
   useEffect(function(){
     fetch("./plants.csv")
       .then(function(r){if(!r.ok)throw new Error("no local csv");return r.text();})
-      .then(function(text){setPlants(parseCSV(text).map(rowToPlant).filter(Boolean));setLoading(false);})
+      .then(function(text){setPlants(dedupePlants(parseCSV(text).map(rowToPlant).filter(Boolean)));setLoading(false);})
       .catch(function(){
         fetch(SHEET_URL)
           .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
-          .then(function(text){setPlants(parseCSV(text).map(rowToPlant).filter(Boolean));setLoading(false);})
+          .then(function(text){setPlants(dedupePlants(parseCSV(text).map(rowToPlant).filter(Boolean)));setLoading(false);})
           .catch(function(err){setError(err.message);setLoading(false);});
       });
   },[]);
