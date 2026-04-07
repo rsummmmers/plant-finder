@@ -1175,7 +1175,7 @@ function App(){
   var _ss=useState(false),showSuggest=_ss[0],setShowSuggest=_ss[1];
   var _hm=useState(false),habitatMode=_hm[0],setHabitatMode=_hm[1];
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
-  var _po=useState(false),panelOpen=_po[0],setPanelOpen=_po[1];
+var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_po[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
