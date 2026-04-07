@@ -617,7 +617,7 @@ function HeartsPanel(props){
   else{if(mix.grass===0&&hearted.length>3)tips.push("Consider adding grasses or sedges");if((mix.tree||0)+(mix.shrub||0)===0&&hearted.length>3)tips.push("A shrub or small tree adds structure");}
 
   function copyLink(){
-var p=new URLSearchParams(window.location.search);
+var p=new URLSearchParams();
     p.set("hearts",hearts.join(","));
     if(label)p.set("label",label);
     navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
