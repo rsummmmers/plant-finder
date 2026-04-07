@@ -140,7 +140,7 @@ function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch
 
 // ── URL helpers ────────────────────────────────────────────────────────────
 function readURL(){
-  var p=new URLSearchParams(window.location.search);
+  var p=new URLSearchParams();
   return{
     view:       p.get("view")||"main",
     search:     p.get("q")||"",
