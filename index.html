@@ -4,14 +4,14 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Plant Palette Builder — for Massachusetts</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <style>
-    :root{--forest:#2d4a2d;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
+    :root{--forest:#2e5339;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
     *{box-sizing:border-box;margin:0;padding:0;}
     html{font-size:16px;}
-    body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--bark);font-size:1rem;}
+    body{background:var(--cream);font-family:'Poppins',sans-serif;color:var(--bark);font-size:1rem;}
     @media print{.no-print{display:none!important;}.print-card{break-inside:avoid;}body{background:white;}}
     .tip-wrap{position:relative;display:inline-flex;}
     .tip-wrap .tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#333;color:white;font-size:11px;padding:5px 9px;border-radius:6px;z-index:400;pointer-events:none;max-width:220px;white-space:normal;text-align:center;line-height:1.4;}
@@ -353,15 +353,15 @@ function sortPlants(plants,sortBy,siteKey){
 // ── Style helpers ─────────────────────────────────────────────────────────
 function pill(active,dark){
   return{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 12px",
-    borderRadius:20,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,
-    whiteSpace:"nowrap",border:"1.5px solid "+(active?"#2d4a2d":"#e0ddd5"),
-    background:active?(dark?"#2d4a2d":"#f0faf0"):"transparent",
-    color:active?(dark?"white":"#2d4a2d"):"#555",
+    borderRadius:20,cursor:"pointer",fontFamily:"'Poppins',sans-serif",fontSize:13,
+    whiteSpace:"nowrap",border:"1.5px solid "+(active?"#2e5339":"#e0ddd5"),
+    background:active?(dark?"#2e5339":"#f0faf0"):"transparent",
+    color:active?(dark?"white":"#2e5339"):"#555",
     fontWeight:active?"500":"normal"};
 }
 function btn(bg,fg,extra){
   return Object.assign({background:bg,color:fg,border:"none",borderRadius:8,
-    padding:"8px 16px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+    padding:"8px 16px",cursor:"pointer",fontFamily:"'Poppins',sans-serif",
     fontSize:14,fontWeight:500},extra||{});
 }
 
@@ -506,7 +506,7 @@ function PhotoGallery(props){
         onClick:function(){setLbIdx(i);},
         onError:function(ev){ev.target.style.opacity="0.2";},
         style:{width:34,height:34,borderRadius:5,objectFit:"cover",flexShrink:0,cursor:"pointer",
-          border:"2px solid "+(i===0?"#2d4a2d":"transparent"),opacity:i===0?1:0.55}});})
+          border:"2px solid "+(i===0?"#2e5339":"transparent"),opacity:i===0?1:0.55}});})
     ),
     cur2.credit&&h("div",{style:{fontSize:9,color:"#bbb",marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},cur2.credit.length>70?cur2.credit.slice(0,70)+"\u2026":cur2.credit),
     h("div",{style:{fontSize:9,color:"#ccc",marginTop:1}},"via iNaturalist \u00b7 "+photos.length+" photo"+(photos.length!==1?"s":"")+" \u00b7 click to enlarge")
@@ -536,7 +536,7 @@ function EdibleSection(props){
   // Auto-expand when relevant filter is active
   var isOpen=open||(edibleOnly&&hasEdible)||(medicinalOnly&&hasMedicinal)||(edibleOnly&&medicinalOnly);
   return h("div",{style:{marginTop:10}},
-    h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}},
+    h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2e5339",fontFamily:"inherit",padding:0}},
       hasEdible&&h("span",null,"\ud83c\udf74"),
       hasMedicinal&&h("span",null,"\u2615"),
       h("span",{style:{fontWeight:"bold"}},isOpen?"\u25b2 Hide":"\u25bc "+(hasEdible&&hasMedicinal?"Edible & medicinal":hasEdible?"Edible":"Medicinal"))
@@ -545,7 +545,7 @@ function EdibleSection(props){
       hasEdible&&h("div",{style:{marginBottom:hasMedicinal?10:0}},
         h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
           h("span",{style:{fontSize:14}},"\ud83c\udf74"),
-          h("span",{style:{fontWeight:"bold",color:"#2d4a2d"}},"Edible"),
+          h("span",{style:{fontWeight:"bold",color:"#2e5339"}},"Edible"),
           edibleCaveats&&h("span",{style:{display:"inline-flex",alignItems:"center",gap:3,background:"#fff8e1",color:"#f57f17",fontSize:11,fontWeight:500,padding:"1px 7px",borderRadius:10,marginLeft:3}},"\u26a0 with caveats")
         ),
         edibleNotes&&h("div",{style:{color:"#555"}},edibleNotes)
@@ -554,7 +554,7 @@ function EdibleSection(props){
       hasMedicinal&&h("div",null,
         h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
           h("span",{style:{fontSize:14}},"\u2615"),
-          h("span",{style:{fontWeight:"bold",color:"#2d4a2d"}},"Medicinal"),
+          h("span",{style:{fontWeight:"bold",color:"#2e5339"}},"Medicinal"),
           medicinalCaveats&&h("span",{style:{display:"inline-flex",alignItems:"center",gap:3,background:"#fff8e1",color:"#f57f17",fontSize:11,fontWeight:500,padding:"1px 7px",borderRadius:10,marginLeft:3}},"\u26a0 with caveats")
         ),
         medicinalNotes&&h("div",{style:{color:"#555"}},medicinalNotes)
@@ -569,7 +569,7 @@ function SeedSection(props){
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   if(!plant.seedStart&&!plant.seedNotes&&!plant.propagNotes)return null;
   return h("div",{style:{marginTop:10}},
-    h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}},
+    h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2e5339",fontFamily:"inherit",padding:0}},
       h("span",null,"\ud83c\udf31"),
       h("span",{style:{fontWeight:"bold"}},open?"\u25b2 Hide":"\u25bc Seed & propagation")
     ),
@@ -647,7 +647,7 @@ function PlantCard(props){
           MICROZONES.map(function(z){
             var s=plant.scores[z.key]||0;
             return h("div",{key:z.key,style:{display:"flex",alignItems:"center",gap:8}},
-              h("div",{style:{fontSize:11,width:148,color:z.key===siteKey?"#2d4a2d":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
+              h("div",{style:{fontSize:11,width:148,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
               h("div",{style:{flex:1,height:5,background:"#f0ede4",borderRadius:3,overflow:"hidden"}},
                 h("div",{style:{width:(s/5*100)+"%",height:"100%",background:SCORE_COLORS[s],borderRadius:3}})
               ),
@@ -690,8 +690,8 @@ var p=new URLSearchParams();
   return h("div",null,
     h("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:199}}),
     h("div",{style:{position:"fixed",right:0,top:0,bottom:0,width:W,background:"white",boxShadow:"-4px 0 24px rgba(0,0,0,0.12)",zIndex:200,display:"flex",flexDirection:"column"}},
-      h("div",{style:{background:"#2d4a2d",color:"white",padding:"18px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
-        h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:20}},"My palette"),
+      h("div",{style:{background:"#2e5339",color:"white",padding:"18px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:20}},"My palette"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer"}},"\u2715")
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
@@ -702,7 +702,7 @@ var p=new URLSearchParams();
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
           [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennial"},{k:"grass",e:"\ud83c\udf3e",l:"Grass"}].map(function(x){
             return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"8px 10px"}},
-              h("div",{style:{fontSize:22,fontWeight:600,color:mix[x.k]>0?"#2d4a2d":"#aaa",lineHeight:1.1}},mix[x.k]),
+              h("div",{style:{fontSize:22,fontWeight:600,color:mix[x.k]>0?"#2e5339":"#aaa",lineHeight:1.1}},mix[x.k]),
               h("div",{style:{fontSize:11,color:"#888",marginTop:1}},x.e+" "+x.l)
             );
           })
@@ -722,7 +722,7 @@ var p=new URLSearchParams();
         })
       ),
       h("div",{style:{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}},
-        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2d4a2d",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
+        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c")},"\ud83d\udda8\ufe0f Print / save PDF"),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
       )
@@ -763,9 +763,9 @@ function SuggestPanel(props){
 
   var total=Object.values(suggested).reduce(function(s,a){return s+a.length;},0);
 
-  return h("div",{style:{background:"white",border:"2px solid #2d4a2d",borderRadius:12,padding:20,marginBottom:16}},
+  return h("div",{style:{background:"white",border:"2px solid #2e5339",borderRadius:12,padding:20,marginBottom:16}},
     h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
-      h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#2d4a2d"}},"Suggested palette \u2014 "+total+" plants"),
+      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested palette \u2014 "+total+" plants"),
       h("button",{onClick:onClose,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:0,lineHeight:1}},"\u2715")
     ),
     h("div",{style:{fontSize:13,color:"#888",marginBottom:16}},"Best-fit plants for your site \u00b7 ranked by wildlife value + suitability \u00b7 tap \u2661 to save"),
@@ -791,7 +791,7 @@ function SuggestPanel(props){
       })
     ),
     h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-      h("button",{onClick:function(){Object.values(suggested).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});onClose();},style:btn("#2d4a2d","white")},"\u2665 Save all to my palette"),
+      h("button",{onClick:function(){Object.values(suggested).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});onClose();},style:btn("#2e5339","white")},"\u2665 Save all to my palette"),
       h("button",{onClick:onClose,style:btn("#f0ede4","#2c2c2c")},"Browse all matches below \u2193")
     )
   );
@@ -879,7 +879,7 @@ function HabitatView(props){
 
   return h("div",null,
     undoStack.length>0&&h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:14,padding:"10px 14px",background:"#f0faf0",border:"1px solid #c8e6c9",borderRadius:10}},
-      h("button",{onClick:handleUndo,style:{padding:"6px 14px",borderRadius:8,border:"1px solid #a5d6a7",background:"white",color:"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"\u21a9 Undo"),
+      h("button",{onClick:handleUndo,style:{padding:"6px 14px",borderRadius:8,border:"1px solid #a5d6a7",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"\u21a9 Undo"),
       h("button",{onClick:handleReset,style:{padding:"6px 14px",borderRadius:8,border:"1px solid #c8e6c9",background:"white",color:"#888",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Reset"),
       h("span",{style:{fontSize:12,color:"#5a8a5a",fontStyle:"italic"}},removedLatins.length+" plant"+(removedLatins.length!==1?"s":"")+" removed \u00b7 showing next best replacements from filtered pool")
     ),
@@ -888,7 +888,7 @@ function HabitatView(props){
       h("div",{style:{marginLeft:"auto",display:"flex",gap:5,alignItems:"center"}},
         h("span",{style:{fontSize:12,color:"#aaa"}},"Sort:"),
         [{v:"wildlife",l:"\ud83e\udd8b Insect value"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
-          return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,border:"1px solid "+(sortBy===x.v?"#2d4a2d":"#e0ddd5"),background:sortBy===x.v?"#2d4a2d":"transparent",color:sortBy===x.v?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l);
+          return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l);
         })
       )
     ),
@@ -906,7 +906,7 @@ function HabitatView(props){
       return h("div",{key:ld.key,style:{marginBottom:20}},
         h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
           h("span",{style:{fontSize:22}},ld.emoji),
-          h("span",{style:{fontFamily:"'Playfair Display',serif",fontSize:18,color:"#2d4a2d"}},ld.title),
+          h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:"#2e5339"}},ld.title),
           h("span",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},ld.plants.length)
         ),
         ld.plants.map(function(p){
@@ -963,11 +963,11 @@ function SeedCard(props){
             var mAdj=i<s?i+12:i;
             var active=mAdj>=s&&mAdj<=e;
             var cur2=i===monthIdx;
-            return h("div",{key:i,title:m,style:{flex:1,height:6,borderRadius:2,background:cur2?"#2d4a2d":active?"#8aab8a":"#e0e0e0"}});
+            return h("div",{key:i,title:m,style:{flex:1,height:6,borderRadius:2,background:cur2?"#2e5339":active?"#8aab8a":"#e0e0e0"}});
           })
         ),
         h("div",{style:{display:"flex",gap:2,marginTop:2}},
-          MONTHS_SHORT.map(function(m,i){return h("div",{key:i,style:{flex:1,fontSize:8,color:i===monthIdx?"#2d4a2d":"#ccc",textAlign:"center"}},m[0]);})
+          MONTHS_SHORT.map(function(m,i){return h("div",{key:i,style:{flex:1,fontSize:8,color:i===monthIdx?"#2e5339":"#ccc",textAlign:"center"}},m[0]);})
         )
       )
     )
@@ -1031,16 +1031,16 @@ function BloomCalendar(props){
   function toggleStatus(k){setStatuses(function(prev){return prev.indexOf(k)>=0?prev.filter(function(x){return x!==k;}):[...prev,k];});}
 
   var pill=function(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(active?(fg||"#2d4a2d")+"44":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2d4a2d":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(active?(fg||"#2e5339")+"44":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   };
 
-  return h("div",{style:{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
     // Header
-    h("div",{style:{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}},
+    h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
       h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
-          h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:400}},"\ud83c\udf38 Bloom Calendar"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf38 Bloom Calendar"),
           h("div",{style:{fontSize:11,opacity:0.6,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}},"Massachusetts \u00b7 What\u2019s flowering and when")
         )
       )
@@ -1058,7 +1058,7 @@ function BloomCalendar(props){
         h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
         h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
         [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
-          return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2d4a2d":"#e0ddd5"),background:colorFilter===x.v?"#2d4a2d":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
+          return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
         })
       )
     ),
@@ -1066,7 +1066,7 @@ function BloomCalendar(props){
     h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
       h("div",{style:{display:"flex",gap:3}},
         MONTHS_SHORT.map(function(m,i){
-          return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2d4a2d":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2d4a2d":"#ccc",border:"1.5px solid "+(selMonth===i?"#2d4a2d":monthCounts[i]>0?"#c8e6c9":"transparent")}},
+          return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2e5339":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2e5339":"#ccc",border:"1.5px solid "+(selMonth===i?"#2e5339":monthCounts[i]>0?"#c8e6c9":"transparent")}},
             m,
             h("div",{style:{fontSize:10,marginTop:2,color:selMonth===i?"rgba(255,255,255,0.7)":monthCounts[i]>0?"#4a7c59":"#ccc"}},monthCounts[i]||"")
           );
@@ -1081,7 +1081,7 @@ function BloomCalendar(props){
           h("tr",null,
             h("th",{style:{textAlign:"left",fontSize:11,color:"#aaa",padding:"4px 8px 4px 0",width:150,fontWeight:500}},"Plant"),
             MONTHS_SHORT.map(function(m,i){
-              return h("th",{key:i,style:{fontSize:10,color:selMonth===i?"#2d4a2d":"#aaa",padding:"4px 1px",textAlign:"center",fontWeight:selMonth===i?700:400,cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},m);
+              return h("th",{key:i,style:{fontSize:10,color:selMonth===i?"#2e5339":"#aaa",padding:"4px 1px",textAlign:"center",fontWeight:selMonth===i?700:400,cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},m);
             })
           )
         ),
@@ -1101,7 +1101,7 @@ function BloomCalendar(props){
                     background:hex,
                     border:isWhite?"1px solid #d0c8b8":"none",
                     opacity:selMonth!==null&&selMonth!==i?0.4:1,
-                    outline:selMonth===i?"2px solid #2d4a2d":"none",
+                    outline:selMonth===i?"2px solid #2e5339":"none",
                     outlineOffset:"1px"
                   }})
                 );
@@ -1114,7 +1114,7 @@ function BloomCalendar(props){
     // Detail panel
     selMonth!==null&&h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
       h("div",{style:{borderTop:"2px solid #e0ddd5",paddingTop:14}},
-        h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:20,marginBottom:12,color:"#2d4a2d"}},
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,marginBottom:12,color:"#2e5339"}},
           MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming"
         ),
         selPlants.length===0&&h("div",{style:{color:"#aaa",fontStyle:"italic",fontSize:14}},"No plants match your filters for this month."),
@@ -1237,7 +1237,7 @@ function SeedCalendar(props){
     return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:10,margin:"8px 0 10px",paddingBottom:8,borderBottom:"2px solid #e0ddd5"}},
         h("div",{style:{width:12,height:12,borderRadius:"50%",background:dot,flexShrink:0}}),
-        h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:20}},title),
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:20}},title),
         h("div",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},count),
         h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},hint)
       ),
@@ -1245,12 +1245,12 @@ function SeedCalendar(props){
     );
   }
 
-  return h("div",{style:{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
-    h("div",{style:{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
+    h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
       h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
-          h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:400}},"\ud83c\udf31 Seed & Propagation Calendar"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf31 Seed & Propagation Calendar"),
           h("div",{style:{fontSize:11,opacity:0.6,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}},"Massachusetts \u00b7 What to collect and when")
         )
       )
@@ -1259,13 +1259,13 @@ function SeedCalendar(props){
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+11)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:15}},"\u25c0"),
-          h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:22,flex:1}},MONTHS[monthIdx]),
-          h("button",{onClick:function(){setMonthIdx(now.getMonth());},style:{background:"#2d4a2d",color:"white",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Today"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,flex:1}},MONTHS[monthIdx]),
+          h("button",{onClick:function(){setMonthIdx(now.getMonth());},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Today"),
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+1)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:15}},"\u25b6")
         ),
         h("div",{style:{display:"flex",gap:3}},
           MONTHS_SHORT.map(function(m,i){
-            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",fontSize:10,cursor:"pointer",padding:"3px 1px",borderRadius:4,background:i===monthIdx?"#2d4a2d":"transparent",color:i===monthIdx?"white":"#888"}},
+            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",fontSize:10,cursor:"pointer",padding:"3px 1px",borderRadius:4,background:i===monthIdx?"#2e5339":"transparent",color:i===monthIdx?"white":"#888"}},
               m,
               h("div",{style:{height:4,borderRadius:2,marginTop:3,background:i===monthIdx?"rgba(255,255,255,0.4)":monthCounts[i]>0?"#8aab8a":"#e0e0e0"}}),
               h("div",{style:{fontSize:9,marginTop:1,color:i===monthIdx?"rgba(255,255,255,0.7)":"#ccc"}},monthCounts[i]||"")
@@ -1282,7 +1282,7 @@ function SeedCalendar(props){
       h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
       [{k:"tree",e:"\ud83c\udf33"},{k:"perennial",e:"\ud83c\udf3c"},{k:"grass",e:"\ud83c\udf3e"}].map(function(x){
         var g=PLANT_TYPES.find(function(g){return g.key===x.k;});
-        return h("button",{key:x.k,onClick:function(){setTypeFilter(typeFilter===x.k?null:x.k);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(typeFilter===x.k?"#2d4a2d":"#e0ddd5"),background:typeFilter===x.k?"#f0faf0":"transparent",color:typeFilter===x.k?"#2d4a2d":"#666"}},x.e+" "+g.label);
+        return h("button",{key:x.k,onClick:function(){setTypeFilter(typeFilter===x.k?null:x.k);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(typeFilter===x.k?"#2e5339":"#e0ddd5"),background:typeFilter===x.k?"#f0faf0":"transparent",color:typeFilter===x.k?"#2e5339":"#666"}},x.e+" "+g.label);
       }),
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
@@ -1311,7 +1311,7 @@ function ShareBar(props){
   return h("div",{className:"no-print",style:{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center",background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"9px 14px",marginTop:10,marginBottom:4}},
     editing?h("div",{style:{display:"flex",gap:7,flex:1,flexWrap:"wrap"}},
       h("input",{autoFocus:true,value:val,onChange:function(ev){setVal(ev.target.value);},onKeyDown:function(ev){if(ev.key==="Enter")save();if(ev.key==="Escape")setEditing(false);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}}),
-      h("button",{onClick:save,style:btn("#2d4a2d","white",{padding:"5px 14px",fontSize:13})},"Save"),
+      h("button",{onClick:save,style:btn("#2e5339","white",{padding:"5px 14px",fontSize:13})},"Save"),
       h("button",{onClick:function(){setEditing(false);},style:btn("#f0ede4","#555",{padding:"5px 10px",fontSize:13})},"Cancel")
     ):h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
       h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this palette"),
@@ -1336,7 +1336,7 @@ function FilterDrawer(props){
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
   function P(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2d4a2d":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2d4a2d":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
   return h("div",null,
@@ -1344,7 +1344,7 @@ function FilterDrawer(props){
     h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",overflowY:"auto"}},
       h("div",{style:{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}}),
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}},
-        h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:18}},"Filters"),
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
       h("div",{style:{padding:"16px 20px 30px",display:"flex",flexDirection:"column",gap:18}},
@@ -1369,14 +1369,14 @@ function FilterDrawer(props){
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},
             [{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return P(o.l,f.moisture===o.v,function(){set({moisture:f.moisture===o.v?null:o.v});});}),
             h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,padding:"6px 0"}},
-              h("input",{type:"checkbox",checked:f.irrigated,onChange:function(ev){set({irrigated:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
+              h("input",{type:"checkbox",checked:f.irrigated,onChange:function(ev){set({irrigated:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
               "\ud83d\udca6 Will be irrigated"
             )
           )
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},inferredSun?"Sun \u2014 inferred from site \u2713":"Sun"),
-          inferredSun?h("div",{style:{fontSize:15,color:"#2d4a2d",fontWeight:500,padding:"6px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
+          inferredSun?h("div",{style:{fontSize:15,color:"#2e5339",fontWeight:500,padding:"6px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
             [{v:"full",l:"\u2600\ufe0f Full sun"},{v:"part",l:"\u26c5 Part shade"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return P(o.l,f.sun===o.v,function(){set({sun:f.sun===o.v?null:o.v});});})
           )
@@ -1396,7 +1396,7 @@ function FilterDrawer(props){
         flowerColors.length>0&&h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},flowerColors.map(function(c){
-            return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:"1.5px solid "+(f.rflower.indexOf(c)>=0?"#2d4a2d":"#e0ddd5"),background:f.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:f.rflower.indexOf(c)>=0?"#2d4a2d":"#666"}},
+            return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:"1.5px solid "+(f.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:f.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:f.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
@@ -1404,19 +1404,19 @@ function FilterDrawer(props){
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
-            h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
+            h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
             "\u2744\ufe0f Winter interest"
           ),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:10}},
-            h("input",{type:"checkbox",checked:f.edibleOnly||false,onChange:function(ev){set({edibleOnly:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
+            h("input",{type:"checkbox",checked:f.edibleOnly||false,onChange:function(ev){set({edibleOnly:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
             "\ud83c\udf74 Edible"
           ),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:10}},
-            h("input",{type:"checkbox",checked:f.medicinalOnly||false,onChange:function(ev){set({medicinalOnly:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
+            h("input",{type:"checkbox",checked:f.medicinalOnly||false,onChange:function(ev){set({medicinalOnly:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
             "\u2615 Medicinal"
           )
         ),
-        h("button",{onClick:onClose,style:btn("#2d4a2d","white",{borderRadius:10,padding:"13px",fontSize:15,marginTop:4})},"Show results")
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,marginTop:4})},"Show results")
       )
     )
   );
@@ -1455,14 +1455,14 @@ function PaletteView(props){
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1.5px solid #e0ddd5",borderRadius:8,padding:"6px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}}),
-        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2d4a2d",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
+        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
         [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"}].map(function(x){
           return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"6px 10px",textAlign:"center"}},
-            h("div",{style:{fontSize:18,fontWeight:500,color:mix[x.k]>0?"#2d4a2d":"#ccc",lineHeight:1.2}},mix[x.k]),
+            h("div",{style:{fontSize:18,fontWeight:500,color:mix[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},mix[x.k]),
             h("div",{style:{fontSize:10,color:"#888",marginTop:1}},x.e+" "+x.l)
           );
         })
@@ -1483,7 +1483,7 @@ function PaletteView(props){
     hearted.length>0&&results.length===0&&h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
       h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette or our database yet."),
-      h("button",{style:{background:"#2d4a2d",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+      h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
     ),
     // Plant cards
     results.map(function(p){
@@ -1591,18 +1591,20 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
 
     // Header
-    h("div",{style:{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}},
+    h("div",{style:{position:"relative",overflow:"hidden",minHeight:140}},
+      h("img",{src:"https://raw.githubusercontent.com/rsummmmers/plant-finder/main/header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
+      h("div",{style:{position:"absolute",inset:0,background:"rgba(46,83,57,0.72)"}}),
+      h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:"22px 20px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}},
         h("div",null,
-          h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:400,letterSpacing:"-0.3px"}},"Plant Palette Builder"),
-          h("div",{style:{fontSize:13,opacity:0.75,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}},"for Massachusetts")
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:28,fontWeight:600,color:"#f0ede4",letterSpacing:"-0.2px",lineHeight:1.2}},"Plant Palette Builder"),
+          h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:13,color:"rgba(240,237,228,0.8)",letterSpacing:"0.05em",marginTop:4}},"for Massachusetts")
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
-          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar"),
-          h("button",{onClick:function(){setView("bloom");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf38 Bloom calendar")
+          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar"),
+          h("button",{onClick:function(){setView("bloom");},style:{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.25)",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf38 Bloom calendar")
         )
       )
     ),
@@ -1613,9 +1615,9 @@ function App(){
 
         // Preset buttons
         h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}},
-          h("button",{onClick:function(){setShowSuggest(!showSuggest);setHabitatMode(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:showSuggest?"#2d4a2d":"white",color:showSuggest?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
-          h("button",{onClick:function(){setHabitatMode(!habitatMode);setShowSuggest(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:habitatMode?"#2d4a2d":"white",color:habitatMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\ud83c\udf3f Habitat patch"+(habitatMode?" \u2713":"")),
-          h("button",{onClick:function(){setPaletteMode(!paletteMode);setShowSuggest(false);setHabitatMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:paletteMode?"#2d4a2d":"white",color:paletteMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},
+          h("button",{onClick:function(){setShowSuggest(!showSuggest);setHabitatMode(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:showSuggest?"#2e5339":"white",color:showSuggest?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
+          h("button",{onClick:function(){setHabitatMode(!habitatMode);setShowSuggest(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:habitatMode?"#2e5339":"white",color:habitatMode?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\ud83c\udf3f Habitat patch"+(habitatMode?" \u2713":"")),
+          h("button",{onClick:function(){setPaletteMode(!paletteMode);setShowSuggest(false);setHabitatMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:paletteMode?"#2e5339":"white",color:paletteMode?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},
             "\u2665 My palette",
             hearts.length>0&&h("span",{style:{background:paletteMode?"rgba(255,255,255,0.3)":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500,marginLeft:2}},hearts.length)
           ),
@@ -1623,7 +1625,7 @@ function App(){
             h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
             [{n:10,l:"Small",desc:"~10 plants · a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants · typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants · meadow, woodland edge, or larger restoration"}].map(function(x){
               return h("span",{key:x.n,className:"tip-wrap"},
-                h("button",{onClick:function(){setPatchSize(x.n);},style:{padding:"5px 10px",borderRadius:16,border:"1px solid "+(patchSize===x.n?"#2d4a2d":"#e0ddd5"),background:patchSize===x.n?"#2d4a2d":"white",color:patchSize===x.n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l),
+                h("button",{onClick:function(){setPatchSize(x.n);},style:{padding:"5px 10px",borderRadius:16,border:"1px solid "+(patchSize===x.n?"#2e5339":"#e0ddd5"),background:patchSize===x.n?"#2e5339":"white",color:patchSize===x.n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l),
                 h("span",{className:"tip"},x.desc)
               );
             })
@@ -1638,11 +1640,11 @@ function App(){
 
         // Mobile filter button
         isMobile?h("div",{style:{paddingBottom:10,display:"flex",gap:8,alignItems:"center"}},
-          h("button",{onClick:function(){setDrawerOpen(true);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2d4a2d":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2d4a2d":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
+          h("button",{onClick:function(){setDrawerOpen(true);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2e5339":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2e5339":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
             "\u2699\ufe0f Filters",
-            activeFilterCount>0&&h("span",{style:{background:"#2d4a2d",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},activeFilterCount)
+            activeFilterCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},activeFilterCount)
           ),
-          zone&&h("button",{onClick:function(){setZone(null);},style:{display:"flex",alignItems:"center",gap:5,padding:"10px 14px",borderRadius:10,border:"1.5px solid #2d4a2d",background:"#2d4a2d",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone)+" \u2715")
+          zone&&h("button",{onClick:function(){setZone(null);},style:{display:"flex",alignItems:"center",gap:5,padding:"10px 14px",borderRadius:10,border:"1.5px solid #2e5339",background:"#2e5339",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone)+" \u2715")
         ):h("div",null,
           // Desktop Row 1: Status + type + height
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",paddingBottom:8}},
@@ -1702,7 +1704,7 @@ function App(){
             h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
             h("button",{onClick:function(){setShowMore(!showMore);},style:Object.assign({},pill(moreCount>0),{padding:"5px 12px",borderRadius:8})},
               "More ",
-              moreCount>0&&h("span",{style:{background:"#2d4a2d",color:"white",borderRadius:10,padding:"0 6px",fontSize:10,marginLeft:2}},moreCount),
+              moreCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 6px",fontSize:10,marginLeft:2}},moreCount),
               " "+(showMore?"\u25b2":"\u25bc")
             )
           ),
@@ -1712,7 +1714,7 @@ function App(){
             h("div",{style:{fontSize:13,color:"#888",marginBottom:10,fontStyle:"italic"}},"Choose a site type to sort plants by how well they fit there."),
             h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}},
               MICROZONES.map(function(z){
-                return h("button",{key:z.key,onClick:function(){setZone(z.key===zone?null:z.key);setShowZones(false);},style:{background:zone===z.key?"#2d4a2d":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:"2px solid "+(zone===z.key?"#2d4a2d":"#e0ddd5"),borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}},
+                return h("button",{key:z.key,onClick:function(){setZone(z.key===zone?null:z.key);setShowZones(false);},style:{background:zone===z.key?"#2e5339":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:"2px solid "+(zone===z.key?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}},
                   h("div",{style:{fontSize:18,marginBottom:2}},z.emoji),
                   h("div",{style:{fontWeight:500,fontSize:13,marginBottom:2}},z.label),
                   h("div",{style:{fontSize:11,opacity:0.6,lineHeight:1.4}},z.desc)
@@ -1729,14 +1731,14 @@ function App(){
                 h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
                   [{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return h("button",{key:o.v,onClick:function(){setFilters(function(f){return Object.assign({},f,{moisture:f.moisture===o.v?null:o.v});});},style:pill(filters.moisture===o.v)},o.l);}),
                   h("label",{style:{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:13,padding:"0 4px"}},
-                    h("input",{type:"checkbox",checked:filters.irrigated,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{irrigated:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
+                    h("input",{type:"checkbox",checked:filters.irrigated,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{irrigated:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
                     "\ud83d\udca6 Irrigated"
                   )
                 )
               ),
               h("div",null,
                 h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:4}},inferredSun?"Sun \u2014 inferred \u2713":"Sun"),
-                inferredSun?h("div",{style:{fontSize:14,color:"#2d4a2d",fontWeight:500,padding:"5px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
+                inferredSun?h("div",{style:{fontSize:14,color:"#2e5339",fontWeight:500,padding:"5px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
                 h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
                   [{v:"full",l:"\u2600\ufe0f Full"},{v:"part",l:"\u26c5 Part"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return h("button",{key:o.v,onClick:function(){setFilters(function(f){return Object.assign({},f,{sun:f.sun===o.v?null:o.v});});},style:pill(filters.sun===o.v)},o.l);})
                 )
@@ -1745,7 +1747,7 @@ function App(){
                 h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
                 h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
                   flowerColors.map(function(c){
-                    return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2d4a2d":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:12,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2d4a2d":"#666"}},
+                    return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:12,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
                       h("div",{style:{width:10,height:10,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
                     );
                   })
@@ -1754,15 +1756,15 @@ function App(){
               h("div",null,
                 h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
                 h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},
-                  h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
+                  h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
                   "\u2744\ufe0f Winter interest"
                 ),
                 h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
+                  h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
                   "\ud83c\udf74 Edible"
                 ),
                 h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
+                  h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
                   "\u2615 Medicinal"
                 )
               )
@@ -1781,12 +1783,12 @@ function App(){
 
       // Active chips
       activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
-        zone&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone),h("span",{onClick:function(){setZone(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-        filters.concerns.map(function(c){var opt=CONCERN_OPTS.find(function(o){return o.key===c;});return opt?h("div",{key:c,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},opt.emoji+" "+opt.label,h("span",{onClick:function(){togCx(c);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
-        filters.ptypes.map(function(k){var g=PLANT_TYPES.find(function(t){return t.key===k;});return g?h("div",{key:k,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},g.emoji+" "+g.label,h("span",{onClick:function(){togPt(k);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
-        filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-        filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-        filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        zone&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone),h("span",{onClick:function(){setZone(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        filters.concerns.map(function(c){var opt=CONCERN_OPTS.find(function(o){return o.key===c;});return opt?h("div",{key:c,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},opt.emoji+" "+opt.label,h("span",{onClick:function(){togCx(c);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
+        filters.ptypes.map(function(k){var g=PLANT_TYPES.find(function(t){return t.key===k;});return g?h("div",{key:k,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},g.emoji+" "+g.label,h("span",{onClick:function(){togPt(k);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
+        filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
         h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},style:{fontSize:12,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"Clear all")
       ),
 
@@ -1818,7 +1820,7 @@ function App(){
             h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
               h("span",{style:{fontSize:12,color:"#aaa"}},"Sort:"),
               [{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
-                return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,fontSize:12,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2d4a2d":"#e0ddd5"),background:sortBy===x.v?"#2d4a2d":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
+                return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,fontSize:12,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
               })
             )
           ),
@@ -1835,11 +1837,11 @@ function App(){
 
     // Footer
     h("div",{style:{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5",lineHeight:2}},
-      h("div",null,"Created by ",h("a",{href:"https://www.summersgardening.com",target:"_blank",rel:"noopener noreferrer",style:{color:"#2d4a2d",textDecoration:"none"}},"Rachel Noack Summers / Summers EcoScaping")," \u00b7 Built with Claude (Anthropic)"),
+      h("div",null,"Created by ",h("a",{href:"https://www.summersgardening.com",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Rachel Noack Summers / Summers EcoScaping")," \u00b7 Built with Claude (Anthropic)"),
       h("div",null,"Images from iNaturalist and other Creative Commons sources \u00b7 Plant data compiled from publicly available sources"),
-      h("div",null,"Native plant designations specific to Massachusetts per ",h("a",{href:"https://gobotany.nativeplanttrust.org",target:"_blank",rel:"noopener noreferrer",style:{color:"#2d4a2d",textDecoration:"none"}},"Go Botany / Native Plant Trust")),
-      h("div",null,h("a",{href:SHEET_VIEW,target:"_blank",rel:"noopener noreferrer",style:{color:"#2d4a2d",textDecoration:"none"}},"View source data \u2192")," \u00b7 Edits, suggestions, additions and corrections are welcome"),
-      h("div",null,"Questions, suggestions, collaboration: ",h("a",{href:"mailto:rsummmmers@gmail.com",style:{color:"#2d4a2d",textDecoration:"none"}},"rsummmmers@gmail.com"))
+      h("div",null,"Native plant designations specific to Massachusetts per ",h("a",{href:"https://gobotany.nativeplanttrust.org",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Go Botany / Native Plant Trust")),
+      h("div",null,h("a",{href:SHEET_VIEW,target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"View source data \u2192")," \u00b7 Edits, suggestions, additions and corrections are welcome"),
+      h("div",null,"Questions, suggestions, collaboration: ",h("a",{href:"mailto:rsummmmers@gmail.com",style:{color:"#2e5339",textDecoration:"none"}},"rsummmmers@gmail.com"))
     )
   );
 }
