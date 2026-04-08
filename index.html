@@ -1192,6 +1192,76 @@ function FilterDrawer(props){
   );
 }
 
+// ── PaletteView ───────────────────────────────────────────────────────────
+function PaletteView(props){
+  var hearts=props.hearts,plants=props.plants,onHeart=props.onHeart,onClear=props.onClear;
+  var _s=useState(""),search=_s[0],setSearch=_s[1];
+  var _c=useState(false),copied=_c[0],setCopied=_c[1];
+  var _lb=useState(""),label=_lb[0],setLabel=_lb[1];
+
+  var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
+  var results=useMemo(function(){
+    if(!search.trim())return hearted;
+    var q=search.toLowerCase();
+    return hearted.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
+  },[hearted,search]);
+
+  var mix=useMemo(function(){
+    var c={tree:0,shrub:0,perennial:0,grass:0,fern:0,ground:0,vine:0};
+    hearted.forEach(function(p){if(c[p.typeKey]!==undefined)c[p.typeKey]++;});
+    return c;
+  },[hearted]);
+
+  function copyLink(){
+    var p=new URLSearchParams();
+    p.set("hearts",hearts.join(","));
+    if(label)p.set("label",label);
+    navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
+      .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});
+  }
+
+  return h("div",null,
+    // Palette header bar
+    h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
+        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1.5px solid #e0ddd5",borderRadius:8,padding:"6px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}}),
+        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2d4a2d",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
+        h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
+        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
+      ),
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
+        [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"}].map(function(x){
+          return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"6px 10px",textAlign:"center"}},
+            h("div",{style:{fontSize:18,fontWeight:500,color:mix[x.k]>0?"#2d4a2d":"#ccc",lineHeight:1.2}},mix[x.k]),
+            h("div",{style:{fontSize:10,color:"#888",marginTop:1}},x.e+" "+x.l)
+          );
+        })
+      )
+    ),
+    // Search within palette
+    h("div",{style:{position:"relative",marginBottom:12}},
+      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your palette\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
+      search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
+    ),
+    // Empty state
+    hearted.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
+      h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
+      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:8}},"Your palette is empty"),
+      h("div",{style:{fontSize:13}},"Heart plants in the main list to add them here.")
+    ),
+    // No search results → suggest a plant
+    hearted.length>0&&results.length===0&&h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#888"}},
+      h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
+      h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette or our database yet."),
+      h("button",{style:{background:"#2d4a2d",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+    ),
+    // Plant cards
+    results.map(function(p){
+      return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart});
+    })
+  );
+}
+
 // ── App ───────────────────────────────────────────────────────────────────
 function App(){
   var _p=useState([]),plants=_p[0],setPlants=_p[1];
@@ -1214,8 +1284,8 @@ function App(){
   var _sm=useState(false),showMore=_sm[0],setShowMore=_sm[1];
   var _ss=useState(false),showSuggest=_ss[0],setShowSuggest=_ss[1];
   var _hm=useState(false),habitatMode=_hm[0],setHabitatMode=_hm[1];
+  var _pm=useState(initURL.sharedHearts.length>0),paletteMode=_pm[0],setPaletteMode=_pm[1];
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
-var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_po[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
@@ -1301,9 +1371,9 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
           h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar"),
-          h("button",{onClick:function(){setPanelOpen(true);},style:{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.12)",borderRadius:24,padding:"8px 16px",border:"none",color:"#f0ede4",cursor:"pointer",fontSize:14,flexShrink:0}},
+          h("button",{onClick:function(){setPaletteMode(!paletteMode);setShowSuggest(false);setHabitatMode(false);},style:{display:"flex",alignItems:"center",gap:8,background:paletteMode?"white":"rgba(255,255,255,0.12)",borderRadius:24,padding:"8px 16px",border:"none",color:paletteMode?"#2d4a2d":"#f0ede4",cursor:"pointer",fontSize:14,flexShrink:0,fontWeight:paletteMode?500:400}},
             "\u2665 My palette",
-            h("span",{style:{background:"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500}},hearts.length)
+            h("span",{style:{background:paletteMode?"#2d4a2d":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500}},hearts.length)
           )
         )
       )
@@ -1315,8 +1385,8 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
 
         // Preset buttons
         h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}},
-          h("button",{onClick:function(){setShowSuggest(!showSuggest);setHabitatMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:showSuggest?"#2d4a2d":"white",color:showSuggest?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
-          h("button",{onClick:function(){setHabitatMode(!habitatMode);setShowSuggest(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:habitatMode?"#2d4a2d":"white",color:habitatMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\ud83c\udf3f Habitat patch"+(habitatMode?" \u2713":"")),
+          h("button",{onClick:function(){setShowSuggest(!showSuggest);setHabitatMode(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:showSuggest?"#2d4a2d":"white",color:showSuggest?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
+          h("button",{onClick:function(){setHabitatMode(!habitatMode);setShowSuggest(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:habitatMode?"#2d4a2d":"white",color:habitatMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\ud83c\udf3f Habitat patch"+(habitatMode?" \u2713":"")),
           habitatMode&&h("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"0 4px"}},
             h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
             [{n:10,l:"Small",desc:"~10 plants · a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants · typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants · meadow, woodland edge, or larger restoration"}].map(function(x){
@@ -1494,6 +1564,8 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
       !loading&&!error&&h("div",null,
         showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
 
+        paletteMode?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);}}):h("div",null,
+
         noFilters&&!showSuggest&&!habitatMode&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
           h("span",{style:{fontSize:28,flexShrink:0}},"\ud83c\udf31"),
           h("div",null,
@@ -1525,10 +1597,9 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
             h("div",{style:{fontSize:13}},"Try loosening the height cap, removing a concern, or broadening moisture or sun settings.")
           )
         )
+        )
       )
     ),
-
-    h(HeartsPanel,{hearts:hearts,plants:plants,open:panelOpen,onClose:function(){setPanelOpen(false);},isHabitat:habitatMode,onClear:function(){setHearts([]);saveHearts([]);}}),
 
     // Footer
     h("div",{style:{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5",lineHeight:2}},
