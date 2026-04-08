@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <style>
-    :root{--forest:#465d45;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
+    :root{--forest:#2d4a2d;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
     *{box-sizing:border-box;margin:0;padding:0;}
     html{font-size:16px;}
     body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--bark);font-size:1rem;}
@@ -122,6 +122,29 @@ var COLOR_MAP={
   burgundy:"#6d1f1f",bronze:"#cd7f32",gold:"#ffc107","blue-green":"#00695c",
 };
 
+// Default display hex for bloom calendar bars — more visually accurate than COLOR_MAP
+var FLOWER_HEX_MAP={
+  white:"#F5F0E8",cream:"#F5E6A3",yellow:"#F9C820",golden:"#FFB300",
+  "yellow-green":"#C8D836","orange":"#F4741E",red:"#C0392B",coral:"#E8624A",
+  pink:"#E8829A",rose:"#C2456A",magenta:"#C2187A",maroon:"#7B2340",
+  burgundy:"#6D1F38",purple:"#7B4EA0",violet:"#5B3E9E",lavender:"#9B89C4",
+  blue:"#4A7FC1",green:"#5A9E5A",brown:"#8B6347",tan:"#C4A882",silver:"#B0B8C0",
+};
+
+function getBloomHex(plant){
+  if(plant.flowerColorHex)return plant.flowerColorHex;
+  var first=(plant.flowerColor||"").split("|")[0].trim().toLowerCase();
+  return FLOWER_HEX_MAP[first]||"#aab8a0";
+}
+
+function blooms(plant,m){
+  if(plant.bloomStart<0||plant.bloomEnd<0)return false;
+  var s=plant.bloomStart,e=plant.bloomEnd;
+  if(e<s)e+=12;
+  var mAdj=m<s?m+12:m;
+  return mAdj>=s&&mAdj<=e;
+}
+
 var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var MONTHS_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -228,6 +251,9 @@ function rowToPlant(row){
     common:row["Common Name"]||"",latin:row["Latin Name"]||"",
     category:cat,status:status,
     bloom:row["Bloom Period"]||"",seasonal:row["Seasonal Interest"]||"",
+    bloomStart:row["bloom_start_idx"]!==undefined&&row["bloom_start_idx"]!==""?parseInt(row["bloom_start_idx"]):-1,
+    bloomEnd:row["bloom_end_idx"]!==undefined&&row["bloom_end_idx"]!==""?parseInt(row["bloom_end_idx"]):-1,
+    flowerColorHex:row["flower_color_hex"]||"",
     evergreen:row["Evergreen"]||"",height:row["Height Class"]||"",
     heightFt:parseFloat(row["Max Height (ft)"])||0,
     sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
@@ -948,6 +974,210 @@ function SeedCard(props){
   );
 }
 
+// ── BloomCalendar ─────────────────────────────────────────────────────────
+function BloomCalendar(props){
+  var plants=props.plants,onBack=props.onBack;
+  var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
+  var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
+  var _src=useState("all"),source=_src[0],setSource=_src[1];
+  var _col=useState("all"),colorFilter=_col[0],setColorFilter=_col[1];
+  var _ph=useState([]),paletteHearts=_ph[0];
+
+  // Load hearts from localStorage for "my palette" toggle
+  var hearts=useMemo(function(){try{return JSON.parse(localStorage.getItem("ppb_hearts_v2")||"[]");}catch(e){return[];}},[]);
+
+  var eligible=useMemo(function(){
+    return plants.filter(function(p){
+      if(p.bloomStart<0||p.bloomEnd<0)return false;
+      if(!matchStatus(p,statuses))return false;
+      if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
+      if(colorFilter!=="all"){
+        var cols=(p.flowerColor||"").split("|").map(function(c){return c.trim().toLowerCase();});
+        var allowed=BLOOM_COLOR_GROUPS[colorFilter]||[];
+        if(!cols.some(function(c){return allowed.indexOf(c)>=0;}))return false;
+      }
+      return true;
+    });
+  },[plants,statuses,source,colorFilter,hearts]);
+
+  var monthCounts=useMemo(function(){
+    var c=new Array(12).fill(0);
+    eligible.forEach(function(p){for(var m=0;m<12;m++){if(blooms(p,m))c[m]++;}});
+    return c;
+  },[eligible]);
+
+  var selPlants=useMemo(function(){
+    if(selMonth===null)return[];
+    return eligible.filter(function(p){return blooms(p,selMonth);})
+      .sort(function(a,b){return a.common.localeCompare(b.common);});
+  },[eligible,selMonth]);
+
+  // Suggestions: plants not in palette blooming selMonth
+  var suggestions=useMemo(function(){
+    if(selMonth===null||source!=="hearts")return[];
+    return plants.filter(function(p){
+      if(hearts.indexOf(p.latin)>=0)return false;
+      if(!blooms(p,selMonth))return false;
+      if(!matchStatus(p,["native","nearnative"]))return false;
+      if(colorFilter!=="all"){
+        var cols=(p.flowerColor||"").split("|").map(function(c){return c.trim().toLowerCase();});
+        var allowed=BLOOM_COLOR_GROUPS[colorFilter]||[];
+        if(!cols.some(function(c){return allowed.indexOf(c)>=0;}))return false;
+      }
+      return true;
+    }).sort(function(a,b){return(b.caterpillars||0)-(a.caterpillars||0);}).slice(0,8);
+  },[plants,hearts,selMonth,source,colorFilter]);
+
+  function toggleStatus(k){setStatuses(function(prev){return prev.indexOf(k)>=0?prev.filter(function(x){return x!==k;}):[...prev,k];});}
+
+  var pill=function(label,active,onClick,bg,fg){
+    return h("button",{onClick:onClick,style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(active?(fg||"#2d4a2d")+"44":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2d4a2d":"#666",fontWeight:active?"500":"normal"}},label);
+  };
+
+  return h("div",{style:{fontFamily:"'DM Sans',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
+    // Header
+    h("div",{style:{background:"#2d4a2d",color:"#f0ede4",padding:"18px 20px 16px"}},
+      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+        h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
+        h("div",null,
+          h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:400}},"\ud83c\udf38 Bloom Calendar"),
+          h("div",{style:{fontSize:11,opacity:0.6,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}},"Massachusetts \u00b7 What\u2019s flowering and when")
+        )
+      )
+    ),
+    // Filters
+    h("div",{style:{position:"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"12px 20px"}},
+      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",flexWrap:"wrap",gap:8,alignItems:"center"}},
+        pill("All plants",source==="all",function(){setSource("all");}),
+        pill("\u2665 My palette",source==="hearts",function(){setSource("hearts");}),
+        h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+        STATUS_OPTS.map(function(opt){
+          var on=statuses.indexOf(opt.key)>=0;
+          return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal"}},opt.label);
+        }),
+        h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+        h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
+        [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
+          return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2d4a2d":"#e0ddd5"),background:colorFilter===x.v?"#2d4a2d":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
+        })
+      )
+    ),
+    // Month strip
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+      h("div",{style:{display:"flex",gap:3}},
+        MONTHS_SHORT.map(function(m,i){
+          return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2d4a2d":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2d4a2d":"#ccc",border:"1.5px solid "+(selMonth===i?"#2d4a2d":monthCounts[i]>0?"#c8e6c9":"transparent")}},
+            m,
+            h("div",{style:{fontSize:10,marginTop:2,color:selMonth===i?"rgba(255,255,255,0.7)":monthCounts[i]>0?"#4a7c59":"#ccc"}},monthCounts[i]||"")
+          );
+        })
+      )
+    ),
+    // Matrix
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px",overflowX:"auto"}},
+      eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"#888",fontStyle:"italic"}},"No plants match your filters."):
+      h("table",{style:{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}},
+        h("thead",null,
+          h("tr",null,
+            h("th",{style:{textAlign:"left",fontSize:11,color:"#aaa",padding:"4px 8px 4px 0",width:150,fontWeight:500}},"Plant"),
+            MONTHS_SHORT.map(function(m,i){
+              return h("th",{key:i,style:{fontSize:10,color:selMonth===i?"#2d4a2d":"#aaa",padding:"4px 1px",textAlign:"center",fontWeight:selMonth===i?700:400,cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},m);
+            })
+          )
+        ),
+        h("tbody",null,
+          eligible.map(function(p){
+            var hex=getBloomHex(p);
+            return h("tr",{key:p.latin,style:{borderTop:"0.5px solid #f0ede4"}},
+              h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#2c2c2c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}},
+                h("span",{title:p.latin},p.common)
+              ),
+              MONTHS_SHORT.map(function(m,i){
+                var active=blooms(p,i);
+                var isWhite=hex==="#F5F0E8";
+                return h("td",{key:i,style:{padding:"2px 1px",textAlign:"center",cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},
+                  active&&h("div",{style:{
+                    height:13,borderRadius:3,
+                    background:hex,
+                    border:isWhite?"1px solid #d0c8b8":"none",
+                    opacity:selMonth!==null&&selMonth!==i?0.4:1,
+                    outline:selMonth===i?"2px solid #2d4a2d":"none",
+                    outlineOffset:"1px"
+                  }})
+                );
+              })
+            );
+          })
+        )
+      )
+    ),
+    // Detail panel
+    selMonth!==null&&h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
+      h("div",{style:{borderTop:"2px solid #e0ddd5",paddingTop:14}},
+        h("div",{style:{fontFamily:"'Playfair Display',serif",fontSize:20,marginBottom:12,color:"#2d4a2d"}},
+          MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming"
+        ),
+        selPlants.length===0&&h("div",{style:{color:"#aaa",fontStyle:"italic",fontSize:14}},"No plants match your filters for this month."),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:20}},
+          selPlants.map(function(p){
+            var hex=getBloomHex(p);
+            var isWhite=hex==="#F5F0E8";
+            return h("div",{key:p.latin,style:{background:"white",border:"1px solid #e0ddd5",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#d0c8b8":hex)}},
+              h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",marginBottom:2}},p.common),
+              h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",marginBottom:4}},p.latin),
+              h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
+                p.flowerColor.split("|").map(function(c,i){
+                  var ch=FLOWER_HEX_MAP[c.trim().toLowerCase()]||"#aaa";
+                  var cIsWhite=ch==="#F5F0E8";
+                  return h("span",{key:i,style:{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,color:"#666"}},
+                    h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,flexShrink:0,border:cIsWhite?"1px solid #ccc":"none"}}),
+                    c.trim()
+                  );
+                }),
+                p.caterpillars>0&&h("span",{style:{fontSize:11,color:"#4a7c59",marginLeft:"auto"}},"\ud83e\udd8b"+p.caterpillars)
+              )
+            );
+          })
+        ),
+        // Suggestions for palette view
+        source==="hearts"&&h("div",null,
+          h("div",{style:{fontSize:13,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:10,marginTop:4}},
+            suggestions.length>0?"Suggest more for "+MONTHS[selMonth]:"Your palette covers "+MONTHS[selMonth]+" well \u2713"
+          ),
+          suggestions.length>0&&h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}},
+            suggestions.map(function(p){
+              var hex=getBloomHex(p);
+              var isWhite=hex==="#F5F0E8";
+              return h("div",{key:p.latin,style:{background:"#fafaf7",border:"1px dashed #c8e6c9",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#d0c8b8":hex)}},
+                h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",marginBottom:2}},p.common),
+                h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",marginBottom:4}},p.latin),
+                h("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                  p.flowerColor.split("|").map(function(c,i){
+                    var ch=FLOWER_HEX_MAP[c.trim().toLowerCase()]||"#aaa";
+                    var cIsWhite=ch==="#F5F0E8";
+                    return h("span",{key:i,style:{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,color:"#666"}},
+                      h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,border:cIsWhite?"1px solid #ccc":"none"}}),
+                      c.trim()
+                    );
+                  }),
+                  h("button",{onClick:function(){props.onHeart(p.latin);},style:{marginLeft:"auto",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ddd",lineHeight:1}},"\u2661")
+                )
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+}
+
+var BLOOM_COLOR_GROUPS={
+  yellow:["yellow","golden","yellow-green","cream","gold","orange"],
+  purple:["purple","violet","lavender","blue","magenta"],
+  pink:["pink","red","rose","coral","maroon","burgundy"],
+  white:["white","cream","silver"],
+};
+
 // ── SeedCalendar ──────────────────────────────────────────────────────────
 function SeedCalendar(props){
   var plants=props.plants,onBack=props.onBack;
@@ -1351,6 +1581,7 @@ function App(){
   var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search;
 
   if(view==="seeds")return h(SeedCalendar,{plants:plants,onBack:function(){setView("main");}});
+  if(view==="bloom")return h(BloomCalendar,{plants:plants,onBack:function(){setView("main");},onHeart:toggleHeart});
 
   function TipBtn(text,label2,active,dark,onClick){
     return h("span",{className:"tip-wrap"},
@@ -1370,7 +1601,8 @@ function App(){
           h("div",{style:{fontSize:13,opacity:0.75,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}},"for Massachusetts")
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
-          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar")
+          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar"),
+          h("button",{onClick:function(){setView("bloom");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf38 Bloom calendar")
         )
       )
     ),
