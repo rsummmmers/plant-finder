@@ -246,9 +246,12 @@ function rowToPlant(row){
     seedEndIdx:monthIdx(row["seed_ripe_end"]||""),
     seedNotes:row["seed_notes"]||"",propagNotes:row["propagation_notes"]||"",
     caterpillars:parseInt(row["caterpillar_species"])||0,
-    edible:!!(row["edible_medicinal_human"]||"").trim().match(/^(yes|true|with caveats)/i),
-    edibleNotes:row["edible_medicinal_notes"]||"",
-    edibleValue:(row["edible_medicinal_human"]||"").trim().toLowerCase(),
+    edible:!!(row["edible"]||"").trim().match(/^(yes|true|with caveats)/i),
+    edibleNotes:row["edible_notes"]||"",
+    edibleValue:(row["edible"]||"").trim().toLowerCase(),
+    medicinal:!!(row["medicinal"]||"").trim().match(/^(yes|true|with caveats)/i),
+    medicinalNotes:row["medicinal_notes"]||"",
+    medicinalValue:(row["medicinal"]||"").trim().toLowerCase(),
     isCultivar:status.indexOf("Cultivar")>=0,
     isWoody:!!WOODY_SET[cat],isCanopy:!!CANOPY_SET[cat],
     typeKey:getTypeKey(cat),scores:scores,
@@ -306,7 +309,7 @@ function applyFilters(plants,f,siteKey){
     if(f.sun){var sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&sun.indexOf("full sun")<0)return false;if(f.sun==="shade"&&sun.indexOf("shade")<0)return false;if(f.sun==="part"&&sun.indexOf("part")<0)return false;}
     if(f.moisture){var m=(p.moisture||"").toLowerCase();var eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&m.indexOf("dry")<0&&m.indexOf("mesic")<0)return false;if(eff==="moist"&&m.indexOf("moist")<0&&m.indexOf("wet")<0)return false;if(eff==="average"&&m.indexOf("mesic")<0)return false;}
     if(f.rflower&&f.rflower.length){var cols=p.flowerColor.split(/\s*[|]\s*/).map(function(c){return c.trim().toLowerCase();});if(!f.rflower.some(function(rc){return cols.indexOf(rc)>=0;}))return false;}
-    if(f.edibleOnly&&!p.edible)return false;
+    if(f.edibleOnly&&!p.edible&&!p.medicinal)return false;
     if(f.rwinter){var w=(p.seasonal||"").toLowerCase().indexOf("winter")>=0||(p.evergreen||"").toLowerCase()==="yes";if(!w)return false;}
     return true;
   });
@@ -487,26 +490,48 @@ function PhotoGallery(props){
 function EdibleSection(props){
   var plant=props.plant,edibleOnly=props.edibleOnly;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
-  var raw=(plant.edibleNotes||"").trim();
-  // If edible=no but there are notes (e.g. toxic warning), show inline warning, no expand needed
-  if(!plant.edible){
-    if(!raw)return null;
+  var hasEdible=plant.edible;
+  var hasMedicinal=plant.medicinal;
+  var edibleNotes=(plant.edibleNotes||"").trim();
+  var medicinalNotes=(plant.medicinalNotes||"").trim();
+  var edibleCaveats=plant.edibleValue&&plant.edibleValue.indexOf("caveats")>=0;
+  var medicinalCaveats=plant.medicinalValue&&plant.medicinalValue.indexOf("caveats")>=0;
+  var toxicNotes=(!hasEdible&&!hasMedicinal)?(plant.edibleNotes||"").trim():"";
+
+  // If no edible/medicinal info but there's a toxic warning, show it inline
+  if(!hasEdible&&!hasMedicinal){
+    if(!toxicNotes)return null;
     return h("div",{style:{marginTop:8,padding:"6px 10px",background:"#fff3e0",borderRadius:6,fontSize:12,color:"#e65100",display:"flex",gap:5,alignItems:"flex-start"}},
       h("span",null,"\u26a0\ufe0f"),
-      h("span",null,raw)
+      h("span",null,toxicNotes)
     );
   }
-  var label=plant.edibleValue&&plant.edibleValue.indexOf("caveats")>=0?"with caveats":"edible";
-  // Auto-expand when edible filter is active
+
   var isOpen=open||!!edibleOnly;
   return h("div",{style:{marginTop:10}},
     h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}},
-      h("span",null,"\ud83c\udf4e"),
-      h("span",{style:{fontWeight:"bold"}},isOpen?"\u25b2 Hide":"\u25bc Edible / medicinal")
+      hasEdible&&h("span",null,"\ud83c\udf74"),
+      hasMedicinal&&h("span",null,"\u2615"),
+      h("span",{style:{fontWeight:"bold"}},isOpen?"\u25b2 Hide":"\u25bc "+(hasEdible&&hasMedicinal?"Edible & medicinal":hasEdible?"Edible":"Medicinal"))
     ),
     isOpen&&h("div",{style:{marginTop:8,padding:"10px 12px",background:"#f0faf0",borderRadius:8,fontSize:13,lineHeight:1.6,color:"#444"}},
-      h("div",{style:{marginBottom:raw?5:0}},h("span",{style:{color:"#888"}},"Status: "),h("strong",null,label)),
-      raw&&h("div",null,h("span",{style:{color:"#888"}},"Notes: "),raw)
+      hasEdible&&h("div",{style:{marginBottom:hasMedicinal?10:0}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
+          h("span",{style:{fontSize:14}},"\ud83c\udf74"),
+          h("span",{style:{fontWeight:"bold",color:"#2d4a2d"}},"Edible"),
+          edibleCaveats&&h("span",{style:{display:"inline-flex",alignItems:"center",gap:3,background:"#fff8e1",color:"#f57f17",fontSize:11,fontWeight:500,padding:"1px 7px",borderRadius:10,marginLeft:3}},"\u26a0 with caveats")
+        ),
+        edibleNotes&&h("div",{style:{color:"#555"}},edibleNotes)
+      ),
+      hasEdible&&hasMedicinal&&h("div",{style:{borderTop:"1px solid #d8eed8",marginBottom:10}}),
+      hasMedicinal&&h("div",null,
+        h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
+          h("span",{style:{fontSize:14}},"\u2615"),
+          h("span",{style:{fontWeight:"bold",color:"#2d4a2d"}},"Medicinal"),
+          medicinalCaveats&&h("span",{style:{display:"inline-flex",alignItems:"center",gap:3,background:"#fff8e1",color:"#f57f17",fontSize:11,fontWeight:500,padding:"1px 7px",borderRadius:10,marginLeft:3}},"\u26a0 with caveats")
+        ),
+        medicinalNotes&&h("div",{style:{color:"#555"}},medicinalNotes)
+      )
     )
   );
 }
