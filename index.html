@@ -1370,11 +1370,7 @@ function App(){
           h("div",{style:{fontSize:13,opacity:0.75,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}},"for Massachusetts")
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
-          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar"),
-          h("button",{onClick:function(){setPaletteMode(!paletteMode);setShowSuggest(false);setHabitatMode(false);},style:{display:"flex",alignItems:"center",gap:8,background:paletteMode?"white":"rgba(255,255,255,0.12)",borderRadius:24,padding:"8px 16px",border:"none",color:paletteMode?"#2d4a2d":"#f0ede4",cursor:"pointer",fontSize:14,flexShrink:0,fontWeight:paletteMode?500:400}},
-            "\u2665 My palette",
-            h("span",{style:{background:paletteMode?"#2d4a2d":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500}},hearts.length)
-          )
+          h("button",{onClick:function(){setView("seeds");},style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:20,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83c\udf31 Seed calendar")
         )
       )
     ),
@@ -1387,6 +1383,10 @@ function App(){
         h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}},
           h("button",{onClick:function(){setShowSuggest(!showSuggest);setHabitatMode(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:showSuggest?"#2d4a2d":"white",color:showSuggest?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
           h("button",{onClick:function(){setHabitatMode(!habitatMode);setShowSuggest(false);setPaletteMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:habitatMode?"#2d4a2d":"white",color:habitatMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\ud83c\udf3f Habitat patch"+(habitatMode?" \u2713":"")),
+          h("button",{onClick:function(){setPaletteMode(!paletteMode);setShowSuggest(false);setHabitatMode(false);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2d4a2d",background:paletteMode?"#2d4a2d":"white",color:paletteMode?"white":"#2d4a2d",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},
+            "\u2665 My palette",
+            hearts.length>0&&h("span",{style:{background:paletteMode?"rgba(255,255,255,0.3)":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:12,fontWeight:500,marginLeft:2}},hearts.length)
+          ),
           habitatMode&&h("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"0 4px"}},
             h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
             [{n:10,l:"Small",desc:"~10 plants · a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants · typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants · meadow, woodland edge, or larger restoration"}].map(function(x){
