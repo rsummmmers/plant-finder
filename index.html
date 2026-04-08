@@ -309,7 +309,8 @@ function applyFilters(plants,f,siteKey){
     if(f.sun){var sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&sun.indexOf("full sun")<0)return false;if(f.sun==="shade"&&sun.indexOf("shade")<0)return false;if(f.sun==="part"&&sun.indexOf("part")<0)return false;}
     if(f.moisture){var m=(p.moisture||"").toLowerCase();var eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&m.indexOf("dry")<0&&m.indexOf("mesic")<0)return false;if(eff==="moist"&&m.indexOf("moist")<0&&m.indexOf("wet")<0)return false;if(eff==="average"&&m.indexOf("mesic")<0)return false;}
     if(f.rflower&&f.rflower.length){var cols=p.flowerColor.split(/\s*[|]\s*/).map(function(c){return c.trim().toLowerCase();});if(!f.rflower.some(function(rc){return cols.indexOf(rc)>=0;}))return false;}
-    if(f.edibleOnly&&!p.edible&&!p.medicinal)return false;
+    if(f.edibleOnly&&!p.edible)return false;
+    if(f.medicinalOnly&&!p.medicinal)return false;
     if(f.rwinter){var w=(p.seasonal||"").toLowerCase().indexOf("winter")>=0||(p.evergreen||"").toLowerCase()==="yes";if(!w)return false;}
     return true;
   });
@@ -488,7 +489,7 @@ function PhotoGallery(props){
 
 // ── EdibleSection ─────────────────────────────────────────────────────────
 function EdibleSection(props){
-  var plant=props.plant,edibleOnly=props.edibleOnly;
+  var plant=props.plant,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var hasEdible=plant.edible;
   var hasMedicinal=plant.medicinal;
@@ -498,7 +499,6 @@ function EdibleSection(props){
   var medicinalCaveats=plant.medicinalValue&&plant.medicinalValue.indexOf("caveats")>=0;
   var toxicNotes=(!hasEdible&&!hasMedicinal)?(plant.edibleNotes||"").trim():"";
 
-  // If no edible/medicinal info but there's a toxic warning, show it inline
   if(!hasEdible&&!hasMedicinal){
     if(!toxicNotes)return null;
     return h("div",{style:{marginTop:8,padding:"6px 10px",background:"#fff3e0",borderRadius:6,fontSize:12,color:"#e65100",display:"flex",gap:5,alignItems:"flex-start"}},
@@ -507,7 +507,8 @@ function EdibleSection(props){
     );
   }
 
-  var isOpen=open||!!edibleOnly;
+  // Auto-expand when relevant filter is active
+  var isOpen=open||(edibleOnly&&hasEdible)||(medicinalOnly&&hasMedicinal)||(edibleOnly&&medicinalOnly);
   return h("div",{style:{marginTop:10}},
     h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2d4a2d",fontFamily:"inherit",padding:0}},
       hasEdible&&h("span",null,"\ud83c\udf74"),
@@ -556,7 +557,7 @@ function SeedSection(props){
 
 // ── PlantCard ─────────────────────────────────────────────────────────────
 function PlantCard(props){
-  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly;
+  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
@@ -611,7 +612,7 @@ function PlantCard(props){
           ),
           h(RiskBadges,{plant:plant}),
           h(SeedSection,{plant:plant}),
-          h(EdibleSection,{plant:plant,edibleOnly:edibleOnly})
+          h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
         )
       ),
       siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&h("div",{style:{marginTop:14}},
@@ -1178,7 +1179,11 @@ function FilterDrawer(props){
           ),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:10}},
             h("input",{type:"checkbox",checked:f.edibleOnly||false,onChange:function(ev){set({edibleOnly:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
-            "\ud83c\udf4e Edible / medicinal"
+            "\ud83c\udf74 Edible"
+          ),
+          h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,marginTop:10}},
+            h("input",{type:"checkbox",checked:f.medicinalOnly||false,onChange:function(ev){set({medicinalOnly:ev.target.checked});},style:{accentColor:"#2d4a2d",width:16,height:16}}),
+            "\u2615 Medicinal"
           )
         ),
         h("button",{onClick:onClose,style:btn("#2d4a2d","white",{borderRadius:10,padding:"13px",fontSize:15,marginTop:4})},"Show results")
@@ -1202,7 +1207,7 @@ function App(){
     statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,
     concerns:initURL.concerns,moisture:initURL.moisture,sun:initURL.sun,
     irrigated:initURL.irrigated,rflower:initURL.rflower,rwinter:initURL.rwinter,
-    edibleOnly:false,
+    edibleOnly:false,medicinalOnly:false,
   }),filters=_f[0],setFilters=_f[1];
   var _sb=useState(initURL.sortBy),sortBy=_sb[0],setSortBy=_sb[1];
   var _lb=useState(initURL.label),label=_lb[0],setLabel=_lb[1];
@@ -1265,7 +1270,7 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
 
   var defaultStatuses=["native","nearnative"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
-  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,statusesChanged]).filter(Boolean).length;
+  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged]).filter(Boolean).length;
   var moreCount=[filters.moisture,filters.sun&&!inferredSun,filters.irrigated].concat(filters.rflower,[filters.rwinter]).filter(Boolean).length;
 
   function togSt(k){setFilters(function(f){return Object.assign({},f,{statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});});}
@@ -1450,9 +1455,13 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
                   h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
                   "\u2744\ufe0f Winter interest"
                 ),
-              h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
+                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
                   h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
-                  "\ud83c\udf4e Edible / medicinal"
+                  "\ud83c\udf74 Edible"
+                ),
+                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
+                  h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2d4a2d"}}),
+                  "\u2615 Medicinal"
                 )
               )
             )
@@ -1474,8 +1483,9 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
         filters.concerns.map(function(c){var opt=CONCERN_OPTS.find(function(o){return o.key===c;});return opt?h("div",{key:c,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},opt.emoji+" "+opt.label,h("span",{onClick:function(){togCx(c);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
         filters.ptypes.map(function(k){var g=PLANT_TYPES.find(function(t){return t.key===k;});return g?h("div",{key:k,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},g.emoji+" "+g.label,h("span",{onClick:function(){togPt(k);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
         filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-        filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\ud83c\udf4e Edible / medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-        h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false});},style:{fontSize:12,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"Clear all")
+        filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2d4a2d"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
+        h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},style:{fontSize:12,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"Clear all")
       ),
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
@@ -1508,7 +1518,7 @@ var _po=useState(initURL.sharedHearts.length>0),panelOpen=_po[0],setPanelOpen=_p
               })
             )
           ),
-          results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly});}),
+          results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly});}),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),
