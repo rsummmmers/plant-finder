@@ -124,17 +124,20 @@ var COLOR_MAP={
 
 // Default display hex for bloom calendar bars — more visually accurate than COLOR_MAP
 var FLOWER_HEX_MAP={
-  white:"#F5F0E8",cream:"#F5E6A3",yellow:"#F9C820",golden:"#FFB300",
+  white:"#E8E4DC",cream:"#F5E6A3",yellow:"#F9C820",golden:"#FFB300",
   "yellow-green":"#C8D836","orange":"#F4741E",red:"#C0392B",coral:"#E8624A",
   pink:"#E8829A",rose:"#C2456A",magenta:"#C2187A",maroon:"#7B2340",
   burgundy:"#6D1F38",purple:"#7B4EA0",violet:"#5B3E9E",lavender:"#9B89C4",
-  blue:"#4A7FC1",green:"#5A9E5A",brown:"#8B6347",tan:"#C4A882",silver:"#B0B8C0",
+  blue:"#4A7FC1",
 };
+
+var NONSHOWY_COLORS={"green":1,"brown":1,"tan":1,"silver":1};
 
 function getBloomHex(plant){
   if(plant.flowerColorHex)return plant.flowerColorHex;
   var first=(plant.flowerColor||"").split("|")[0].trim().toLowerCase();
-  return FLOWER_HEX_MAP[first]||"#aab8a0";
+  if(!first||NONSHOWY_COLORS[first])return null;
+  return FLOWER_HEX_MAP[first]||"#C0BDB8";
 }
 
 function blooms(plant,m){
@@ -981,6 +984,7 @@ function BloomCalendar(props){
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
   var _col=useState("all"),colorFilter=_col[0],setColorFilter=_col[1];
+  var _ns=useState(false),showNonShowy=_ns[0],setShowNonShowy=_ns[1];
   var _ph=useState([]),paletteHearts=_ph[0];
 
   // Load hearts from localStorage for "my palette" toggle
@@ -991,6 +995,10 @@ function BloomCalendar(props){
       if(p.bloomStart<0||p.bloomEnd<0)return false;
       if(!matchStatus(p,statuses))return false;
       if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
+      if(!showNonShowy){
+        var first=(p.flowerColor||"").split("|")[0].trim().toLowerCase();
+        if(!first||NONSHOWY_COLORS[first])return false;
+      }
       if(colorFilter!=="all"){
         var cols=(p.flowerColor||"").split("|").map(function(c){return c.trim().toLowerCase();});
         var allowed=BLOOM_COLOR_GROUPS[colorFilter]||[];
@@ -998,7 +1006,7 @@ function BloomCalendar(props){
       }
       return true;
     });
-  },[plants,statuses,source,colorFilter,hearts]);
+  },[plants,statuses,source,colorFilter,showNonShowy,hearts]);
 
   var monthCounts=useMemo(function(){
     var c=new Array(12).fill(0);
@@ -1060,7 +1068,9 @@ function BloomCalendar(props){
           h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
           [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
             return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
-          })
+          }),
+          h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+          h("button",{onClick:function(){setShowNonShowy(!showNonShowy);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(showNonShowy?"#2e5339":"#e0ddd5"),background:showNonShowy?"#f0faf0":"transparent",color:showNonShowy?"#2e5339":"#888"}},"+ non-showy")
         ),
         h("div",{style:{display:"flex",gap:3}},
           MONTHS_SHORT.map(function(m,i){
@@ -1078,28 +1088,32 @@ function BloomCalendar(props){
       h("table",{style:{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}},
         h("thead",null,
           h("tr",null,
-            h("th",{style:{textAlign:"left",fontSize:11,color:"#aaa",padding:"4px 8px 4px 0",width:150,fontWeight:500}},"Plant"),
+            h("th",{style:{textAlign:"left",fontSize:11,color:"#aaa",padding:"4px 8px 4px 0",width:150,fontWeight:500}},
+              selMonth!==null?MONTHS_SHORT.filter(function(_,i){return i===selMonth;})[0]+" blooms":"Plant"
+            ),
             MONTHS_SHORT.map(function(m,i){
               return h("th",{key:i,style:{fontSize:10,color:selMonth===i?"#2e5339":"#aaa",padding:"4px 1px",textAlign:"center",fontWeight:selMonth===i?700:400,cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},m);
             })
           )
         ),
         h("tbody",null,
-          eligible.map(function(p){
-            var hex=getBloomHex(p);
+          eligible.filter(function(p){
+            return selMonth===null||blooms(p,selMonth);
+          }).map(function(p){
+            var hex=getBloomHex(p)||"#C0BDB8";
+            var isWhite=hex==="#E8E4DC";
             return h("tr",{key:p.latin,style:{borderTop:"0.5px solid #f0ede4"}},
               h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#2c2c2c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}},
                 h("span",{title:p.latin},p.common)
               ),
               MONTHS_SHORT.map(function(m,i){
                 var active=blooms(p,i);
-                var isWhite=hex==="#F5F0E8";
                 return h("td",{key:i,style:{padding:"2px 1px",textAlign:"center",cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},
                   active&&h("div",{style:{
                     height:13,borderRadius:3,
                     background:hex,
-                    border:isWhite?"1px solid #d0c8b8":"none",
-                    opacity:selMonth!==null&&selMonth!==i?0.4:1,
+                    border:isWhite?"1px solid #B8B0A0":"none",
+                    opacity:selMonth!==null&&selMonth!==i?0.35:1,
                     outline:selMonth===i?"2px solid #2e5339":"none",
                     outlineOffset:"1px"
                   }})
@@ -1119,17 +1133,18 @@ function BloomCalendar(props){
         selPlants.length===0&&h("div",{style:{color:"#aaa",fontStyle:"italic",fontSize:14}},"No plants match your filters for this month."),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:20}},
           selPlants.map(function(p){
-            var hex=getBloomHex(p);
-            var isWhite=hex==="#F5F0E8";
-            return h("div",{key:p.latin,style:{background:"white",border:"1px solid #e0ddd5",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#d0c8b8":hex)}},
+            var hex=getBloomHex(p)||"#C0BDB8";
+            var isWhite=hex==="#E8E4DC";
+            return h("div",{key:p.latin,style:{background:"white",border:"1px solid #e0ddd5",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#B8B0A0":hex)}},
               h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",marginBottom:2}},p.common),
               h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",marginBottom:4}},p.latin),
               h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
                 p.flowerColor.split("|").map(function(c,i){
-                  var ch=FLOWER_HEX_MAP[c.trim().toLowerCase()]||"#aaa";
-                  var cIsWhite=ch==="#F5F0E8";
+                  var cl=c.trim().toLowerCase();
+                  var ch=FLOWER_HEX_MAP[cl]||(NONSHOWY_COLORS[cl]?"#C4C0B8":"#C0BDB8");
+                  var cIsWhite=ch==="#E8E4DC";
                   return h("span",{key:i,style:{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,color:"#666"}},
-                    h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,flexShrink:0,border:cIsWhite?"1px solid #ccc":"none"}}),
+                    h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,flexShrink:0,border:cIsWhite?"1px solid #B8B0A0":"none"}}),
                     c.trim()
                   );
                 }),
@@ -1145,17 +1160,18 @@ function BloomCalendar(props){
           ),
           suggestions.length>0&&h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}},
             suggestions.map(function(p){
-              var hex=getBloomHex(p);
-              var isWhite=hex==="#F5F0E8";
-              return h("div",{key:p.latin,style:{background:"#fafaf7",border:"1px dashed #c8e6c9",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#d0c8b8":hex)}},
+              var hex=getBloomHex(p)||"#C0BDB8";
+              var isWhite=hex==="#E8E4DC";
+              return h("div",{key:p.latin,style:{background:"#fafaf7",border:"1px dashed #c8e6c9",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"#B8B0A0":hex)}},
                 h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",marginBottom:2}},p.common),
                 h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",marginBottom:4}},p.latin),
                 h("div",{style:{display:"flex",alignItems:"center",gap:4}},
                   p.flowerColor.split("|").map(function(c,i){
-                    var ch=FLOWER_HEX_MAP[c.trim().toLowerCase()]||"#aaa";
-                    var cIsWhite=ch==="#F5F0E8";
+                    var cl=c.trim().toLowerCase();
+                    var ch=FLOWER_HEX_MAP[cl]||(NONSHOWY_COLORS[cl]?"#C4C0B8":"#C0BDB8");
+                    var cIsWhite=ch==="#E8E4DC";
                     return h("span",{key:i,style:{display:"inline-flex",alignItems:"center",gap:3,fontSize:11,color:"#666"}},
-                      h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,border:cIsWhite?"1px solid #ccc":"none"}}),
+                      h("span",{style:{width:8,height:8,borderRadius:"50%",background:ch,border:cIsWhite?"1px solid #B8B0A0":"none"}}),
                       c.trim()
                     );
                   }),
