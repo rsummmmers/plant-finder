@@ -1046,31 +1046,30 @@ function BloomCalendar(props){
       )
     ),
     // Filters
-    h("div",{style:{position:"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"12px 20px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",flexWrap:"wrap",gap:8,alignItems:"center"}},
-        pill("All plants",source==="all",function(){setSource("all");}),
-        pill("\u2665 My palette",source==="hearts",function(){setSource("hearts");}),
-        h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
-        STATUS_OPTS.map(function(opt){
-          var on=statuses.indexOf(opt.key)>=0;
-          return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal"}},opt.label);
-        }),
-        h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
-        h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
-        [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
-          return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
-        })
-      )
-    ),
-    // Month strip
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
-      h("div",{style:{display:"flex",gap:3}},
-        MONTHS_SHORT.map(function(m,i){
-          return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2e5339":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2e5339":"#ccc",border:"1.5px solid "+(selMonth===i?"#2e5339":monthCounts[i]>0?"#c8e6c9":"transparent")}},
-            m,
-            h("div",{style:{fontSize:10,marginTop:2,color:selMonth===i?"rgba(255,255,255,0.7)":monthCounts[i]>0?"#4a7c59":"#ccc"}},monthCounts[i]||"")
-          );
-        })
+    h("div",{style:{position:"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"12px 20px 10px"}},
+      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+        h("div",{style:{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",marginBottom:10}},
+          pill("All plants",source==="all",function(){setSource("all");}),
+          pill("\u2665 My palette",source==="hearts",function(){setSource("hearts");}),
+          h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+          STATUS_OPTS.map(function(opt){
+            var on=statuses.indexOf(opt.key)>=0;
+            return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal"}},opt.label);
+          }),
+          h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+          h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
+          [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
+            return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
+          })
+        ),
+        h("div",{style:{display:"flex",gap:3}},
+          MONTHS_SHORT.map(function(m,i){
+            return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2e5339":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2e5339":"#ccc",border:"1.5px solid "+(selMonth===i?"#2e5339":monthCounts[i]>0?"#c8e6c9":"transparent")}},
+              m,
+              h("div",{style:{fontSize:10,marginTop:2,color:selMonth===i?"rgba(255,255,255,0.7)":monthCounts[i]>0?"#4a7c59":"#ccc"}},monthCounts[i]||"")
+            );
+          })
+        )
       )
     ),
     // Matrix
@@ -1599,7 +1598,7 @@ function App(){
       h("div",{style:{position:"absolute",inset:0,background:"rgba(240,237,228,0.45)"}}),
       h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:"26px 20px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}},
         h("div",null,
-          h("div",{style:{fontFamily:"'Literata',serif",fontSize:42,fontWeight:600,color:"#1a2e1a",letterSpacing:"-0.5px",lineHeight:1.1}},"Plant Palette Builder"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:"clamp(22px, 5vw, 42px)",fontWeight:600,color:"#1a2e1a",letterSpacing:"-0.5px",lineHeight:1.1}},"Plant Palette Builder"),
           h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:15,color:"rgba(30,50,30,0.75)",letterSpacing:"0.03em",marginTop:6}},"for Massachusetts")
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
