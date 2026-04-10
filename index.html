@@ -20,6 +20,15 @@
     .lb-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.92);flex-direction:column;align-items:center;justify-content:center;}
     .lb-overlay.open{display:flex;}
   </style>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-716WR82ZCL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-716WR82ZCL');
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -586,8 +595,8 @@ function SeedSection(props){
 
 // ── PlantCard ─────────────────────────────────────────────────────────────
 function PlantCard(props){
-  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly;
-  var _s=useState(false),open=_s[0],setOpen=_s[1];
+  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false;
+  var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
@@ -943,7 +952,7 @@ function SeedCard(props){
       style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"40px 16px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",background:"white",borderRadius:12,overflow:"hidden",position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:12,right:12,background:"rgba(0,0,0,0.08)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:18,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}},"\u2715"),
-        h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false})
+        h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true})
       )
     ),
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}},
@@ -1053,6 +1062,8 @@ function BloomCalendar(props){
 
   function toggleStatus(k){setStatuses(function(prev){return prev.indexOf(k)>=0?prev.filter(function(x){return x!==k;}):[...prev,k];});}
 
+  var isMobile=typeof window!=="undefined"&&window.innerWidth<700;
+
   var pill=function(label,active,onClick,bg,fg){
     return h("button",{onClick:onClick,style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(active?(fg||"#2e5339")+"44":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   };
@@ -1079,17 +1090,56 @@ function BloomCalendar(props){
             var on=statuses.indexOf(opt.key)>=0;
             return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal"}},opt.label);
           }),
-          h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
-          h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
-          [{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
+          !isMobile&&h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+          !isMobile&&h("span",{style:{fontSize:12,color:"#aaa"}},"Color:"),
+          !isMobile&&[{v:"all",l:"All"},{v:"yellow",l:"Yellow/Orange"},{v:"purple",l:"Purple/Blue"},{v:"pink",l:"Pink/Red"},{v:"white",l:"White/Cream"}].map(function(x){
             return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
           }),
-          h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
-          h("button",{onClick:function(){setShowNonShowy(!showNonShowy);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(showNonShowy?"#2e5339":"#e0ddd5"),background:showNonShowy?"#f0faf0":"transparent",color:showNonShowy?"#2e5339":"#888"}},"+ non-showy")
+          !isMobile&&h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
+          !isMobile&&h("button",{onClick:function(){setShowNonShowy(!showNonShowy);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(showNonShowy?"#2e5339":"#e0ddd5"),background:showNonShowy?"#f0faf0":"transparent",color:showNonShowy?"#2e5339":"#888"}},"+ non-showy")
+        ),
+        // Mobile: month spinner. Desktop: full month header in table
+        isMobile&&h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+          h("button",{onClick:function(){setSelMonth(selMonth===null?11:selMonth===0?null:(selMonth-1));},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:15}},"\u25c0"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:18,flex:1,textAlign:"center",color:selMonth!==null?"#2e5339":"#888"}},
+            selMonth!==null?MONTHS[selMonth]+"  \u2014 "+monthCounts[selMonth]+" blooming":"All months"
+          ),
+          h("button",{onClick:function(){setSelMonth(selMonth===null?0:selMonth===11?null:(selMonth+1));},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:15}},"\u25b6")
         )
       )
     ),
-    // Matrix
+    // Matrix (desktop) or list (mobile)
+    isMobile?h("div",{style:{maxWidth:900,margin:"8px auto 0",padding:"0 16px"}},
+      // Mobile color + non-showy filters
+      h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
+        [{v:"all",l:"All"},{v:"yellow",l:"\ud83d\udfe1"},{v:"purple",l:"\ud83d\udfe3"},{v:"pink",l:"\ud83d\udfe5"},{v:"white",l:"\u26aa"}].map(function(x){
+          return h("button",{key:x.v,onClick:function(){setColorFilter(x.v);},style:{padding:"5px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(colorFilter===x.v?"#2e5339":"#e0ddd5"),background:colorFilter===x.v?"#2e5339":"transparent",color:colorFilter===x.v?"white":"#666"}},x.l);
+        }),
+        h("button",{onClick:function(){setShowNonShowy(!showNonShowy);},style:{padding:"5px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(showNonShowy?"#2e5339":"#e0ddd5"),background:showNonShowy?"#f0faf0":"transparent",color:showNonShowy?"#2e5339":"#888"}},"+ non-showy")
+      ),
+      eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"#888",fontStyle:"italic"}},"No plants match your filters."):
+      h("div",null,
+        eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
+          var hex=getBloomHex(p)||"#C0BDB8";
+          var isWhite=hex==="#E8E4DC";
+          return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid #f0ede4"}},
+            h(PlantThumb,{plant:p,size:36,radius:6}),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
+              h("div",{style:{display:"flex",gap:2,marginTop:3}},
+                MONTHS_SHORT.map(function(m,i){
+                  var active=blooms(p,i);
+                  return h("div",{key:i,style:{flex:1,height:6,borderRadius:2,
+                    background:active?(selMonth===null||selMonth===i?hex:"rgba(0,0,0,0.1)"):"#f0ede4",
+                    border:active&&isWhite?"1px solid #B8B0A0":"none"
+                  }});
+                })
+              )
+            )
+          );
+        })
+      )
+    ):
     h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px",overflowX:"auto"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"#888",fontStyle:"italic"}},"No plants match your filters."):
       h("table",{style:{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}},
@@ -1143,8 +1193,8 @@ function BloomCalendar(props){
           })
         )
       )
-    ),
-    // Detail panel
+    ), // end desktop table
+    // Detail panel (desktop only)
     selMonth!==null&&h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
       h("div",{style:{borderTop:"2px solid #e0ddd5",paddingTop:14}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,marginBottom:12,color:"#2e5339"}},
@@ -1298,12 +1348,12 @@ function SeedCalendar(props){
           h("button",{onClick:function(){setMonthIdx(now.getMonth());},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Today"),
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+1)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:15}},"\u25b6")
         ),
-        h("div",{style:{display:"flex",gap:3}},
+        h("div",{style:{display:"flex",gap:3,overflow:"hidden"}},
           MONTHS_SHORT.map(function(m,i){
-            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",fontSize:10,cursor:"pointer",padding:"3px 1px",borderRadius:4,background:i===monthIdx?"#2e5339":"transparent",color:i===monthIdx?"white":"#888"}},
-              m,
+            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",fontSize:10,cursor:"pointer",padding:"3px 1px",borderRadius:4,background:i===monthIdx?"#2e5339":"transparent",color:i===monthIdx?"white":"#888",minWidth:0}},
+              h("span",{style:{display:"block",overflow:"hidden",fontSize:9}},m[0]),
               h("div",{style:{height:4,borderRadius:2,marginTop:3,background:i===monthIdx?"rgba(255,255,255,0.4)":monthCounts[i]>0?"#8aab8a":"#e0e0e0"}}),
-              h("div",{style:{fontSize:9,marginTop:1,color:i===monthIdx?"rgba(255,255,255,0.7)":"#ccc"}},monthCounts[i]||"")
+              h("div",{style:{fontSize:8,marginTop:1,color:i===monthIdx?"rgba(255,255,255,0.7)":"#ccc"}},monthCounts[i]||"")
             );
           })
         )
