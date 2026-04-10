@@ -805,9 +805,13 @@ function HabitatView(props){
   var plants=props.plants,concerns=props.concerns,heightCap=props.heightCap,
       patchSize=props.patchSize,hearts=props.hearts,onHeart=props.onHeart,onLoosen=props.onLoosen;
   var scale=patchSize/20;
-  var HT={canopy:Math.max(1,Math.round(10*scale)),woody:Math.max(1,Math.round(10*scale)),
-          perennial:Math.max(1,Math.round(10*scale)),grass:Math.max(1,Math.round(6*scale)),
-          ground:Math.max(1,Math.round(4*scale))};
+  var HT={
+    canopy:   Math.max(1, Math.round(2*scale)),
+    woody:    Math.max(1, Math.round(4*scale)),
+    perennial:Math.max(2, Math.round(7*scale)),
+    grass:    Math.max(1, Math.round(4*scale)),
+    ground:   Math.max(1, Math.round(3*scale)),
+  };
   var _s=useState("wildlife"),sortBy=_s[0],setSortBy=_s[1];
   var _rm=useState([]),removedLatins=_rm[0],setRemovedLatins=_rm[1];
   var _undo=useState([]),undoStack=_undo[0],setUndoStack=_undo[1];
@@ -1814,11 +1818,12 @@ function App(){
         activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");}}):        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         activeTab==="mix"?h("div",null,
-          noFilters&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}},
+          h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}},
             h("div",{style:{fontSize:22,flexShrink:0}},"\ud83c\udf3f"),
             h("div",null,
-              h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"Set site conditions for a tailored mix"),
-              h("div",{style:{fontSize:13,color:"#888"}},"Switch to the Plants tab to choose a site type or add filters \u2014 your mix will draw from those results.")
+              h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"A layered mix of the best plants for your site"),
+              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},noFilters?"Use the filters above to set your site conditions \u2014 sun, moisture, concerns \u2014 and the mix will draw from those results. ":""),
+              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Structured in layers from canopy trees to groundcovers. Remove any plant you don\u2019t like or can\u2019t source and the next best option fills its spot. A mix of heights and types \u2014 including canopy trees \u2014 supports the most biodiversity and ecosystem function.")
             )
           ),
           h(HabitatView,{plants:noFilters?plants:filtered,concerns:filters.concerns,heightCap:filters.heightCap,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
