@@ -869,7 +869,7 @@ function HabitatView(props){
       grass:   buildLayer(scored.filter(function(p){return p.typeKey==="grass";}),HT.grass),
       ground:  buildLayer(scored.filter(function(p){return p.typeKey==="ground";}),HT.ground),
     };
-  },[base,sortBy]);
+  },[base,sortBy,patchSize]);
 
   var total=Object.values(layers).reduce(function(s,a){return s+a.length;},0);
   var thinLayers=Object.entries(layers).filter(function(kv){return kv[1].length<(HT[kv[0]]||0)/2;});
@@ -931,56 +931,67 @@ function HabitatView(props){
 function SeedCard(props){
   var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
+  var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var scolor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
   var sbg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
   var slabel=status==="now"?"\ud83d\udfe2 Ripe now":status==="soon"?"\ud83d\udfe1 Coming soon":"\u26ab Just passed";
 
-  return h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}},
-    h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer"}},
-      h(PlantThumb,{plant:plant,size:48,radius:8}),
-      h("div",{style:{flex:1,minWidth:0}},
-        h("div",{style:{fontWeight:500,fontSize:16,marginBottom:2}},plant.common),
-        h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:5}},plant.latin),
-        h("div",{style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
-          h("span",{style:{background:sbg,color:scolor,fontSize:12,padding:"2px 10px",borderRadius:20,fontWeight:500}},slabel),
-          plant.seedStart&&plant.seedEnd&&h("span",{style:{fontSize:12,color:"#888"}},plant.seedStart+"\u2013"+plant.seedEnd),
-          h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"1px 7px",borderRadius:10,fontWeight:"bold"}},ss.label)
-        )
-      ),
-      h("span",{style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
+  return h("div",null,
+    modalOpen&&h("div",{
+      onClick:function(){setModalOpen(false);},
+      style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"40px 16px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",background:"white",borderRadius:12,overflow:"hidden",position:"relative"}},
+        h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:12,right:12,background:"rgba(0,0,0,0.08)",border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:18,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}},"\u2715"),
+        h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false})
+      )
     ),
-    open&&h("div",{style:{padding:"0 16px 16px",borderTop:"1px solid #f0ede4"}},
-      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}},
-        h("div",{style:{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}},
-          h("div",{style:{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"\ud83c\udf30 Collecting"),
-          h("div",{style:{fontSize:13,lineHeight:1.6,color:"#444"}},plant.seedNotes||"No collecting notes yet.")
+    h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:10,marginBottom:8,overflow:"hidden",opacity:status==="past"?0.75:1}},
+      h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer"}},
+        h(PlantThumb,{plant:plant,size:48,radius:8}),
+        h("div",{style:{flex:1,minWidth:0}},
+          h("div",{style:{fontWeight:500,fontSize:16,marginBottom:2}},plant.common),
+          h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:5}},plant.latin),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
+            h("span",{style:{background:sbg,color:scolor,fontSize:12,padding:"2px 10px",borderRadius:20,fontWeight:500}},slabel),
+            plant.seedStart&&plant.seedEnd&&h("span",{style:{fontSize:12,color:"#888"}},plant.seedStart+"\u2013"+plant.seedEnd),
+            h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"1px 7px",borderRadius:10,fontWeight:"bold"}},ss.label)
+          )
         ),
-        h("div",{style:{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}},
-          h("div",{style:{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"\ud83c\udf31 Propagation"),
-          h("div",{style:{fontSize:13,lineHeight:1.6,color:"#444"}},plant.propagNotes||"No propagation notes yet.")
-        )
+        h("span",{style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
       ),
-      plant.seedStartIdx>=0&&plant.seedEndIdx>=0&&h("div",{style:{marginTop:12}},
-        h("div",{style:{fontSize:11,color:"#aaa",marginBottom:5}},"Seed window"),
-        h("div",{style:{display:"flex",gap:2}},
-          MONTHS_SHORT.map(function(m,i){
-            var s=plant.seedStartIdx,e=plant.seedEndIdx;
-            if(e<s)e+=12;
-            var mAdj=i<s?i+12:i;
-            var active=mAdj>=s&&mAdj<=e;
-            var cur2=i===monthIdx;
-            return h("div",{key:i,title:m,style:{flex:1,height:6,borderRadius:2,background:cur2?"#2e5339":active?"#8aab8a":"#e0e0e0"}});
-          })
+      open&&h("div",{style:{padding:"0 16px 16px",borderTop:"1px solid #f0ede4"}},
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}},
+          h("div",{style:{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}},
+            h("div",{style:{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"\ud83c\udf30 Collecting"),
+            h("div",{style:{fontSize:13,lineHeight:1.6,color:"#444"}},plant.seedNotes||"No collecting notes yet.")
+          ),
+          h("div",{style:{background:"#f0faf0",borderRadius:10,padding:"12px 14px"}},
+            h("div",{style:{fontSize:11,color:"#888",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"\ud83c\udf31 Propagation"),
+            h("div",{style:{fontSize:13,lineHeight:1.6,color:"#444"}},plant.propagNotes||"No propagation notes yet.")
+          )
         ),
-        h("div",{style:{display:"flex",gap:2,marginTop:2}},
-          MONTHS_SHORT.map(function(m,i){return h("div",{key:i,style:{flex:1,fontSize:8,color:i===monthIdx?"#2e5339":"#ccc",textAlign:"center"}},m[0]);})
-        )
+        plant.seedStartIdx>=0&&plant.seedEndIdx>=0&&h("div",{style:{marginTop:12}},
+          h("div",{style:{fontSize:11,color:"#aaa",marginBottom:5}},"Seed window"),
+          h("div",{style:{display:"flex",gap:2}},
+            MONTHS_SHORT.map(function(m,i){
+              var s=plant.seedStartIdx,e=plant.seedEndIdx;
+              if(e<s)e+=12;
+              var mAdj=i<s?i+12:i;
+              var active=mAdj>=s&&mAdj<=e;
+              var cur2=i===monthIdx;
+              return h("div",{key:i,title:m,style:{flex:1,height:6,borderRadius:2,background:cur2?"#2e5339":active?"#8aab8a":"#e0e0e0"}});
+            })
+          ),
+          h("div",{style:{display:"flex",gap:2,marginTop:2}},
+            MONTHS_SHORT.map(function(m,i){return h("div",{key:i,style:{flex:1,fontSize:8,color:i===monthIdx?"#2e5339":"#ccc",textAlign:"center"}},m[0]);})
+          )
+        ),
+        h("button",{onClick:function(){setModalOpen(true);},style:{marginTop:14,padding:"7px 16px",borderRadius:8,border:"1px solid #2e5339",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"View full plant details \u2192")
       )
     )
   );
 }
-
 // ── BloomCalendar ─────────────────────────────────────────────────────────
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
