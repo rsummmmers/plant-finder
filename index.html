@@ -1071,14 +1071,6 @@ function BloomCalendar(props){
           }),
           h("div",{style:{width:1,height:18,background:"#e0ddd5"}}),
           h("button",{onClick:function(){setShowNonShowy(!showNonShowy);},style:{padding:"4px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(showNonShowy?"#2e5339":"#e0ddd5"),background:showNonShowy?"#f0faf0":"transparent",color:showNonShowy?"#2e5339":"#888"}},"+ non-showy")
-        ),
-        h("div",{style:{display:"flex",gap:3}},
-          MONTHS_SHORT.map(function(m,i){
-            return h("div",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},style:{flex:1,textAlign:"center",fontSize:11,cursor:"pointer",padding:"5px 2px",borderRadius:6,background:selMonth===i?"#2e5339":monthCounts[i]>0?"#f0f7f0":"transparent",color:selMonth===i?"white":monthCounts[i]>0?"#2e5339":"#ccc",border:"1.5px solid "+(selMonth===i?"#2e5339":monthCounts[i]>0?"#c8e6c9":"transparent")}},
-              m,
-              h("div",{style:{fontSize:10,marginTop:2,color:selMonth===i?"rgba(255,255,255,0.7)":monthCounts[i]>0?"#4a7c59":"#ccc"}},monthCounts[i]||"")
-            );
-          })
         )
       )
     ),
@@ -1089,10 +1081,23 @@ function BloomCalendar(props){
         h("thead",null,
           h("tr",null,
             h("th",{style:{textAlign:"left",fontSize:11,color:"#aaa",padding:"4px 8px 4px 0",width:150,fontWeight:500}},
-              selMonth!==null?MONTHS_SHORT.filter(function(_,i){return i===selMonth;})[0]+" blooms":"Plant"
+              selMonth!==null?"Blooming in "+MONTHS[selMonth]:"Plant"
             ),
             MONTHS_SHORT.map(function(m,i){
-              return h("th",{key:i,style:{fontSize:10,color:selMonth===i?"#2e5339":"#aaa",padding:"4px 1px",textAlign:"center",fontWeight:selMonth===i?700:400,cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},m);
+              var active=selMonth===i;
+              var hasCount=monthCounts[i]>0;
+              return h("th",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},
+                style:{padding:"2px 1px",textAlign:"center",cursor:"pointer",verticalAlign:"bottom"}},
+                h("div",{style:{
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                  borderRadius:6,padding:"4px 2px",
+                  background:active?"#2e5339":hasCount?"#f0f7f0":"transparent",
+                  border:"1.5px solid "+(active?"#2e5339":hasCount?"#c8e6c9":"transparent")
+                }},
+                  h("span",{style:{fontSize:10,fontWeight:active?700:400,color:active?"white":hasCount?"#2e5339":"#ccc"}},m),
+                  h("span",{style:{fontSize:9,color:active?"rgba(255,255,255,0.75)":hasCount?"#4a7c59":"#ddd",lineHeight:1}},hasCount?monthCounts[i]:"\u00a0")
+                )
+              );
             })
           )
         ),
@@ -1640,11 +1645,18 @@ function App(){
           })
         ),
 
-        // Plants tab controls
-        activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
-          // Suggest button
-          h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}},
-            h("button",{onClick:function(){setShowSuggest(!showSuggest);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:showSuggest?"#2e5339":"white",color:showSuggest?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette")
+        // Plants + Mix tab controls (shared filters)
+        (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
+          // Suggest button (plants only) + patch size (mix only)
+          h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}},
+            activeTab==="plants"&&h("button",{onClick:function(){setShowSuggest(!showSuggest);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:showSuggest?"#2e5339":"white",color:showSuggest?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
+            activeTab==="mix"&&h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
+            activeTab==="mix"&&[{n:10,l:"Small",desc:"~10 plants \u00b7 a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants \u00b7 typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants \u00b7 meadow, woodland edge, or larger restoration"}].map(function(x){
+              return h("span",{key:x.n,className:"tip-wrap"},
+                h("button",{onClick:function(){setPatchSize(x.n);},style:{padding:"5px 10px",borderRadius:16,border:"1px solid "+(patchSize===x.n?"#2e5339":"#e0ddd5"),background:patchSize===x.n?"#2e5339":"white",color:patchSize===x.n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l),
+                h("span",{className:"tip"},x.desc)
+              );
+            })
           ),
           // Search
           h("div",{style:{position:"relative",marginBottom:8}},
@@ -1783,18 +1795,8 @@ function App(){
               )
             )
           )
-        )), // end desktop filters, end plants tab controls
+        )), // end desktop filters, end plants+mix tab controls
 
-        // Mix tab controls
-        activeTab==="mix"&&h("div",{style:{padding:"10px 20px 12px",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
-          h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
-          [{n:10,l:"Small",desc:"~10 plants \u00b7 a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants \u00b7 typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants \u00b7 meadow, woodland edge, or larger restoration"}].map(function(x){
-            return h("span",{key:x.n,className:"tip-wrap"},
-              h("button",{onClick:function(){setPatchSize(x.n);},style:{padding:"5px 10px",borderRadius:16,border:"1px solid "+(patchSize===x.n?"#2e5339":"#e0ddd5"),background:patchSize===x.n?"#2e5339":"white",color:patchSize===x.n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l),
-              h("span",{className:"tip"},x.desc)
-            );
-          })
-        )
       )
     ),
 
