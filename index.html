@@ -837,8 +837,8 @@ function HabitatView(props){
     return plants.filter(function(p){
       if(removedLatins.indexOf(p.latin)>=0)return false;
       if(p.isCultivar)return false;
-      var s=p.status;
-      if(s.indexOf("Native")<0&&s!=="Near-Native"&&s!=="Near Native")return false;
+      var s=p.status.toLowerCase().replace(/[-\s]/g,"");
+      if(s!=="native"&&s!=="nearnative")return false;
       return true;
     });
   },[plants,removedLatins]);
