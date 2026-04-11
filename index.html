@@ -12,8 +12,8 @@
   <style>
     :root{--forest:#2e5339;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
     *{box-sizing:border-box;margin:0;padding:0;}
-    html{font-size:16px;}
-    body{background:var(--cream);font-family:'Poppins',sans-serif;color:var(--bark);font-size:1rem;}
+    html{font-size:16px;overflow-x:hidden;}
+    body{background:var(--cream);font-family:'Poppins',sans-serif;color:var(--bark);font-size:1rem;overflow-x:hidden;}
     @media print{.no-print{display:none!important;}.print-card{break-inside:avoid;}body{background:white;}}
     .tip-wrap{position:relative;display:inline-flex;}
     .tip-wrap .tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#333;color:white;font-size:11px;padding:5px 9px;border-radius:6px;z-index:400;pointer-events:none;max-width:220px;white-space:normal;text-align:center;line-height:1.4;}
@@ -350,8 +350,10 @@ function applyFilters(plants,f,siteKey){
 function sortPlants(plants,sortBy,siteKey){
   return plants.slice().sort(function(a,b){
     if(sortBy==="wildlife")return(b.caterpillars||0)-(a.caterpillars||0);
-    if(sortBy==="fit"&&siteKey){var d=(getSiteScore(b,siteKey)||0)-(getSiteScore(a,siteKey)||0);if(d!==0)return d;}
-    return a.common.localeCompare(b.common);
+    if(sortBy==="alpha")return a.common.localeCompare(b.common);
+    // "fit" mode: sort by site score if available, otherwise by wildlife value
+    if(siteKey){var d=(getSiteScore(b,siteKey)||0)-(getSiteScore(a,siteKey)||0);if(d!==0)return d;}
+    return(b.caterpillars||0)-(a.caterpillars||0);
   });
 }
 
@@ -1058,6 +1060,7 @@ function BloomCalendar(props){
   function toggleStatus(k){setStatuses(function(prev){return prev.indexOf(k)>=0?prev.filter(function(x){return x!==k;}):[...prev,k];});}
 
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
+  var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   useEffect(function(){
     function onResize(){setIsMobile(window.innerWidth<700);}
     window.addEventListener("resize",onResize);
@@ -1069,6 +1072,17 @@ function BloomCalendar(props){
   };
 
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",color:"#2c2c2c"}},
+    // Plant detail modal
+    modalPlant&&h("div",{
+      onClick:function(){setModalPlant(null);},
+      style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
+        h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
+        h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false})
+        )
+      )
+    ),
     // Header (standalone only)
     !embedded&&h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
       h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
@@ -1123,7 +1137,7 @@ function BloomCalendar(props){
         eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
           var hex=getBloomHex(p)||"#C0BDB8";
           var isWhite=hex==="#E8E4DC";
-          return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid #f0ede4"}},
+          return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid #f0ede4",cursor:"pointer"},onClick:function(){setModalPlant(p);}},
             h(PlantThumb,{plant:p,size:36,radius:6}),
             h("div",{style:{flex:1,minWidth:0}},
               h("div",{style:{fontSize:13,fontWeight:500,color:"#2c2c2c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
@@ -1174,7 +1188,7 @@ function BloomCalendar(props){
             var hex=getBloomHex(p)||"#C0BDB8";
             var isWhite=hex==="#E8E4DC";
             return h("tr",{key:p.latin,style:{borderTop:"0.5px solid #f0ede4"}},
-              h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#2c2c2c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}},
+              h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#2e5339",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150,cursor:"pointer"},onClick:function(){setModalPlant(p);}},
                 h("span",{title:p.latin},p.common)
               ),
               MONTHS_SHORT.map(function(m,i){
@@ -1691,7 +1705,7 @@ function App(){
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
 
         // Tab row
-        h("div",{style:{display:"flex",padding:"0 20px",borderBottom:"1px solid #e0ddd5"}},
+        h("div",{style:{display:"flex",padding:"0 12px",borderBottom:"1px solid #e0ddd5",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}},
           [
             {key:"plants",label:"Plants"},
             {key:"mix",label:"Build a mix"},
