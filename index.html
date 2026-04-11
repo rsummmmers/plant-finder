@@ -233,6 +233,13 @@ function parseCSV(text){
 
 function getTypeKey(cat){
   for(var i=0;i<PLANT_TYPES.length;i++)if(PLANT_TYPES[i].cats[cat])return PLANT_TYPES[i].key;
+  var c=cat.toLowerCase();
+  if(c.indexOf("tree")>=0||c.indexOf("canopy")>=0)return"tree";
+  if(c.indexOf("shrub")>=0||c.indexOf("evergreen")>=0)return"shrub";
+  if(c.indexOf("grass")>=0||c.indexOf("sedge")>=0)return"grass";
+  if(c.indexOf("fern")>=0)return"fern";
+  if(c.indexOf("ground")>=0)return"ground";
+  if(c.indexOf("vine")>=0)return"vine";
   return"perennial";
 }
 
@@ -284,7 +291,8 @@ function rowToPlant(row){
     medicinalNotes:row["medicinal_notes"]||"",
     medicinalValue:(row["medicinal"]||"").trim().toLowerCase(),
     isCultivar:status.indexOf("Cultivar")>=0,
-    isWoody:!!WOODY_SET[cat],isCanopy:!!CANOPY_SET[cat],
+    isWoody:!!WOODY_SET[cat]||(cat.toLowerCase().indexOf("tree")>=0||cat.toLowerCase().indexOf("shrub")>=0||cat.toLowerCase().indexOf("canopy")>=0||cat.toLowerCase().indexOf("evergreen")>=0||cat.toLowerCase().indexOf("vine")>=0),
+    isCanopy:!!CANOPY_SET[cat]||(cat.toLowerCase().indexOf("canopy")>=0||(cat.toLowerCase().indexOf("tree")>=0&&cat.toLowerCase().indexOf("small")<0&&cat.toLowerCase().indexOf("midstory")<0)),
     typeKey:getTypeKey(cat),scores:scores,
   };
 }
@@ -1363,12 +1371,20 @@ function SeedCalendar(props){
           h("button",{onClick:function(){setMonthIdx(now.getMonth());},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontFamily:"inherit",fontSize:12,flexShrink:0}},"Today"),
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+1)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14,flexShrink:0}},"\u25b6")
         ),
-        h("div",{style:{display:"flex",gap:2}},
+        h("div",{style:{display:"flex",gap:3}},
           MONTHS_SHORT.map(function(m,i){
-            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",fontSize:9,cursor:"pointer",padding:"2px 1px",borderRadius:4,background:i===monthIdx?"#2e5339":"transparent",color:i===monthIdx?"white":"#888",minWidth:0}},
-              h("span",{style:{display:"block",overflow:"hidden"}},m[0]),
-              h("div",{style:{height:3,borderRadius:2,marginTop:2,background:i===monthIdx?"rgba(255,255,255,0.4)":monthCounts[i]>0?"#8aab8a":"#e0e0e0"}}),
-              h("div",{style:{fontSize:8,marginTop:1,color:i===monthIdx?"rgba(255,255,255,0.7)":"#ccc"}},monthCounts[i]||"")
+            var active=i===monthIdx;
+            var hasCount=monthCounts[i]>0;
+            return h("div",{key:i,onClick:function(){setMonthIdx(i);},style:{flex:1,textAlign:"center",cursor:"pointer",minWidth:0}},
+              h("div",{style:{
+                display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                borderRadius:6,padding:"4px 2px",
+                background:active?"#2e5339":hasCount?"#f0f7f0":"transparent",
+                border:"1.5px solid "+(active?"#2e5339":hasCount?"#c8e6c9":"transparent")
+              }},
+                h("span",{style:{fontSize:10,fontWeight:active?700:400,color:active?"white":hasCount?"#2e5339":"#ccc"}},m),
+                h("span",{style:{fontSize:9,color:active?"rgba(255,255,255,0.75)":hasCount?"#4a7c59":"#ddd",lineHeight:1}},hasCount?monthCounts[i]:"\u00a0")
+              )
             );
           })
         )
@@ -1704,8 +1720,8 @@ function App(){
     h("div",{className:"no-print",style:{position:"sticky",top:0,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
 
-        // Tab row
-        h("div",{style:{display:"flex",padding:"0 12px",borderBottom:"1px solid #e0ddd5",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}},
+        // Tab row — desktop only
+        !isMobile&&h("div",{style:{display:"flex",padding:"0 12px",borderBottom:"1px solid #e0ddd5"}},
           [
             {key:"plants",label:"Plants"},
             {key:"mix",label:"Build a mix"},
@@ -1885,7 +1901,7 @@ function App(){
     h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:"0 20px 80px"}},
+    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
@@ -1947,6 +1963,29 @@ function App(){
           )
         )
       )
+    ),
+
+    // Mobile bottom nav
+    isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)"}},
+      [
+        {key:"plants",  label:"Plants",   icon:"\ud83c\udf31"},
+        {key:"mix",     label:"Mix",      icon:"\ud83c\udf3f"},
+        {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
+        {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
+        {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
+      ].map(function(tab){
+        var active=activeTab===tab.key;
+        return h("button",{key:tab.key,
+          onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+          style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+            padding:"8px 4px 6px",background:"none",border:"none",cursor:"pointer",
+            color:active?"#2e5339":"#aaa",fontFamily:"inherit",position:"relative"}
+        },
+          h("div",{style:{fontSize:18,lineHeight:1,marginBottom:2}},tab.icon),
+          h("div",{style:{fontSize:10,fontWeight:active?"500":"normal"}},tab.label),
+          tab.count>0&&h("span",{style:{position:"absolute",top:4,right:"50%",transform:"translateX(14px)",background:"#e57373",color:"white",borderRadius:10,padding:"0 5px",fontSize:9,fontWeight:700,lineHeight:"16px"}},tab.count)
+        );
+      })
     ),
 
     // Footer
