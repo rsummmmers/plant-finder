@@ -1110,7 +1110,7 @@ function BloomCalendar(props){
       )
     ),
     // Filters
-    h("div",{style:{position:embedded?"static":"sticky",top:0,zIndex:50,background:"rgba(0,0,0,0.15)",borderBottom:"1px solid rgba(255,255,255,0.12)",padding:isMobile?"8px 12px":"12px 20px 10px"}},
+    h("div",{style:{position:embedded?"static":"sticky",top:embedded?undefined:140,zIndex:50,background:"rgba(0,0,0,0.15)",borderBottom:"1px solid rgba(255,255,255,0.12)",padding:isMobile?"8px 12px":"12px 20px 10px"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         h("div",{style:{display:"flex",flexWrap:"wrap",gap:isMobile?5:8,alignItems:"center",marginBottom:isMobile?6:10}},
           // All plants / My palette pills
@@ -1717,45 +1717,46 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"46px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
-    // Header
-    h("div",{style:{position:"relative",overflow:"hidden",minHeight:100}},
-      h("img",{src:"./header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
-      h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
-      h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:"20px 20px 18px"}},
-        h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}},"Summers EcoScaping"),
-        h("div",{style:{fontFamily:"'Literata',serif",fontSize:"clamp(20px,4vw,30px)",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1}},"Ecoscaping Planner"),
-        h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:5}},"Native plants for Massachusetts")
-      )
-    ),
+    // Header + tabs — fixed on desktop, normal flow on mobile
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200}},
 
-    // Fixed tab bar — desktop only, always visible
-    !isMobile&&h("div",{className:"no-print",style:{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
-        [
-          {key:"plants", label:"🔍 Plants"},
-          {key:"mix",    label:"🧩 Build a mix"},
-          {key:"bloom",  label:"🌸 Bloom calendar"},
-          {key:"seeds",  label:"🌰 Seed calendar"},
-          {key:"palette",label:"♥ My palette",count:hearts.length},
-        ].map(function(tab){
-          var active=activeTab===tab.key;
-          return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
-            style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
-              color:active?"#2e5339":"#888",background:"none",border:"none",
-              borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
-              cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
-          },
-            tab.label,
-            tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
-          );
-        })
-      )
-    ),
+      // Green photo bar
+      h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
+        h("img",{src:"./header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
+        h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
+        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px"}},
+          h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2}},"Summers EcoScaping"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1}},"Ecoscaping Planner"),
+          !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
+        )
+      ),
 
-    // Sticky filter bar (below fixed tabs on desktop)
-    h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:46,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+      // Tab row — desktop only
+      !isMobile&&h("div",{className:"no-print",style:{background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
+          [
+            {key:"plants", label:"🔍 Plants"},
+            {key:"mix",    label:"🧩 Build a mix"},
+            {key:"bloom",  label:"🌸 Bloom calendar"},
+            {key:"seeds",  label:"🌰 Seed calendar"},
+            {key:"palette",label:"♥ My palette",count:hearts.length},
+          ].map(function(tab){
+            var active=activeTab===tab.key;
+            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
+                color:active?"#2e5339":"#888",background:"none",border:"none",
+                borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
+                cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
+            },
+              tab.label,
+              tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
+            );
+          })
+        )
+    // Sticky filter bar
+    h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
           // Suggest button (plants only) + patch size (mix only)
@@ -1915,7 +1916,7 @@ function App(){
     h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px",paddingTop:isMobile?"0":"56px"}},
+    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
