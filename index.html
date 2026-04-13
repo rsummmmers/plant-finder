@@ -2040,6 +2040,7 @@ function App(){
       ].map(function(tab){
         var active=activeTab===tab.key;
         return h("button",{key:tab.key,
+          onTouchEnd:function(e){e.preventDefault();setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
           onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
           style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
             padding:"8px 4px 6px",background:"none",border:"none",borderTop:"2px solid "+(active?"#2e5339":"transparent"),cursor:"pointer",
