@@ -1709,7 +1709,8 @@ function App(){
   },[activeTab,search,zone,filters,sortBy,label]);
 
   useEffect(function(){
-    if(isMobile)window.scrollTo(0,0);
+    var t=setTimeout(function(){window.scrollTo(0,0);},0);
+    return function(){clearTimeout(t);};
   },[activeTab]);
 
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
