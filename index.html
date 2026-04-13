@@ -12,6 +12,7 @@
   <style>
     :root{--forest:#2e5339;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
     *{box-sizing:border-box;margin:0;padding:0;}
+    button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
     html{font-size:16px;overflow-x:hidden;}
     body{background:var(--cream);font-family:'Poppins',sans-serif;color:var(--bark);font-size:1rem;overflow-x:hidden;}
     @media print{.no-print{display:none!important;}.print-card{break-inside:avoid;}body{background:white;}}
@@ -1708,6 +1709,10 @@ function App(){
     pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab,search:search,zone:zone,sortBy:sortBy,label:label},filters));
   },[activeTab,search,zone,filters,sortBy,label]);
 
+  useEffect(function(){
+    requestAnimationFrame(function(){requestAnimationFrame(function(){window.scrollTo(0,0);});});
+  },[activeTab]);
+
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
   //   The app loads plants.csv first (fast). If missing, falls back to live Sheet fetch.
@@ -1785,7 +1790,7 @@ function App(){
             {key:"palette",label:"♥ My palette",count:hearts.length},
           ].map(function(tab){
             var active=activeTab===tab.key;
-            return h("button",{key:tab.key,onClick:function(){window.scrollTo(0,0);setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
               style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
                 color:active?"#2e5339":"#888",background:"none",border:"none",
                 borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
@@ -2035,10 +2040,10 @@ function App(){
       ].map(function(tab){
         var active=activeTab===tab.key;
         return h("button",{key:tab.key,
-          onClick:function(){window.scrollTo(0,0);setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+          onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
           style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
             padding:"8px 4px 6px",background:"none",border:"none",borderTop:"2px solid "+(active?"#2e5339":"transparent"),cursor:"pointer",
-            color:active?"#2e5339":"#aaa",fontFamily:"inherit",position:"relative"}
+            color:active?"#2e5339":"#aaa",fontFamily:"inherit",position:"relative",touchAction:"manipulation",WebkitTapHighlightColor:"transparent"}
         },
           h("div",{style:{fontSize:18,lineHeight:1,marginBottom:2}},tab.icon),
           h("div",{style:{fontSize:10,fontWeight:active?"500":"normal"}},tab.label),
