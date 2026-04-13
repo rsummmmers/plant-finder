@@ -143,10 +143,19 @@ function getBloomHex(plant){
   if(!first||NONSHOWY_COLORS[first])return null;
   return FLOWER_HEX_MAP[first]||"#C0BDB8";
 }
-function getBloomColors(plant){
+function getBloomColors(plant,priorityFilter){
   var cols=(plant.flowerColor||"").split(/\s*[|]\s*/).map(function(c){return c.trim().toLowerCase();}).filter(Boolean);
   var seen={};
-  return cols.filter(function(c){return !NONSHOWY_COLORS[c]&&!seen[c]&&(seen[c]=true);}).map(function(c){return FLOWER_HEX_MAP[c]||"#C0BDB8";}).slice(0,3);
+  var mapped=cols.filter(function(c){return !NONSHOWY_COLORS[c]&&!seen[c]&&(seen[c]=true);}).map(function(c){return{name:c,hex:FLOWER_HEX_MAP[c]||"#C0BDB8"};});
+  if(priorityFilter&&priorityFilter!=="all"){
+    var allowed=BLOOM_COLOR_GROUPS[priorityFilter]||[];
+    mapped.sort(function(a,b){
+      var aMatch=allowed.indexOf(a.name)>=0?0:1;
+      var bMatch=allowed.indexOf(b.name)>=0?0:1;
+      return aMatch-bMatch;
+    });
+  }
+  return mapped.map(function(x){return x.hex;}).slice(0,3);
 }
 
 function blooms(plant,m){
@@ -1156,7 +1165,7 @@ function BloomCalendar(props){
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("div",null,
         eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
-          var colors=getBloomColors(p);
+          var colors=getBloomColors(p,colorFilter);
           var hex=colors[0]||"#C0BDB8";
           return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid rgba(255,255,255,0.1)",cursor:"pointer"}},
             h("div",{onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}},
@@ -1208,18 +1217,18 @@ function BloomCalendar(props){
           eligible.filter(function(p){
             return selMonth===null||blooms(p,selMonth);
           }).map(function(p){
-            var colors=getBloomColors(p);
-            return h("tr",{key:p.latin,style:{borderTop:"0.5px solid rgba(255,255,255,0.08)"}},
-              h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#c8e6c0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150,cursor:"pointer"},onClick:function(){setModalPlant(p);}},
+            var colors=getBloomColors(p,colorFilter);
+            return h("tr",{key:p.latin,style:{borderTop:"0.5px solid rgba(255,255,255,0.08)",cursor:"pointer"},onClick:function(){setModalPlant(p);}},
+              h("td",{style:{fontSize:12,padding:"3px 8px 3px 0",color:"#c8e6c0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:150}},
                 h("span",{title:p.latin},p.common)
               ),
               MONTHS_SHORT.map(function(m,i){
                 var active=blooms(p,i);
-                return h("td",{key:i,style:{padding:"2px 1px",textAlign:"center",cursor:"pointer"},onClick:function(){setSelMonth(selMonth===i?null:i);}},
-                  active&&h("div",{style:{display:"flex",gap:1,justifyContent:"center",alignItems:"center",height:24,borderRadius:5,background:"rgba(255,255,255,0.12)",opacity:selMonth!==null&&selMonth!==i?0.4:1,outline:selMonth===i?"2px solid rgba(255,255,255,0.5)":"none",outlineOffset:"1px"}},
-                    colors.slice(0,2).map(function(c,ci){
+                return h("td",{key:i,style:{padding:"2px 1px",textAlign:"center"}},
+                  active&&h("div",{style:{display:"flex",gap:1,justifyContent:"center",alignItems:"center",height:24,borderRadius:5,background:"rgba(255,255,255,0.12)",opacity:selMonth!==null&&selMonth!==i?0.4:1,outline:selMonth===i?"2px solid rgba(255,255,255,0.5)":"none",outlineOffset:"1px",cursor:"pointer"},onClick:function(e){e.stopPropagation();setModalPlant(p);}},
+                    colors.slice(0,3).map(function(c,ci){
                       var isW=c==="#E8E4DC";
-                      return h("div",{key:ci,style:{width:8,height:8,borderRadius:"50%",background:c,border:isW?"1px solid rgba(255,255,255,0.4)":"none",flexShrink:0}});
+                      return h("div",{key:ci,style:{width:7,height:7,borderRadius:"50%",background:c,border:isW?"1px solid rgba(255,255,255,0.4)":"none",flexShrink:0}});
                     })
                   )
                 );
@@ -1240,13 +1249,13 @@ function BloomCalendar(props){
           selPlants.map(function(p){
             var hex=getBloomHex(p)||"#C0BDB8";
             var isWhite=hex==="#E8E4DC";
-            return h("div",{key:p.latin,style:{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"rgba(255,255,255,0.4)":hex)}},
+            return h("div",{key:p.latin,style:{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"rgba(255,255,255,0.4)":hex),cursor:"pointer"},onClick:function(){setModalPlant(p);}},
               h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}},
                 h("div",{style:{flex:1,minWidth:0}},
                   h("div",{style:{fontSize:13,fontWeight:500,color:"white",marginBottom:2}},p.common),
                   h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",fontStyle:"italic",marginBottom:4}},p.latin)
                 ),
-                props.onHeart&&h("button",{onClick:function(){props.onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:hearts.indexOf(p.latin)>=0?"#e57373":"rgba(255,255,255,0.3)",flexShrink:0,lineHeight:1,padding:"0 0 0 8px"}},hearts.indexOf(p.latin)>=0?"\u2665":"\u2661")
+                props.onHeart&&h("button",{onClick:function(e){e.stopPropagation();props.onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:hearts.indexOf(p.latin)>=0?"#e57373":"rgba(255,255,255,0.3)",flexShrink:0,lineHeight:1,padding:"0 0 0 8px"}},hearts.indexOf(p.latin)>=0?"\u2665":"\u2661")
               ),
               h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
                 p.flowerColor.split("|").map(function(c,i){
