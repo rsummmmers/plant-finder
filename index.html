@@ -1032,6 +1032,8 @@ function BloomCalendar(props){
   var _col=useState("all"),colorFilter=_col[0],setColorFilter=_col[1];
   var _ns=useState(false),showNonShowy=_ns[0],setShowNonShowy=_ns[1];
 
+  var _ex=useState([]),exclude=_ex[0],setExclude=_ex[1];
+
   // Use hearts from props (App state) so changes are reactive; fallback to localStorage for standalone use
   var hearts=props.hearts||useMemo(function(){try{return JSON.parse(localStorage.getItem("ppb_hearts_v2")||"[]");}catch(e){return[];}},[]);
 
@@ -1040,6 +1042,9 @@ function BloomCalendar(props){
       if(p.bloomStart<0||p.bloomEnd<0)return false;
       if(!matchStatus(p,statuses))return false;
       if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
+      if(exclude.indexOf("tree")>=0&&p.typeKey==="tree")return false;
+      if(exclude.indexOf("shrub")>=0&&p.typeKey==="shrub")return false;
+      if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
       if(!showNonShowy){
         var first=(p.flowerColor||"").split("|")[0].trim().toLowerCase();
         if(!first||NONSHOWY_COLORS[first])return false;
@@ -1051,7 +1056,7 @@ function BloomCalendar(props){
       }
       return true;
     });
-  },[plants,statuses,source,colorFilter,showNonShowy,hearts]);
+  },[plants,statuses,source,colorFilter,showNonShowy,hearts,exclude]);
 
   var monthCounts=useMemo(function(){
     var c=new Array(12).fill(0);
@@ -1149,6 +1154,25 @@ function BloomCalendar(props){
             h("div",{style:{width:9,height:9,borderRadius:"50%",background:"#8a7355",flexShrink:0}}),
             "+ non-showy"
           )
+        ),
+        // Exclude type pills
+        h("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:isMobile?8:6}},
+          h("span",{style:{fontSize:11,color:"rgba(255,255,255,0.4)",marginRight:2}},"Exclude:"),
+          [
+            {key:"tree",     label:"🌳 Trees"},
+            {key:"shrub",    label:"🌿 Shrubs"},
+            {key:"perennial",label:"🌸 Perennials"},
+          ].map(function(x){
+            var on=exclude.indexOf(x.key)>=0;
+            return h("button",{key:x.key,onClick:function(){setExclude(function(prev){return on?prev.filter(function(k){return k!==x.key;}):[...prev,x.key];});},
+              style:{padding:"3px 11px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,
+                border:"1.5px solid "+(on?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.22)"),
+                background:on?"rgba(220,60,60,0.25)":"transparent",
+                color:on?"rgba(255,200,200,1)":"rgba(255,255,255,0.6)",
+                fontWeight:on?"500":"normal",
+                textDecoration:on?"line-through":"none"}
+            },x.label);
+          })
         ),
         // Mobile: month spinner
         isMobile&&h("div",{style:{display:"flex",alignItems:"center",gap:10}},
