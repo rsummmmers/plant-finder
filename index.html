@@ -1716,7 +1716,7 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0"}},
 
     // Header
     h("div",{style:{position:"relative",overflow:"hidden",minHeight:100}},
@@ -1927,7 +1927,7 @@ function App(){
             h("div",{style:{fontSize:22,flexShrink:0}},"\ud83c\udf3f"),
             h("div",null,
               h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"A layered mix of the best plants for your site"),
-              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},noFilters?"Use the filters above to set your site conditions \u2014 sun, moisture, concerns \u2014 and the mix will draw from those results. ":""),
+              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Use the filters above to set your site conditions \u2014 sun, moisture, concerns \u2014 and the mix will draw from those results. "),
               h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Structured in layers from canopy trees to groundcovers. Remove any plant you don\u2019t like or can\u2019t source and the next best option fills its spot. A mix of heights and types \u2014 including canopy trees \u2014 supports the most biodiversity and ecosystem function.")
             )
           ),
