@@ -1051,9 +1051,8 @@ function BloomCalendar(props){
   },[eligible]);
 
   var selPlants=useMemo(function(){
-    if(selMonth===null)return[];
-    return eligible.filter(function(p){return blooms(p,selMonth);})
-      .sort(function(a,b){return a.common.localeCompare(b.common);});
+    var base=selMonth===null?eligible:eligible.filter(function(p){return blooms(p,selMonth);});
+    return base.slice().sort(function(a,b){return a.common.localeCompare(b.common);});
   },[eligible,selMonth]);
 
   // Suggestions: plants not in palette blooming selMonth
@@ -1231,12 +1230,12 @@ function BloomCalendar(props){
       )
     ), // end desktop table
     // Detail panel (desktop only)
-    selMonth!==null&&h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
+    h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
       h("div",{style:{borderTop:"1px solid rgba(255,255,255,0.15)",paddingTop:14}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,marginBottom:12,color:"white"}},
-          MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming"
+          selMonth!==null?MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming":selPlants.length+" plant"+(selPlants.length!==1?"s":"")
         ),
-        selPlants.length===0&&h("div",{style:{color:"rgba(255,255,255,0.5)",fontStyle:"italic",fontSize:14}},"No plants match your filters for this month."),
+        selPlants.length===0&&h("div",{style:{color:"rgba(255,255,255,0.5)",fontStyle:"italic",fontSize:14}},"No plants match your filters."),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:20}},
           selPlants.map(function(p){
             var hex=getBloomHex(p)||"#C0BDB8";
