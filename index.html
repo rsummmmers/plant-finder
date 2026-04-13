@@ -1022,10 +1022,9 @@ function BloomCalendar(props){
   var _src=useState("all"),source=_src[0],setSource=_src[1];
   var _col=useState("all"),colorFilter=_col[0],setColorFilter=_col[1];
   var _ns=useState(false),showNonShowy=_ns[0],setShowNonShowy=_ns[1];
-  var _ph=useState([]),paletteHearts=_ph[0];
 
-  // Load hearts from localStorage for "my palette" toggle
-  var hearts=useMemo(function(){try{return JSON.parse(localStorage.getItem("ppb_hearts_v2")||"[]");}catch(e){return[];}},[]);
+  // Use hearts from props (App state) so changes are reactive; fallback to localStorage for standalone use
+  var hearts=props.hearts||useMemo(function(){try{return JSON.parse(localStorage.getItem("ppb_hearts_v2")||"[]");}catch(e){return[];}},[]);
 
   var eligible=useMemo(function(){
     return plants.filter(function(p){
@@ -1095,7 +1094,7 @@ function BloomCalendar(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false})
         )
       )
     ),
@@ -1160,19 +1159,22 @@ function BloomCalendar(props){
         eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
           var colors=getBloomColors(p);
           var hex=colors[0]||"#C0BDB8";
-          return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid rgba(255,255,255,0.1)",cursor:"pointer"},onClick:function(){setModalPlant(p);}},
-            h(PlantThumb,{plant:p,size:36,radius:6}),
-            h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontSize:13,fontWeight:500,color:"white",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
-              h("div",{style:{display:"flex",gap:2,marginTop:3}},
-                MONTHS_SHORT.map(function(m,i){
-                  var active=blooms(p,i);
-                  return h("div",{key:i,style:{flex:1,height:6,borderRadius:2,
-                    background:active?(selMonth===null||selMonth===i?hex:"rgba(255,255,255,0.2)"):"rgba(255,255,255,0.08)"
-                  }});
-                })
+          return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid rgba(255,255,255,0.1)",cursor:"pointer"}},
+            h("div",{onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}},
+              h(PlantThumb,{plant:p,size:36,radius:6}),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{fontSize:13,fontWeight:500,color:"white",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
+                h("div",{style:{display:"flex",gap:2,marginTop:3}},
+                  MONTHS_SHORT.map(function(m,i){
+                    var active=blooms(p,i);
+                    return h("div",{key:i,style:{flex:1,height:6,borderRadius:2,
+                      background:active?(selMonth===null||selMonth===i?hex:"rgba(255,255,255,0.2)"):"rgba(255,255,255,0.08)"
+                    }});
+                  })
+                )
               )
-            )
+            ),
+            props.onHeart&&h("button",{onClick:function(){props.onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:hearts.indexOf(p.latin)>=0?"#e57373":"rgba(255,255,255,0.3)",flexShrink:0,lineHeight:1,padding:"4px"}},hearts.indexOf(p.latin)>=0?"\u2665":"\u2661")
           );
         })
       )
@@ -1240,8 +1242,13 @@ function BloomCalendar(props){
             var hex=getBloomHex(p)||"#C0BDB8";
             var isWhite=hex==="#E8E4DC";
             return h("div",{key:p.latin,style:{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,padding:"10px 12px",borderLeft:"4px solid "+(isWhite?"rgba(255,255,255,0.4)":hex)}},
-              h("div",{style:{fontSize:13,fontWeight:500,color:"white",marginBottom:2}},p.common),
-              h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",fontStyle:"italic",marginBottom:4}},p.latin),
+              h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}},
+                h("div",{style:{flex:1,minWidth:0}},
+                  h("div",{style:{fontSize:13,fontWeight:500,color:"white",marginBottom:2}},p.common),
+                  h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",fontStyle:"italic",marginBottom:4}},p.latin)
+                ),
+                props.onHeart&&h("button",{onClick:function(){props.onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:hearts.indexOf(p.latin)>=0?"#e57373":"rgba(255,255,255,0.3)",flexShrink:0,lineHeight:1,padding:"0 0 0 8px"}},hearts.indexOf(p.latin)>=0?"\u2665":"\u2661")
+              ),
               h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
                 p.flowerColor.split("|").map(function(c,i){
                   var cl=c.trim().toLowerCase();
@@ -1925,7 +1932,7 @@ function App(){
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
 
       !loading&&!error&&(
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");}}):        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart}):
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");}}):        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         activeTab==="mix"?h("div",null,
           h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}},
