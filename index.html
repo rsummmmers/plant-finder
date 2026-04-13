@@ -912,6 +912,7 @@ function HabitatView(props){
     h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14,flexWrap:"wrap"}},
       h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},total+" plants \u00b7 Massachusetts "+statusNote+" \u00b7 straight species only"),
       h("div",{style:{marginLeft:"auto",display:"flex",gap:5,alignItems:"center"}},
+        h("button",{onClick:function(){Object.values(layers).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});},style:{padding:"5px 14px",borderRadius:20,border:"none",background:"#2e5339",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"\u2665 Save all"),
         h("span",{style:{fontSize:12,color:"#aaa"}},"Sort:"),
         [{v:"wildlife",l:"\ud83e\udd8b Insect value"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
           return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l);
@@ -1716,7 +1717,7 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"46px"}},
 
     // Header
     h("div",{style:{position:"relative",overflow:"hidden",minHeight:100}},
@@ -1729,33 +1730,33 @@ function App(){
       )
     ),
 
-    // Sticky bar
-    h("div",{className:"no-print",style:{position:"sticky",top:0,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+    // Fixed tab bar — desktop only, always visible
+    !isMobile&&h("div",{className:"no-print",style:{position:"fixed",top:0,left:0,right:0,zIndex:200,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
+        [
+          {key:"plants", label:"🔍 Plants"},
+          {key:"mix",    label:"🧩 Build a mix"},
+          {key:"bloom",  label:"🌸 Bloom calendar"},
+          {key:"seeds",  label:"🌰 Seed calendar"},
+          {key:"palette",label:"♥ My palette",count:hearts.length},
+        ].map(function(tab){
+          var active=activeTab===tab.key;
+          return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+            style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
+              color:active?"#2e5339":"#888",background:"none",border:"none",
+              borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
+              cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
+          },
+            tab.label,
+            tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
+          );
+        })
+      )
+    ),
+
+    // Sticky filter bar (below fixed tabs on desktop)
+    h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:46,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
-
-        // Tab row — desktop only
-        !isMobile&&h("div",{style:{display:"flex",padding:"0 12px",borderBottom:"1px solid #e0ddd5"}},
-          [
-            {key:"plants",label:"🔍 Plants"},
-            {key:"mix",label:"🧩 Build a mix"},
-            {key:"bloom",label:"Bloom calendar"},
-            {key:"seeds",label:"Seed calendar"},
-            {key:"palette",label:"My palette",count:hearts.length},
-          ].map(function(tab){
-            var active=activeTab===tab.key;
-            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
-              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
-                color:active?"#2e5339":"#888",background:"none",border:"none",
-                borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
-                cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
-            },
-              tab.label,
-              tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
-            );
-          })
-        ),
-
-        // Plants + Mix tab controls (shared filters)
         (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
           // Suggest button (plants only) + patch size (mix only)
           h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}},
@@ -1914,7 +1915,7 @@ function App(){
     h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px"}},
+    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px",paddingTop:isMobile?"0":"56px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
