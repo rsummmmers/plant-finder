@@ -1045,6 +1045,7 @@ function BloomCalendar(props){
       if(exclude.indexOf("tree")>=0&&p.typeKey==="tree")return false;
       if(exclude.indexOf("shrub")>=0&&p.typeKey==="shrub")return false;
       if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
+      if(exclude.indexOf("grass")>=0&&(p.typeKey==="grass"||p.typeKey==="fern"))return false;
       if(!showNonShowy){
         var first=(p.flowerColor||"").split("|")[0].trim().toLowerCase();
         if(!first||NONSHOWY_COLORS[first])return false;
@@ -1162,6 +1163,7 @@ function BloomCalendar(props){
             {key:"tree",     label:"🌳 Trees"},
             {key:"shrub",    label:"🌿 Shrubs"},
             {key:"perennial",label:"🌸 Perennials"},
+            {key:"grass",    label:"🌾 Grasses & ferns"},
           ].map(function(x){
             var on=exclude.indexOf(x.key)>=0;
             return h("button",{key:x.key,onClick:function(){setExclude(function(prev){return on?prev.filter(function(k){return k!==x.key;}):[...prev,x.key];});},
