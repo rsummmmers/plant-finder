@@ -597,7 +597,7 @@ function EdibleSection(props){
 // ── SeedSection ───────────────────────────────────────────────────────────
 function SeedSection(props){
   var plant=props.plant;
-  var _s=useState(false),open=_s[0],setOpen=_s[1];
+  var _s=useState(props.defaultOpen||false),open=_s[0],setOpen=_s[1];
   if(!plant.seedStart&&!plant.seedNotes&&!plant.propagNotes)return null;
   return h("div",{style:{marginTop:10}},
     h("button",{onClick:function(ev){ev.stopPropagation();setOpen(!open);},style:{display:"flex",alignItems:"center",gap:5,background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2e5339",fontFamily:"inherit",padding:0}},
@@ -614,7 +614,7 @@ function SeedSection(props){
 
 // ── PlantCard ─────────────────────────────────────────────────────────────
 function PlantCard(props){
-  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false;
+  var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
@@ -668,7 +668,7 @@ function PlantCard(props){
             cats>0&&h("div",{style:{gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species"))
           ),
           h(RiskBadges,{plant:plant}),
-          h(SeedSection,{plant:plant}),
+          h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
           h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
         )
       ),
@@ -973,7 +973,7 @@ function SeedCard(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true})
+          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true})
         )
       )
     ),
