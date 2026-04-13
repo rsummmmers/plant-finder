@@ -1708,11 +1708,6 @@ function App(){
     pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab,search:search,zone:zone,sortBy:sortBy,label:label},filters));
   },[activeTab,search,zone,filters,sortBy,label]);
 
-  useEffect(function(){
-    var t=setTimeout(function(){window.scrollTo(0,0);},0);
-    return function(){clearTimeout(t);};
-  },[activeTab]);
-
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
   //   The app loads plants.csv first (fast). If missing, falls back to live Sheet fetch.
@@ -1790,7 +1785,7 @@ function App(){
             {key:"palette",label:"♥ My palette",count:hearts.length},
           ].map(function(tab){
             var active=activeTab===tab.key;
-            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+            return h("button",{key:tab.key,onClick:function(){window.scrollTo(0,0);setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
               style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
                 color:active?"#2e5339":"#888",background:"none",border:"none",
                 borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
@@ -2040,7 +2035,7 @@ function App(){
       ].map(function(tab){
         var active=activeTab===tab.key;
         return h("button",{key:tab.key,
-          onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+          onClick:function(){window.scrollTo(0,0);setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
           style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
             padding:"8px 4px 6px",background:"none",border:"none",borderTop:"2px solid "+(active?"#2e5339":"transparent"),cursor:"pointer",
             color:active?"#2e5339":"#aaa",fontFamily:"inherit",position:"relative"}
