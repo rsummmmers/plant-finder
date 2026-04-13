@@ -1736,8 +1736,8 @@ function App(){
         // Tab row — desktop only
         !isMobile&&h("div",{style:{display:"flex",padding:"0 12px",borderBottom:"1px solid #e0ddd5"}},
           [
-            {key:"plants",label:"Plants"},
-            {key:"mix",label:"Build a mix"},
+            {key:"plants",label:"🔍 Plants"},
+            {key:"mix",label:"🧩 Build a mix"},
             {key:"bloom",label:"Bloom calendar"},
             {key:"seeds",label:"Seed calendar"},
             {key:"palette",label:"My palette",count:hearts.length},
@@ -1949,7 +1949,7 @@ function App(){
             filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},style:{fontSize:12,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"Clear all")
+            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:20,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
           showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
@@ -1981,8 +1981,8 @@ function App(){
     // Mobile bottom nav
     isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)"}},
       [
-        {key:"plants",  label:"Plants",   icon:"\ud83c\udf31"},
-        {key:"mix",     label:"Mix",      icon:"\ud83c\udf3f"},
+        {key:"plants",  label:"Plants",   icon:"\ud83d\udd0d"},
+        {key:"mix",     label:"Mix",      icon:"\ud83e\udde9"},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
