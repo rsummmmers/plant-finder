@@ -1875,7 +1875,7 @@ function App(){
               activeFilterCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},activeFilterCount)
             )
           ):h("div",{style:{position:"relative",paddingBottom:10}},
-            h("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"nowrap",overflowX:"auto",paddingBottom:2}},
+            h("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",paddingBottom:2}},
               h("span",{style:{position:"relative",display:"inline-flex"}},
                 h("button",{onClick:function(){togglePop("site");},style:pill(!!(zone||filters.concerns.some(function(c){return c==="shadedby_norway"||c==="shadedby_pine"||c==="near_walnut";})),!!(zone||filters.concerns.some(function(c){return c==="shadedby_norway"||c==="shadedby_pine"||c==="near_walnut";})))},
                   "\ud83d\udccd "+(zone?(zoneInfo?zoneInfo.label:zone):"Site")+" "+(openPop==="site"?"\u25b2":"\u25bc"),
