@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Ecoscaping Planner — Summers EcoScaping</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-716WR82ZCL"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-716WR82ZCL');</script>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    :root{--forest:#2e5339;--leaf:#4a7c59;--sage:#8aab8a;--mist:#f0ede4;--cream:#fafaf7;--bark:#2c2c2c;--stone:#888;--border:#e0ddd5;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+    html{font-size:16px;overflow-x:hidden;}
+    body{background:var(--cream);font-family:'Poppins',sans-serif;color:var(--bark);font-size:1rem;overflow-x:hidden;}
+    @media print{.no-print{display:none!important;}.print-card{break-inside:avoid;}body{background:white;}}
+    .tip-wrap{position:relative;display:inline-flex;}
+    .tip-wrap .tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#333;color:white;font-size:11px;padding:5px 9px;border-radius:6px;z-index:400;pointer-events:none;max-width:220px;white-space:normal;text-align:center;line-height:1.4;}
+    .tip-wrap:hover .tip{display:block;}
+    .plant-removing{opacity:0;transform:translateX(-10px);transition:opacity 0.25s ease,transform 0.25s ease;pointer-events:none;}
+    .lb-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.92);flex-direction:column;align-items:center;justify-content:center;}
+    .lb-overlay.open{display:flex;}
+  </style>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.png" sizes="32x32">
+</head>
+<body>
+<div id="root"></div>
+<script src="plants-data.js"></script>
+<script src="plants-components.js"></script>
+<script src="plants-app.js"></script>
+<script>
+ReactDOM.createRoot(document.getElementById("root")).render(h(App,null));
+</script>
+</body>
+</html>
