@@ -1785,7 +1785,9 @@ function App(){
   var effectiveSun=inferredSun||filters.sun;
   var effectiveFilters=Object.assign({},filters,{sun:effectiveSun,search:search});
 
-  var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,zone);},[plants,JSON.stringify(effectiveFilters),zone]);
+  var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,zone);
+  var mixFilters=useMemo(function(){return Object.assign({},filters,{ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters]);
+  var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);},[plants,JSON.stringify(effectiveFilters),zone]);
   var results=useMemo(function(){return sortPlants(filtered,sortBy,zone);},[filtered,sortBy,zone]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
@@ -1918,19 +1920,29 @@ function App(){
                 )
               ),
               h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("type");},style:pill(filters.ptypes.length>0,filters.ptypes.length>0)},
+                  "\ud83c\udf3f "+(filters.ptypes.length>0?filters.ptypes.map(function(k){var g=PLANT_TYPES.find(function(t){return t.key===k;});return g?g.label:k;}).join(", "):"Type")+" "+(openPop==="type"?"\u25b2":"\u25bc"),
+                  filters.ptypes.length>0&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{ptypes:[]});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
+                ),
+                openPop==="type"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:240}},
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}},"Plant type"),
+                  h("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
+                    PLANT_TYPES.map(function(g){var on=filters.ptypes.indexOf(g.key)>=0;return h("button",{key:g.key,onClick:function(){togPt(g.key);},style:pill(on,on)},g.emoji+" "+g.label);})
+                  )
+                )
+              ),
+              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
 
               h("span",{style:{position:"relative",display:"inline-flex"}},
                 h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
-                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:360}},
+                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:340,maxWidth:"min(520px,90vw)",maxHeight:"80vh",overflowY:"auto"}},
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
                     h("div",null,
-                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Nativeness"),
                       STATUS_OPTS.map(function(opt){var on=filters.statuses.indexOf(opt.key)>=0;return h("button",{key:opt.key,onClick:function(){togSt(opt.key);},style:{display:"block",width:"100%",textAlign:"left",padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal",marginBottom:4}},opt.label);})
                     ),
-                    h("div",null,
-                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
-                      h("div",{style:{display:"flex",flexWrap:"wrap",gap:4}},PLANT_TYPES.map(function(g){var on=filters.ptypes.indexOf(g.key)>=0;return h("button",{key:g.key,onClick:function(){togPt(g.key);},style:pill(on,on)},g.emoji+" "+g.label);}))
-                    ),
+
                     h("div",null,
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Max height"),
                       h("div",{style:{display:"inline-flex",alignItems:"center",gap:4}},
@@ -1971,6 +1983,9 @@ function App(){
                         h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.concerns.indexOf("nospread")>=0,onChange:function(){togCx("nospread");},style:{accentColor:"#2e5339"}}),"\ud83dude\ufe0f No spreaders")
                       )
                     )
+                  ),
+                  h("div",{style:{borderTop:"1px solid #e0ddd5",marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end"}},
+                    h("button",{onClick:function(){setOpenPop(null);},style:{padding:"7px 20px",borderRadius:20,background:"#2e5339",color:"white",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"Apply")
                   )
                 )
               )
@@ -2002,7 +2017,7 @@ function App(){
               h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Structured in layers from canopy trees to groundcovers. Remove any plant you don\u2019t like or can\u2019t source and the next best option fills its spot. A mix of heights and types \u2014 including canopy trees \u2014 supports the most biodiversity and ecosystem function.")
             )
           ),
-          h(HabitatView,{plants:noFilters?plants:filtered,concerns:filters.concerns,heightCap:filters.heightCap,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
+          h(HabitatView,{plants:mixFiltered,concerns:filters.concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
           onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
