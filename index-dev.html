@@ -87,7 +87,6 @@ var CONCERN_OPTS=[
   {key:"shadedby_conifer",emoji:"\ud83c\udf32",label:"Other conifers", tip:"Under hemlock, spruce, or fir \u2014 dry, dark, acidic",group:"shaded"},
   {key:"near_walnut",     emoji:"\ud83c\udf30",label:"Black walnut",   tip:"Produces juglone, a chemical toxic to many plants",group:"near"},
   {key:"postconstruction",emoji:"\ud83c\udfd7\ufe0f",label:"Post-construction",tip:"Compacted or disturbed fill soil \u2014 favor tough, adaptable pioneers",group:"site"},
-
   {key:"dogs",    emoji:"\ud83d\udc15",label:"Dogs",        tip:"Excludes plants toxic to dogs",group:"safety"},
   {key:"cats",    emoji:"\ud83d\udc08",label:"Cats",        tip:"Excludes plants toxic to cats",group:"safety"},
   {key:"children",emoji:"\ud83d\udc76",label:"Children",   tip:"Excludes plants with parts toxic to children",group:"safety"},
@@ -356,12 +355,17 @@ function applyFilters(plants,f,siteKey){
     if(cx.indexOf("near_walnut")>=0&&p.juglone==="sensitive")return false;
     if(cx.indexOf("postconstruction")>=0&&(getSiteScore(p,"postconstruction")||0)<3)return false;
     if(f.deerLevel==="high"&&p.deerPressure==="high")return false;
-    if(f.deerLevel==="mod"&&(p.deerPressure==="high"||p.deerPressure==="med"))return false;
+    if(f.deerLevel==="mod"&&(p.deerPressure==="high"||p.deerPressure==="medium"))return false;
     if(f.rabbitLevel==="high"&&p.rabbitDamage==="high")return false;
-    if(f.rabbitLevel==="mod"&&(p.rabbitDamage==="high"||p.rabbitDamage==="med"))return false;
-    if(cx.indexOf("dogs")>=0&&p.toxicDogs==="yes")return false;
-    if(cx.indexOf("cats")>=0&&p.toxicCats==="yes")return false;
-    if(cx.indexOf("children")>=0&&p.toxicChildren==="yes")return false;
+    if(f.rabbitLevel==="mod"&&(p.rabbitDamage==="high"||p.rabbitDamage==="medium"))return false;
+    if(f.voleLevel==="high"&&p.voleRisk==="high")return false;
+    if(f.voleLevel==="mod"&&(p.voleRisk==="high"||p.voleRisk==="medium"))return false;
+    if(f.dogsLevel==="strict"&&p.toxicDogs==="yes")return false;
+    if(f.dogsLevel==="mild"&&(p.toxicDogs==="yes"||p.toxicDogs==="medium"||p.toxicDogs==="mild"))return false;
+    if(f.catsLevel==="strict"&&p.toxicCats==="yes")return false;
+    if(f.catsLevel==="mild"&&(p.toxicCats==="yes"||p.toxicCats==="mild"))return false;
+    if(f.childrenLevel==="strict"&&p.toxicChildren==="yes")return false;
+    if(f.childrenLevel==="mild"&&(p.toxicChildren==="yes"||p.toxicChildren==="mild"))return false;
     if(cx.indexOf("nospread")>=0&&p.aggressive==="Y")return false;
     if(f.sun){var sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&sun.indexOf("full sun")<0)return false;if(f.sun==="shade"&&sun.indexOf("shade")<0)return false;if(f.sun==="part"&&sun.indexOf("part")<0)return false;}
     if(f.moisture){var m=(p.moisture||"").toLowerCase();var eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&m.indexOf("dry")<0&&m.indexOf("mesic")<0)return false;if(eff==="moist"&&m.indexOf("moist")<0&&m.indexOf("wet")<0)return false;if(eff==="average"&&m.indexOf("mesic")<0)return false;}
@@ -474,15 +478,21 @@ function ColorDots(props){
 function RiskBadges(props){
   var plant=props.plant,b=[];
   if(plant.deerPressure==="high")b.push({t:"\ud83e\udd8c Deer: high risk",bg:"#fcebeb",fg:"#a32d2d"});
-  else if(plant.deerPressure==="med")b.push({t:"\ud83e\udd8c Deer: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.deerPressure==="medium")b.push({t:"\ud83e\udd8c Deer: moderate",bg:"#faeeda",fg:"#854f0b"});
   else if(plant.deerPressure==="low")b.push({t:"\ud83e\udd8c Deer: resistant",bg:"#eaf3de",fg:"#3b6d11"});
   if(plant.rabbitDamage==="high")b.push({t:"\ud83d\udc07 Rabbit: high risk",bg:"#fcebeb",fg:"#a32d2d"});
-  else if(plant.rabbitDamage==="med")b.push({t:"\ud83d\udc07 Rabbit: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.rabbitDamage==="medium")b.push({t:"\ud83d\udc07 Rabbit: moderate",bg:"#faeeda",fg:"#854f0b"});
   else if(plant.rabbitDamage==="low")b.push({t:"\ud83d\udc07 Rabbit: resistant",bg:"#eaf3de",fg:"#3b6d11"});
+  if(plant.voleRisk==="high")b.push({t:"\ud83d\udc2d Vole: high risk",bg:"#fcebeb",fg:"#a32d2d"});
+  else if(plant.voleRisk==="medium")b.push({t:"\ud83d\udc2d Vole: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.voleRisk==="low")b.push({t:"\ud83d\udc2d Vole: resistant",bg:"#eaf3de",fg:"#3b6d11"});
   if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
   if(plant.toxicDogs==="yes")b.push({t:"\ud83d\udc15 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicDogs==="medium"||plant.toxicDogs==="mild")b.push({t:"\ud83d\udc15 Mildly toxic to dogs",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicCats==="yes")b.push({t:"\ud83d\udc08 Toxic to cats",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicCats==="mild")b.push({t:"\ud83d\udc08 Mildly toxic to cats",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicChildren==="yes")b.push({t:"\ud83d\udc76 Toxic to children",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicChildren==="mild")b.push({t:"\ud83d\udc76 Mildly toxic to children",bg:"#fff3e0",fg:"#e65100"});
   if(!b.length)return null;
   return h("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}},
     b.map(function(x,i){return h("span",{key:i,style:{fontSize:11,padding:"2px 8px",borderRadius:10,background:x.bg,color:x.fg,fontWeight:"bold"}},x.t);})
@@ -1715,7 +1725,7 @@ function App(){
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
-  var _sz=useState(false),showZones=_sz[0],setShowZones=_sz[1];
+  var _op=useState(null),openPop=_op[0],setOpenPop=_op[1];
   var _f=useState({
     statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,
     concerns:initURL.concerns,moisture:initURL.moisture,sun:initURL.sun,
@@ -1725,12 +1735,10 @@ function App(){
   }),filters=_f[0],setFilters=_f[1];
   var _sb=useState(initURL.sortBy),sortBy=_sb[0],setSortBy=_sb[1];
   var _lb=useState(initURL.label),label=_lb[0],setLabel=_lb[1];
-  var _sm=useState(false),showMore=_sm[0],setShowMore=_sm[1];
   var _ss=useState(false),showSuggest=_ss[0],setShowSuggest=_ss[1];
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
-  var _op=useState(null),openPop=_op[0],setOpenPop=_op[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
 
@@ -1801,7 +1809,7 @@ function App(){
   function setDogsLevel(v){setFilters(function(f){return Object.assign({},f,{dogsLevel:v});});}
   function setCatsLevel(v){setFilters(function(f){return Object.assign({},f,{catsLevel:v});});}
   function setChildrenLevel(v){setFilters(function(f){return Object.assign({},f,{childrenLevel:v});});}
-  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search&&!filters.deerLevel&&!filters.rabbitLevel;
+  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search&&!filters.deerLevel&&!filters.rabbitLevel&&!filters.voleLevel&&!filters.dogsLevel&&!filters.catsLevel&&!filters.childrenLevel;
 
   function TipBtn(text,label2,active,dark,onClick){
     return h("span",{className:"tip-wrap"},
@@ -1813,7 +1821,49 @@ function App(){
   // ── Render ──
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
-    // Header + tabs — fixed on desktop, n        (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
+    // Header + tabs — fixed on desktop, normal flow on mobile
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200}},
+
+      // Green photo bar
+      h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
+        h("img",{src:"./header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
+        h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
+        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px"},onClick:function(){setActiveTab("home");},cursor:"pointer"},
+          h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
+          !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
+        )
+      ),
+
+      // Tab row — desktop only
+      !isMobile&&h("div",{className:"no-print",style:{background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
+          [
+            {key:"plants", label:"🔍 Plants"},
+            {key:"mix",    label:"🧩 Build a mix"},
+            {key:"bloom",  label:"🌸 Bloom calendar"},
+            {key:"seeds",  label:"🌰 Seed calendar"},
+            {key:"palette",label:"♥ My palette",count:hearts.length},
+          ].map(function(tab){
+            var active=activeTab===tab.key;
+            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
+              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
+                color:active?"#2e5339":"#888",background:"none",border:"none",
+                borderBottom:"2px solid "+(active?"#2e5339":"transparent"),
+                cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
+            },
+              tab.label,
+              tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
+            );
+          })
+        )
+      )
+    ),
+
+    // Sticky filter bar
+    activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
+      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+        (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search "+plants.length+" Massachusetts native plants\u2026",style:{flex:1,padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
             search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}},"\u00d7"),
@@ -1896,7 +1946,7 @@ function App(){
               ),
               h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
               h("span",{style:{position:"relative",display:"inline-flex"}},
-                h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
+                h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
                 openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:360}},
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
                     h("div",null,
@@ -1932,40 +1982,7 @@ function App(){
                 )
               )
             ),
-            openPop&&h("div",{style:{position:"fixed",inset:0,zIndex:200},onClick:function(){setOpenPop(null);}})
-          )redSun?h("div",{style:{fontSize:14,color:"#2e5339",fontWeight:500,padding:"5px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
-                h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-                  [{v:"full",l:"\u2600\ufe0f Full"},{v:"part",l:"\u26c5 Part"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return h("button",{key:o.v,onClick:function(){setFilters(function(f){return Object.assign({},f,{sun:f.sun===o.v?null:o.v});});},style:pill(filters.sun===o.v)},o.l);})
-                )
-              ),
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
-                h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
-                  flowerColors.map(function(c){
-                    return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:12,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
-                      h("div",{style:{width:10,height:10,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
-                    );
-                  })
-                )
-              ),
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},
-                  h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\u2744\ufe0f Winter interest"
-                ),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\ud83c\udf74 Edible"
-                ),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\u2615 Medicinal"
-                )
-              )
-            )
-          )
-        )), // end desktop filters, end plants+mix tab controls
+            openPop&&h("div",{style:{position:"fixed",inset:0,zIndex:200},onClick:function(){setOpenPop(null);}})        )), // end desktop filters, end plants+mix tab controls
 
       )
     ),
@@ -2010,9 +2027,7 @@ function App(){
             filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            filters.deerLevel&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83e\udd8c Deer: "+(filters.deerLevel==="mod"?"moderate+":"high only"),h("span",{onClick:function(){setDeerLevel(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            filters.rabbitLevel&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83d\udc07 Rabbit: "+(filters.rabbitLevel==="mod"?"moderate+":"high only"),h("span",{onClick:function(){setRabbitLevel(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});setOpenPop(null);},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:20,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
+            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:20,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
           showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
