@@ -944,15 +944,18 @@ function HabitatView(props){
         })
       )
     ),
-    thinLayers.length>0&&h("div",{style:{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:14,color:"#5d4037"}},
-      h("strong",{style:{display:"block",marginBottom:6}},"\u26a0\ufe0f Some layers have limited options"),
-      "Try loosening one of these:",
-      h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}},
-        concerns.some(function(c){return c.indexOf("shadedby")>=0;})&&h("button",{onClick:function(){onLoosen("shadedby");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove shade filter"),
-        concerns.indexOf("near_walnut")>=0&&h("button",{onClick:function(){onLoosen("near_walnut");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove black walnut filter"),
-        heightCap&&h("button",{onClick:function(){onLoosen("height");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Raise height cap")
-      )
-    ),
+    (function(){
+      var hasSuggestions=concerns.some(function(c){return c.indexOf("shadedby")>=0;})||concerns.indexOf("near_walnut")>=0||!!heightCap;
+      return thinLayers.length>0&&hasSuggestions&&h("div",{style:{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:14,color:"#5d4037"}},
+        h("strong",{style:{display:"block",marginBottom:6}},"\u26a0\ufe0f Some layers have limited options"),
+        "Try loosening one of these:",
+        h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}},
+          concerns.some(function(c){return c.indexOf("shadedby")>=0;})&&h("button",{onClick:function(){onLoosen("shadedby");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove shade filter"),
+          concerns.indexOf("near_walnut")>=0&&h("button",{onClick:function(){onLoosen("near_walnut");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove black walnut filter"),
+          heightCap&&h("button",{onClick:function(){onLoosen("height");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Raise height cap")
+        )
+      );
+    })(),
     layerDefs.map(function(ld){
       if(!ld.plants.length)return null;
       return h("div",{key:ld.key,style:{marginBottom:20}},
@@ -1796,7 +1799,7 @@ function App(){
   var defaultStatuses=["native","nearnative"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
   var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel]).filter(Boolean).length;
-  var moreCount=filters.rflower.length+[filters.rwinter,filters.edibleOnly,filters.medicinalOnly].filter(Boolean).length;
+  var moreCount=filters.rflower.length+[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel].filter(Boolean).length;
 
   function togSt(k){setFilters(function(f){return Object.assign({},f,{statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});});}
   function togCx(k){setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});});}
@@ -1915,36 +1918,7 @@ function App(){
                 )
               ),
               h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
-              h("span",{style:{position:"relative",display:"inline-flex"}},
-                h("button",{onClick:function(){togglePop("animals");},style:pill(!!(filters.deerLevel||filters.rabbitLevel||filters.voleLevel),!!(filters.deerLevel||filters.rabbitLevel||filters.voleLevel))},
-                  "\ud83d\udc3e Animals "+(openPop==="animals"?"\u25b2":"\u25bc"),
-                  (filters.deerLevel||filters.rabbitLevel||filters.voleLevel)&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{deerLevel:null,rabbitLevel:null,voleLevel:null});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
-                ),
-                openPop==="animals"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:260}},
-                  [{title:"\ud83e\udd8c Deer",key:"deerLevel",setFn:setDeerLevel,val:filters.deerLevel},{title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",setFn:setRabbitLevel,val:filters.rabbitLevel},{title:"\ud83d\udc2d Vole",key:"voleLevel",setFn:setVoleLevel,val:filters.voleLevel}].map(function(row){
-                    return h("div",{key:row.key,style:{marginBottom:10}},
-                      h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}},row.title),
-                      h("div",{style:{display:"flex",gap:5}},[{v:null,l:"Any"},{v:"mod",l:"Moderate+"},{v:"high",l:"High only"}].map(function(o){return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);}))
-                    );
-                  })
-                )
-              ),
-              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
-              h("span",{style:{position:"relative",display:"inline-flex"}},
-                h("button",{onClick:function(){togglePop("safety");},style:pill(!!(filters.dogsLevel||filters.catsLevel||filters.childrenLevel),!!(filters.dogsLevel||filters.catsLevel||filters.childrenLevel))},
-                  "\u26a0\ufe0f Safety "+(openPop==="safety"?"\u25b2":"\u25bc"),
-                  (filters.dogsLevel||filters.catsLevel||filters.childrenLevel)&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{dogsLevel:null,catsLevel:null,childrenLevel:null});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
-                ),
-                openPop==="safety"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:280}},
-                  [{title:"\ud83d\udc15 Dogs",key:"dogsLevel",setFn:setDogsLevel,val:filters.dogsLevel,opts:[{v:null,l:"Any"},{v:"mild",l:"Avoid mild+"},{v:"strict",l:"Avoid toxic only"}]},{title:"\ud83d\udc08 Cats",key:"catsLevel",setFn:setCatsLevel,val:filters.catsLevel,opts:[{v:null,l:"Any"},{v:"mild",l:"Avoid mild+"},{v:"strict",l:"Avoid toxic only"}]},{title:"\ud83d\udc76 Children",key:"childrenLevel",setFn:setChildrenLevel,val:filters.childrenLevel,opts:[{v:null,l:"Any"},{v:"mild",l:"Avoid mild+"},{v:"strict",l:"Avoid toxic only"}]}].map(function(row){
-                    return h("div",{key:row.key,style:{marginBottom:10}},
-                      h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}},row.title),
-                      h("div",{style:{display:"flex",gap:5}},row.opts.map(function(o){return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);}))
-                    );
-                  })
-                )
-              ),
-              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
+
               h("span",{style:{position:"relative",display:"inline-flex"}},
                 h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
                 openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:360}},
@@ -1968,6 +1942,25 @@ function App(){
                     h("div",null,
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
                       h("div",{style:{display:"flex",flexWrap:"wrap",gap:4}},flowerColors.map(function(c){return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:3,padding:"3px 7px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:11,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2e5339":"#666"}},h("div",{style:{width:8,height:8,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c);}))
+                    ),
+                    h("div",{style:{gridColumn:"1 / -1"}},
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+                      h("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:14}},
+                        [{title:"\ud83e\udd8c Deer",key:"deerLevel",setFn:setDeerLevel,val:filters.deerLevel},{title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",setFn:setRabbitLevel,val:filters.rabbitLevel},{title:"\ud83d\udc2d Vole",key:"voleLevel",setFn:setVoleLevel,val:filters.voleLevel}].map(function(row){
+                          return h("div",{key:row.key,style:{display:"flex",alignItems:"center",gap:8}},
+                            h("div",{style:{fontSize:13,color:"#555",width:70,flexShrink:0}},row.title),
+                            h("div",{style:{display:"flex",gap:5}},[{v:null,l:"Any"},{v:"high",l:"Resistant"},{v:"mod",l:"Highly resistant"}].map(function(o){return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);}))
+                          );
+                        })
+                      )
+                    ),
+                    h("div",{style:{gridColumn:"1 / -1"}},
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety — exclude toxic plants for:"),
+                      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.dogsLevel,onChange:function(ev){setDogsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc15 Dogs")),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.catsLevel,onChange:function(ev){setCatsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc08 Cats")),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.childrenLevel,onChange:function(ev){setChildrenLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc76 Children"))
+                      )
                     ),
                     h("div",{style:{gridColumn:"1 / -1"}},
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
