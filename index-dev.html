@@ -1957,9 +1957,9 @@ function App(){
                     h("div",{style:{gridColumn:"1 / -1"}},
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety — exclude toxic plants for:"),
                       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.dogsLevel,onChange:function(ev){setDogsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc15 Dogs")),
-                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.catsLevel,onChange:function(ev){setCatsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc08 Cats")),
-                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.childrenLevel,onChange:function(ev){setChildrenLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}},"\ud83d\udc76 Children"))
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.dogsLevel,onChange:function(ev){setDogsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc15 Dogs"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.catsLevel,onChange:function(ev){setCatsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc08 Cats"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.childrenLevel,onChange:function(ev){setChildrenLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc76 Children")
                       )
                     ),
                     h("div",{style:{gridColumn:"1 / -1"}},
