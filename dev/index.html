@@ -1971,7 +1971,8 @@ function App(){
 
               h("span",{style:{position:"relative",display:"inline-flex"}},
                 h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
-                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",maxHeight:"70vh",overflowY:"auto",minWidth:340,maxWidth:"min(520px,90vw)",maxHeight:"80vh",overflowY:"auto"}},
+                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:340,maxWidth:"min(500px,90vw)",maxHeight:"70vh",display:"flex",flexDirection:"column"}},
+                  h("div",{style:{overflowY:"auto",flex:1,padding:"16px 18px"}},
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
                     h("div",null,
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Nativeness"),
@@ -2019,7 +2020,8 @@ function App(){
                       )
                     )
                   ),
-                  h("div",{style:{borderTop:"1px solid #e0ddd5",marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end",position:"sticky",bottom:0,background:"white",marginLeft:-18,marginRight:-18,paddingLeft:18,paddingRight:18,paddingBottom:12}},
+                  ),
+                h("div",{style:{borderTop:"1px solid #e0ddd5",padding:"12px 18px",display:"flex",justifyContent:"flex-end",flexShrink:0,background:"white"}},
                     h("button",{onClick:function(){setOpenPop(null);},style:{padding:"7px 20px",borderRadius:20,background:"#2e5339",color:"white",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"Apply")
                   )
                 )
