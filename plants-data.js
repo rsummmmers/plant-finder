@@ -25,6 +25,8 @@ var STATUS_OPTS=[
   {key:"nearnative",label:"Near-Native",    bg:"#e3f2fd",fg:"#1565c0"},
   {key:"cultivar",  label:"Native Cultivar",bg:"#f3e5f5",fg:"#6a1b9a"},
   {key:"nonnative", label:"Safe Non-Native",bg:"#fff8e1",fg:"#f57f17"},
+  {key:"invasive",  label:"\u26d4 Invasive",  bg:"#fde8e8",fg:"#b71c1c"},
+  {key:"caution",   label:"\u26a0\ufe0f Caution",   bg:"#fff3cd",fg:"#7d4e00"},
 ];
 var STATUS_COLORS_MAP={
   "Native":                   {bg:"#e8f5e9",text:"#2e7d32",label:"Native to MA"},
@@ -35,6 +37,8 @@ var STATUS_COLORS_MAP={
   "Safe Non Native":          {bg:"#fff8e1",text:"#f57f17",label:"Safe Non-Native"},
   "Native/Non-Native Hybrid": {bg:"#fce4ec",text:"#880e4f",label:"Hybrid"},
   "Native / Nonnative Hybrid":{bg:"#fce4ec",text:"#880e4f",label:"Hybrid"},
+  "Invasive":                 {bg:"#fde8e8",text:"#b71c1c",label:"\u26d4 Invasive"},
+  "Caution":                  {bg:"#fff3cd",text:"#7d4e00",label:"\u26a0\ufe0f Caution"},
 };
 
 var PLANT_TYPES=[
@@ -306,11 +310,16 @@ function matchStatus(plant,statuses){
   if(statuses.indexOf("cultivar")>=0&&s.indexOf("cultivar")>=0)return true;
   if(statuses.indexOf("nearnative")>=0&&(s==="nearnative"||s==="nearnative"))return true;
   if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s.indexOf("hybrid")>=0))return true;
+  if(statuses.indexOf("invasive")>=0&&s==="invasive")return true;
+  if(statuses.indexOf("caution")>=0&&s==="caution")return true;
   return false;
 }
 
 function applyFilters(plants,f,siteKey){
   return plants.filter(function(p){
+    var s=p.status.toLowerCase().replace(/[-\s]/g,"");
+    if(s==="invasive"&&f.statuses.indexOf("invasive")<0)return false;
+    if(s==="caution"&&f.statuses.indexOf("caution")<0)return false;
     if(!matchStatus(p,f.statuses))return false;
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;

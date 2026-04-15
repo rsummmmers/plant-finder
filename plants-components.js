@@ -269,7 +269,15 @@ function PlantCard(props){
       h("div",{style:{display:"flex",gap:16,marginTop:14,flexWrap:"wrap"}},
         h(PhotoGallery,{plant:plant}),
         h("div",{style:{flex:1,minWidth:180}},
-          plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}},plant.notes),
+          (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
+  h("strong",null,"\u26d4 Invasive species"),
+  h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting.")
+)),
+(plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},
+  h("strong",null,"\u26a0\ufe0f Use with caution"),
+  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts.")
+)),
+plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}},plant.notes),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
             plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
             plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
