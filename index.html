@@ -87,8 +87,6 @@ var CONCERN_OPTS=[
   {key:"shadedby_conifer",emoji:"\ud83c\udf32",label:"Other conifers", tip:"Under hemlock, spruce, or fir \u2014 dry, dark, acidic",group:"shaded"},
   {key:"near_walnut",     emoji:"\ud83c\udf30",label:"Black walnut",   tip:"Produces juglone, a chemical toxic to many plants",group:"near"},
   {key:"postconstruction",emoji:"\ud83c\udfd7\ufe0f",label:"Post-construction",tip:"Compacted or disturbed fill soil \u2014 favor tough, adaptable pioneers",group:"site"},
-  {key:"deer",    emoji:"\ud83e\udd8c",label:"Deer",        tip:"Excludes plants frequently browsed to the ground",group:"concern"},
-  {key:"rabbits", emoji:"\ud83d\udc07",label:"Rabbits",     tip:"Excludes plants vulnerable to rabbit chewing, especially young woody stems",group:"concern"},
   {key:"dogs",    emoji:"\ud83d\udc15",label:"Dogs",        tip:"Excludes plants toxic to dogs",group:"safety"},
   {key:"cats",    emoji:"\ud83d\udc08",label:"Cats",        tip:"Excludes plants toxic to cats",group:"safety"},
   {key:"children",emoji:"\ud83d\udc76",label:"Children",   tip:"Excludes plants with parts toxic to children",group:"safety"},
@@ -290,7 +288,7 @@ function rowToPlant(row){
     image:cur||inat,curatedImage:cur,inatImage:inat,
     role:row["Habitat Patch Role"]||"",aggressive:row["Aggressive"]||"",
     flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",
-    deerPressure:row["deer_pressure"]||"",rabbitDamage:row["rabbit_damage"]||"",
+    deerPressure:row["deer_pressure"]||"",rabbitDamage:row["rabbit_damage"]||"",voleRisk:row["vole_girdling_risk"]||"",
     toxicDogs:row["toxic_dogs"]||"",toxicCats:row["toxic_cats"]||"",
     toxicChildren:row["toxic_children"]||"",
     juglone:row["juglone_sensitivity"]||"",
@@ -356,11 +354,18 @@ function applyFilters(plants,f,siteKey){
     if(cx.indexOf("shadedby_conifer")>=0&&(p.scores["Conifer Shade"]||0)<2)return false;
     if(cx.indexOf("near_walnut")>=0&&p.juglone==="sensitive")return false;
     if(cx.indexOf("postconstruction")>=0&&(getSiteScore(p,"postconstruction")||0)<3)return false;
-    if(cx.indexOf("deer")>=0&&p.deerPressure==="high")return false;
-    if(cx.indexOf("rabbits")>=0&&p.rabbitDamage==="high")return false;
-    if(cx.indexOf("dogs")>=0&&p.toxicDogs==="yes")return false;
-    if(cx.indexOf("cats")>=0&&p.toxicCats==="yes")return false;
-    if(cx.indexOf("children")>=0&&p.toxicChildren==="yes")return false;
+    if(f.deerLevel==="high"&&p.deerPressure==="high")return false;
+    if(f.deerLevel==="mod"&&(p.deerPressure==="high"||p.deerPressure==="medium"))return false;
+    if(f.rabbitLevel==="high"&&p.rabbitDamage==="high")return false;
+    if(f.rabbitLevel==="mod"&&(p.rabbitDamage==="high"||p.rabbitDamage==="medium"))return false;
+    if(f.voleLevel==="high"&&p.voleRisk==="high")return false;
+    if(f.voleLevel==="mod"&&(p.voleRisk==="high"||p.voleRisk==="medium"))return false;
+    if(f.dogsLevel==="strict"&&p.toxicDogs==="yes")return false;
+    if(f.dogsLevel==="mild"&&(p.toxicDogs==="yes"||p.toxicDogs==="medium"||p.toxicDogs==="mild"))return false;
+    if(f.catsLevel==="strict"&&p.toxicCats==="yes")return false;
+    if(f.catsLevel==="mild"&&(p.toxicCats==="yes"||p.toxicCats==="mild"))return false;
+    if(f.childrenLevel==="strict"&&p.toxicChildren==="yes")return false;
+    if(f.childrenLevel==="mild"&&(p.toxicChildren==="yes"||p.toxicChildren==="mild"))return false;
     if(cx.indexOf("nospread")>=0&&p.aggressive==="Y")return false;
     if(f.sun){var sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&sun.indexOf("full sun")<0)return false;if(f.sun==="shade"&&sun.indexOf("shade")<0)return false;if(f.sun==="part"&&sun.indexOf("part")<0)return false;}
     if(f.moisture){var m=(p.moisture||"").toLowerCase();var eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&m.indexOf("dry")<0&&m.indexOf("mesic")<0)return false;if(eff==="moist"&&m.indexOf("moist")<0&&m.indexOf("wet")<0)return false;if(eff==="average"&&m.indexOf("mesic")<0)return false;}
@@ -472,12 +477,22 @@ function ColorDots(props){
 // ── RiskBadges ────────────────────────────────────────────────────────────
 function RiskBadges(props){
   var plant=props.plant,b=[];
-  if(plant.deerPressure==="high")b.push({t:"\ud83e\udd8c High deer pressure",bg:"#fff3e0",fg:"#e65100"});
-  if(plant.rabbitDamage==="high")b.push({t:"\ud83d\udc07 High rabbit damage",bg:"#fff3e0",fg:"#bf360c"});
+  if(plant.deerPressure==="high")b.push({t:"\ud83e\udd8c Deer: high risk",bg:"#fcebeb",fg:"#a32d2d"});
+  else if(plant.deerPressure==="medium")b.push({t:"\ud83e\udd8c Deer: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.deerPressure==="low")b.push({t:"\ud83e\udd8c Deer: resistant",bg:"#eaf3de",fg:"#3b6d11"});
+  if(plant.rabbitDamage==="high")b.push({t:"\ud83d\udc07 Rabbit: high risk",bg:"#fcebeb",fg:"#a32d2d"});
+  else if(plant.rabbitDamage==="medium")b.push({t:"\ud83d\udc07 Rabbit: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.rabbitDamage==="low")b.push({t:"\ud83d\udc07 Rabbit: resistant",bg:"#eaf3de",fg:"#3b6d11"});
+  if(plant.voleRisk==="high")b.push({t:"\ud83d\udc2d Vole: high risk",bg:"#fcebeb",fg:"#a32d2d"});
+  else if(plant.voleRisk==="medium")b.push({t:"\ud83d\udc2d Vole: moderate",bg:"#faeeda",fg:"#854f0b"});
+  else if(plant.voleRisk==="low")b.push({t:"\ud83d\udc2d Vole: resistant",bg:"#eaf3de",fg:"#3b6d11"});
   if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
   if(plant.toxicDogs==="yes")b.push({t:"\ud83d\udc15 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicDogs==="medium"||plant.toxicDogs==="mild")b.push({t:"\ud83d\udc15 Mildly toxic to dogs",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicCats==="yes")b.push({t:"\ud83d\udc08 Toxic to cats",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicCats==="mild")b.push({t:"\ud83d\udc08 Mildly toxic to cats",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicChildren==="yes")b.push({t:"\ud83d\udc76 Toxic to children",bg:"#fce4ec",fg:"#c62828"});
+  else if(plant.toxicChildren==="mild")b.push({t:"\ud83d\udc76 Mildly toxic to children",bg:"#fff3e0",fg:"#e65100"});
   if(!b.length)return null;
   return h("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}},
     b.map(function(x,i){return h("span",{key:i,style:{fontSize:11,padding:"2px 8px",borderRadius:10,background:x.bg,color:x.fg,fontWeight:"bold"}},x.t);})
@@ -923,21 +938,25 @@ function HabitatView(props){
       h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},total+" plants \u00b7 Massachusetts "+statusNote+" \u00b7 straight species only"),
       h("div",{style:{marginLeft:"auto",display:"flex",gap:5,alignItems:"center"}},
         h("button",{onClick:function(){Object.values(layers).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});},style:{padding:"5px 14px",borderRadius:20,border:"none",background:"#2e5339",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"\u2665 Save all"),
+        h("button",{onClick:function(){Object.values(layers).flat().map(function(p){return p.latin;}).forEach(function(l){if(hearts.indexOf(l)>=0)onHeart(l);});},style:{padding:"5px 14px",borderRadius:20,border:"1px solid #e0ddd5",background:"transparent",color:"#888",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Remove all"),
         h("span",{style:{fontSize:12,color:"#aaa"}},"Sort:"),
         [{v:"wildlife",l:"\ud83e\udd8b Insect value"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
           return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"3px 10px",borderRadius:16,border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l);
         })
       )
     ),
-    thinLayers.length>0&&h("div",{style:{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:14,color:"#5d4037"}},
-      h("strong",{style:{display:"block",marginBottom:6}},"\u26a0\ufe0f Some layers have limited options"),
-      "Try loosening one of these:",
-      h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}},
-        concerns.some(function(c){return c.indexOf("shadedby")>=0;})&&h("button",{onClick:function(){onLoosen("shadedby");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove shade filter"),
-        concerns.indexOf("near_walnut")>=0&&h("button",{onClick:function(){onLoosen("near_walnut");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove black walnut filter"),
-        heightCap&&h("button",{onClick:function(){onLoosen("height");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Raise height cap")
-      )
-    ),
+    (function(){
+      var hasSuggestions=concerns.some(function(c){return c.indexOf("shadedby")>=0;})||concerns.indexOf("near_walnut")>=0||!!heightCap;
+      return thinLayers.length>0&&hasSuggestions&&h("div",{style:{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:14,color:"#5d4037"}},
+        h("strong",{style:{display:"block",marginBottom:6}},"\u26a0\ufe0f Some layers have limited options"),
+        "Try loosening one of these:",
+        h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}},
+          concerns.some(function(c){return c.indexOf("shadedby")>=0;})&&h("button",{onClick:function(){onLoosen("shadedby");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove shade filter"),
+          concerns.indexOf("near_walnut")>=0&&h("button",{onClick:function(){onLoosen("near_walnut");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Remove black walnut filter"),
+          heightCap&&h("button",{onClick:function(){onLoosen("height");},style:{background:"white",border:"1px solid #ffe082",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#5d4037"}},"Raise height cap")
+        )
+      );
+    })(),
     layerDefs.map(function(ld){
       if(!ld.plants.length)return null;
       return h("div",{key:ld.key,style:{marginBottom:20}},
@@ -1512,14 +1531,14 @@ function FilterDrawer(props){
   }
 
   return h("div",null,
-    h("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199}}),
-    h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",overflowY:"auto"}},
+    h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
+    h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}},
       h("div",{style:{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}}),
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
-      h("div",{style:{padding:"16px 20px 30px",display:"flex",flexDirection:"column",gap:18}},
+      h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},STATUS_OPTS.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
@@ -1574,6 +1593,40 @@ function FilterDrawer(props){
           }))
         ),
         h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+          h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+            [{title:"\ud83e\udd8c Deer",key:"deerLevel",val:f.deerLevel,setFn:function(v){set({deerLevel:v});}},
+             {title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",val:f.rabbitLevel,setFn:function(v){set({rabbitLevel:v});}},
+             {title:"\ud83d\udc2d Vole",key:"voleLevel",val:f.voleLevel,setFn:function(v){set({voleLevel:v});}}].map(function(row){
+              return h("div",{key:row.key,style:{display:"flex",alignItems:"center",gap:8}},
+                h("div",{style:{fontSize:13,color:"#555",width:70,flexShrink:0}},row.title),
+                h("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
+                  [{v:null,l:"Any"},{v:"high",l:"Resistant"},{v:"mod",l:"Highly resistant"}].map(function(o){
+                    return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);
+                  })
+                )
+              );
+            })
+          )
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety \u2014 exclude toxic plants for:"),
+          h("div",{style:{display:"flex",gap:16,flexWrap:"wrap"}},
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.dogsLevel,onChange:function(ev){set({dogsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc15 Dogs"
+            ),
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.catsLevel,onChange:function(ev){set({catsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc08 Cats"
+            ),
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.childrenLevel,onChange:function(ev){set({childrenLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc76 Children"
+            )
+          )
+        ),
+        h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
             h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
@@ -1588,7 +1641,9 @@ function FilterDrawer(props){
             "\u2615 Medicinal"
           )
         ),
-        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,marginTop:4})},"Show results")
+        ),
+      h("div",{style:{padding:"12px 20px",paddingBottom:"calc(80px + env(safe-area-inset-bottom,0px))",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white"}},
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,width:"100%"})},"Show results")
       )
     )
   );
@@ -1710,16 +1765,16 @@ function App(){
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
-  var _sz=useState(false),showZones=_sz[0],setShowZones=_sz[1];
+  var _op=useState(null),openPop=_op[0],setOpenPop=_op[1];
   var _f=useState({
     statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,
     concerns:initURL.concerns,moisture:initURL.moisture,sun:initURL.sun,
     irrigated:initURL.irrigated,rflower:initURL.rflower,rwinter:initURL.rwinter,
-    edibleOnly:false,medicinalOnly:false,
+    edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,
+    voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,
   }),filters=_f[0],setFilters=_f[1];
   var _sb=useState(initURL.sortBy),sortBy=_sb[0],setSortBy=_sb[1];
   var _lb=useState(initURL.label),label=_lb[0],setLabel=_lb[1];
-  var _sm=useState(false),showMore=_sm[0],setShowMore=_sm[1];
   var _ss=useState(false),showSuggest=_ss[0],setShowSuggest=_ss[1];
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
@@ -1768,6 +1823,8 @@ function App(){
   var effectiveFilters=Object.assign({},filters,{sun:effectiveSun,search:search});
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,zone);},[plants,JSON.stringify(effectiveFilters),zone]);
+  var mixFilters=useMemo(function(){return Object.assign({},effectiveFilters,{ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[effectiveFilters]);
+  var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);
   var results=useMemo(function(){return sortPlants(filtered,sortBy,zone);},[filtered,sortBy,zone]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
@@ -1780,15 +1837,21 @@ function App(){
 
   var defaultStatuses=["native","nearnative"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
-  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged]).filter(Boolean).length;
-  var moreCount=[filters.moisture,filters.sun&&!inferredSun,filters.irrigated].concat(filters.rflower,[filters.rwinter]).filter(Boolean).length;
+  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel]).filter(Boolean).length;
+  var moreCount=filters.rflower.length+[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel].filter(Boolean).length;
 
   function togSt(k){setFilters(function(f){return Object.assign({},f,{statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});});}
   function togCx(k){setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});});}
   function togPt(k){setFilters(function(f){return Object.assign({},f,{ptypes:f.ptypes.indexOf(k)>=0?f.ptypes.filter(function(v){return v!==k;}):[...f.ptypes,k]});});}
   function togFl(c){setFilters(function(f){return Object.assign({},f,{rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});});}
-
-  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search;
+  function togglePop(name){setOpenPop(function(cur){return cur===name?null:name;});}
+  function setDeerLevel(v){setFilters(function(f){return Object.assign({},f,{deerLevel:v});});}
+  function setRabbitLevel(v){setFilters(function(f){return Object.assign({},f,{rabbitLevel:v});});}
+  function setVoleLevel(v){setFilters(function(f){return Object.assign({},f,{voleLevel:v});});}
+  function setDogsLevel(v){setFilters(function(f){return Object.assign({},f,{dogsLevel:v});});}
+  function setCatsLevel(v){setFilters(function(f){return Object.assign({},f,{catsLevel:v});});}
+  function setChildrenLevel(v){setFilters(function(f){return Object.assign({},f,{childrenLevel:v});});}
+  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.moisture&&!filters.sun&&!search&&!filters.deerLevel&&!filters.rabbitLevel&&!filters.voleLevel&&!filters.dogsLevel&&!filters.catsLevel&&!filters.childrenLevel;
 
   function TipBtn(text,label2,active,dark,onClick){
     return h("span",{className:"tip-wrap"},
@@ -1798,7 +1861,7 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
     h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200}},
@@ -1843,155 +1906,130 @@ function App(){
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
-          // Suggest button (plants only) + patch size (mix only)
-          h("div",{style:{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}},
-            activeTab==="plants"&&h("button",{onClick:function(){setShowSuggest(!showSuggest);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:showSuggest?"#2e5339":"white",color:showSuggest?"white":"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500,opacity:loading?0.5:1}},"\u2728 Suggest a palette"),
-            activeTab==="mix"&&h("span",{style:{fontSize:13,color:"#888"}},"Patch size:"),
-            activeTab==="mix"&&[{n:10,l:"Small",desc:"~10 plants \u00b7 a single bed or corner planting"},{n:20,l:"Medium",desc:"~20 plants \u00b7 typical backyard habitat area"},{n:40,l:"Large",desc:"~40 plants \u00b7 meadow, woodland edge, or larger restoration"}].map(function(x){
-              return h("span",{key:x.n,className:"tip-wrap"},
-                h("button",{onClick:function(){setPatchSize(x.n);},style:{padding:"5px 10px",borderRadius:16,border:"1px solid "+(patchSize===x.n?"#2e5339":"#e0ddd5"),background:patchSize===x.n?"#2e5339":"white",color:patchSize===x.n?"white":"#666",cursor:"pointer",fontSize:12,fontFamily:"inherit"}},x.l),
-                h("span",{className:"tip"},x.desc)
-              );
-            })
+          h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
+            h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{flex:1,padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
+            search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}},"\u00d7"),
+            activeTab==="plants"&&!isMobile&&h("button",{onClick:function(){setActiveTab("mix");},style:{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,whiteSpace:"nowrap"}},"\ud83c\udf31 Design a habitat patch")
           ),
-          // Search
-          h("div",{style:{position:"relative",marginBottom:8}},
-            h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading plants\u2026":"Search "+plants.length+" Massachusetts native plants\u2026",style:{width:"100%",padding:"12px 44px 12px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
-            search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}},"\u2715")
-          ),
-          // Mobile filter button
-          isMobile?h("div",{style:{paddingBottom:10,display:"flex",gap:8,alignItems:"center"}},
-            h("button",{onClick:function(){setDrawerOpen(true);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2e5339":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2e5339":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
-              "Filters",
+          isMobile?h("div",{style:{paddingBottom:10}},
+            h("button",{onClick:function(){setDrawerOpen(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2e5339":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2e5339":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
+              "▼ Filters",
               activeFilterCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},activeFilterCount)
-            ),
-            zone&&h("button",{onClick:function(){setZone(null);},style:{display:"flex",alignItems:"center",gap:5,padding:"10px 14px",borderRadius:10,border:"1.5px solid #2e5339",background:"#2e5339",color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone)+" \u2715")
-        ):h("div",null,
-          // Desktop Row 1: Status + type + height
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",paddingBottom:8}},
-            h("span",{style:{fontSize:12,color:"#888",marginRight:2}},"Include:"),
-            STATUS_OPTS.map(function(opt){
-              var on=filters.statuses.indexOf(opt.key)>=0;
-              return h("button",{key:opt.key,onClick:function(){togSt(opt.key);},style:{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal"}},opt.label);
-            }),
-            h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
-            h("span",{style:{fontSize:12,color:"#888"}},"Type:"),
-            PLANT_TYPES.map(function(g){
-              var on=filters.ptypes.indexOf(g.key)>=0;
-              return h("span",{key:g.key,className:"tip-wrap"},
-                h("button",{onClick:function(){togPt(g.key);},style:pill(on)},g.emoji+" "+g.label),
-                g.tip&&h("span",{className:"tip"},g.tip)
-              );
-            }),
-            h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
-            h("div",{style:{display:"flex",alignItems:"center",gap:5}},
-              h("span",{style:{fontSize:12,color:"#888"}},"Max height:"),
-              h("div",{style:{position:"relative"}},
-                h("input",{type:"number",min:1,max:120,value:filters.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);setFilters(function(f){return Object.assign({},f,{heightCap:v>0?v:null});});},placeholder:"e.g. 8 for shrubs, 25 for small trees",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"5px 8px",fontFamily:"inherit",fontSize:13,outline:"none",color:"#2c2c2c",background:"white",width:filters.heightCap?75:240}}),
-                filters.heightCap&&h("button",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#aaa"}},"\u2715")
+            )
+          ):h("div",{style:{position:"relative",paddingBottom:10}},
+            h("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",paddingBottom:2}},
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("site");},style:pill(!!(zone||filters.concerns.some(function(c){return c==="shadedby_norway"||c==="shadedby_pine"||c==="near_walnut";})),!!(zone||filters.concerns.some(function(c){return c==="shadedby_norway"||c==="shadedby_pine"||c==="near_walnut";})))},
+                  "\ud83d\udccd "+(zone?(zoneInfo?zoneInfo.label:zone):"Site")+" "+(openPop==="site"?"\u25b2":"\u25bc"),
+                  (zone||filters.concerns.some(function(c){return c==="shadedby_norway"||c==="shadedby_pine"||c==="near_walnut";}))&&h("span",{onClick:function(ev){ev.stopPropagation();setZone(null);setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="shadedby_norway"&&c!=="shadedby_pine"&&c!=="near_walnut";})});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
+                ),
+                openPop==="site"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:280}},
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}},"Site type"),
+                  h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:6,marginBottom:14}},
+                    MICROZONES.map(function(z){return h("button",{key:z.key,onClick:function(){setZone(z.key===zone?null:z.key);setOpenPop(null);},style:{background:zone===z.key?"#2e5339":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:"1.5px solid "+(zone===z.key?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"8px 10px",cursor:"pointer",textAlign:"left",fontFamily:"inherit",fontSize:12}},h("div",{style:{fontSize:14,marginBottom:2}},z.emoji),h("div",{style:{fontWeight:500,fontSize:12}},z.label));})
+                  ),
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}},"Shaded by"),
+                  h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}},CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){return h("button",{key:c.key,onClick:function(){togCx(c.key);},style:pill(filters.concerns.indexOf(c.key)>=0,filters.concerns.indexOf(c.key)>=0)},c.emoji+" "+c.label);})),
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}},"Near"),
+                  h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},CONCERN_OPTS.filter(function(c){return c.group==="near";}).map(function(c){return h("button",{key:c.key,onClick:function(){togCx(c.key);},style:pill(filters.concerns.indexOf(c.key)>=0,filters.concerns.indexOf(c.key)>=0)},c.emoji+" "+c.label);}))
+                )
               ),
-              filters.heightCap&&h("span",{style:{fontSize:12,color:"#aaa"}},"ft")
-            )
-          ),
-          // Desktop Row 2: Site + conditions + more
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center",paddingBottom:10}},
-            h("span",{style:{fontSize:12,color:"#888"}},"Site:"),
-            h("button",{onClick:function(){setShowZones(!showZones);},style:Object.assign({},pill(!!zone,!!zone),{position:"relative"})},
-              zone?("\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone)):"▼ Choose site type",
-              zone&&h("span",{onClick:function(ev){ev.stopPropagation();setZone(null);},style:{marginLeft:4,opacity:0.7,fontSize:14}},"\xd7")
-            ),
-            h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
-            h("span",{style:{fontSize:12,color:"#888"}},"Shaded by:"),
-            CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){
-              return h("span",{key:c.key,className:"tip-wrap"},
-                h("button",{onClick:function(){togCx(c.key);},style:pill(filters.concerns.indexOf(c.key)>=0)},c.emoji+" "+c.label),
-                h("span",{className:"tip"},c.tip)
-              );
-            }),
-            h("span",{style:{fontSize:12,color:"#888",marginLeft:2}},"Near:"),
-            CONCERN_OPTS.filter(function(c){return c.group==="near";}).map(function(c){
-              return h("span",{key:c.key,className:"tip-wrap"},
-                h("button",{onClick:function(){togCx(c.key);},style:pill(filters.concerns.indexOf(c.key)>=0)},c.emoji+" "+c.label),
-                h("span",{className:"tip"},c.tip)
-              );
-            }),
-            h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
-            CONCERN_OPTS.filter(function(c){return c.group==="site"||c.group==="concern"||c.group==="safety";}).map(function(c){
-              return h("span",{key:c.key,className:"tip-wrap"},
-                h("button",{onClick:function(){togCx(c.key);},style:pill(filters.concerns.indexOf(c.key)>=0)},c.emoji+" "+c.label),
-                h("span",{className:"tip"},c.tip)
-              );
-            }),
-            h("div",{style:{width:1,height:18,background:"#e0ddd5",flexShrink:0}}),
-            h("button",{onClick:function(){setShowMore(!showMore);},style:Object.assign({},pill(moreCount>0),{padding:"5px 12px",borderRadius:8})},
-              "More ",
-              moreCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 6px",fontSize:10,marginLeft:2}},moreCount),
-              " "+(showMore?"\u25b2":"\u25bc")
-            )
-          ),
-
-          // Zone picker
-          showZones&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:14,marginBottom:10}},
-            h("div",{style:{fontSize:13,color:"#888",marginBottom:10,fontStyle:"italic"}},"Choose a site type to sort plants by how well they fit there."),
-            h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}},
-              MICROZONES.map(function(z){
-                return h("button",{key:z.key,onClick:function(){setZone(z.key===zone?null:z.key);setShowZones(false);},style:{background:zone===z.key?"#2e5339":"#fafaf7",color:zone===z.key?"white":"#2c2c2c",border:"2px solid "+(zone===z.key?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit"}},
-                  h("div",{style:{fontSize:18,marginBottom:2}},z.emoji),
-                  h("div",{style:{fontWeight:500,fontSize:13,marginBottom:2}},z.label),
-                  h("div",{style:{fontSize:11,opacity:0.6,lineHeight:1.4}},z.desc)
-                );
-              })
-            )
-          ),
-
-          // More filters
-          showMore&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:16,marginBottom:10}},
-            h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Moisture"),
-                h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-                  [{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return h("button",{key:o.v,onClick:function(){setFilters(function(f){return Object.assign({},f,{moisture:f.moisture===o.v?null:o.v});});},style:pill(filters.moisture===o.v)},o.l);}),
-                  h("label",{style:{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:13,padding:"0 4px"}},
-                    h("input",{type:"checkbox",checked:filters.irrigated,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{irrigated:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                    "\ud83d\udca6 Irrigated"
+              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("sun");},style:pill(!!filters.sun,!!filters.sun)},
+                  (filters.sun==="full"?"\u2600\ufe0f Full sun":filters.sun==="part"?"\u26c5 Part shade":filters.sun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u2600\ufe0f Sun")+" "+(openPop==="sun"?"\u25b2":"\u25bc"),
+                  filters.sun&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{sun:null});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
+                ),
+                openPop==="sun"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:200}},
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}},inferredSun?"Sun \u2014 inferred \u2713":"Sun exposure"),
+                  h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},[{v:null,l:"Any"},{v:"full",l:"\u2600\ufe0f Full"},{v:"part",l:"\u26c5 Part"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return h("button",{key:String(o.v),onClick:function(){setFilters(function(f){return Object.assign({},f,{sun:o.v});});},style:pill(filters.sun===o.v,filters.sun===o.v)},o.l);}))
+                )
+              ),
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("moisture");},style:pill(!!filters.moisture,!!filters.moisture)},
+                  (filters.moisture==="dry"?"\ud83c\udfdc\ufe0f Dry":filters.moisture==="average"?"\ud83c\udf31 Average":filters.moisture==="moist"?"\ud83d\udca7 Moist":"\ud83d\udca7 Moisture")+" "+(openPop==="moisture"?"\u25b2":"\u25bc"),
+                  filters.moisture&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{moisture:null});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
+                ),
+                openPop==="moisture"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:220}},
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:8}},"Moisture preference"),
+                  h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}},[{v:null,l:"Any"},{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return h("button",{key:String(o.v),onClick:function(){setFilters(function(f){return Object.assign({},f,{moisture:o.v});});},style:pill(filters.moisture===o.v,filters.moisture===o.v)},o.l);})),
+                  h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.irrigated,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{irrigated:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\ud83d\udca6 Irrigated")
+                )
+              ),
+              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("type");},style:pill(filters.ptypes.length>0,filters.ptypes.length>0)},
+                  "\ud83c\udf3f "+(filters.ptypes.length>0?filters.ptypes.map(function(k){var g=PLANT_TYPES.find(function(t){return t.key===k;});return g?g.label:k;}).join(", "):"Type")+" "+(openPop==="type"?"\u25b2":"\u25bc"),
+                  filters.ptypes.length>0&&h("span",{onClick:function(ev){ev.stopPropagation();setFilters(function(f){return Object.assign({},f,{ptypes:[]});});},style:{marginLeft:5,opacity:0.7,fontSize:13}},"\u00d7")
+                ),
+                openPop==="type"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:240}},
+                  h("div",{style:{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}},"Plant type"),
+                  h("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
+                    PLANT_TYPES.map(function(g){var on=filters.ptypes.indexOf(g.key)>=0;return h("button",{key:g.key,onClick:function(){togPt(g.key);},style:pill(on,on)},g.emoji+" "+g.label);})
                   )
                 )
               ),
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:4}},inferredSun?"Sun \u2014 inferred \u2713":"Sun"),
-                inferredSun?h("div",{style:{fontSize:14,color:"#2e5339",fontWeight:500,padding:"5px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
-                h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-                  [{v:"full",l:"\u2600\ufe0f Full"},{v:"part",l:"\u26c5 Part"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return h("button",{key:o.v,onClick:function(){setFilters(function(f){return Object.assign({},f,{sun:f.sun===o.v?null:o.v});});},style:pill(filters.sun===o.v)},o.l);})
-                )
-              ),
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
-                h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
-                  flowerColors.map(function(c){
-                    return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:12,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
-                      h("div",{style:{width:10,height:10,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
-                    );
-                  })
-                )
-              ),
-              h("div",null,
-                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},
-                  h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\u2744\ufe0f Winter interest"
-                ),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\ud83c\udf74 Edible"
-                ),
-                h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13,marginTop:6}},
-                  h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),
-                  "\u2615 Medicinal"
+              h("div",{style:{width:1,height:20,background:"#e0ddd5",flexShrink:0}}),
+
+              h("span",{style:{position:"relative",display:"inline-flex"}},
+                h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
+                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:340,maxWidth:"min(500px,90vw)",maxHeight:"70vh",display:"flex",flexDirection:"column"}},
+                  h("div",{style:{overflowY:"auto",flex:1,padding:"16px 18px"}},
+                  h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
+                    h("div",null,
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Nativeness"),
+                      STATUS_OPTS.map(function(opt){var on=filters.statuses.indexOf(opt.key)>=0;return h("button",{key:opt.key,onClick:function(){togSt(opt.key);},style:{display:"block",width:"100%",textAlign:"left",padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666",fontWeight:on?"500":"normal",marginBottom:4}},opt.label);})
+                    ),
+
+                    h("div",null,
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Max height"),
+                      h("div",{style:{display:"inline-flex",alignItems:"center",gap:4}},
+                        h("input",{type:"number",min:1,max:120,value:filters.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);setFilters(function(f){return Object.assign({},f,{heightCap:v>0?v:null});});},placeholder:"Any",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"5px 8px",fontFamily:"inherit",fontSize:13,outline:"none",color:"#2c2c2c",background:"white",width:70}}),
+                        h("span",{style:{fontSize:12,color:"#aaa"}},"ft"),
+                        filters.heightCap&&h("button",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#aaa"}},"\u00d7")
+                      )
+                    ),
+                    h("div",null,
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
+                      h("div",{style:{display:"flex",flexWrap:"wrap",gap:4}},flowerColors.map(function(c){return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:3,padding:"3px 7px",borderRadius:20,border:"1.5px solid "+(filters.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:filters.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:11,fontFamily:"inherit",color:filters.rflower.indexOf(c)>=0?"#2e5339":"#666"}},h("div",{style:{width:8,height:8,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c);}))
+                    ),
+                    h("div",{style:{gridColumn:"1 / -1"}},
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+                      h("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:14}},
+                        [{title:"\ud83e\udd8c Deer",key:"deerLevel",setFn:setDeerLevel,val:filters.deerLevel},{title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",setFn:setRabbitLevel,val:filters.rabbitLevel},{title:"\ud83d\udc2d Vole",key:"voleLevel",setFn:setVoleLevel,val:filters.voleLevel}].map(function(row){
+                          return h("div",{key:row.key,style:{display:"flex",alignItems:"center",gap:8}},
+                            h("div",{style:{fontSize:13,color:"#555",width:70,flexShrink:0}},row.title),
+                            h("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},[{v:null,l:"Any"},{v:"high",l:"Resistant"},{v:"mod",l:"Highly resistant"}].map(function(o){return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);}))
+                          );
+                        })
+                      )
+                    ),
+                    h("div",{style:{gridColumn:"1 / -1"}},
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety — exclude toxic plants for:"),
+                      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.dogsLevel,onChange:function(ev){setDogsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc15 Dogs"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.catsLevel,onChange:function(ev){setCatsLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc08 Cats"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:!!filters.childrenLevel,onChange:function(ev){setChildrenLevel(ev.target.checked?"mild":null);},style:{accentColor:"#2e5339"}}),"\ud83d\udc76 Children")
+                      )
+                    ),
+                    h("div",{style:{gridColumn:"1 / -1"}},
+                      h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
+                      h("div",{style:{display:"flex",flexWrap:"wrap",gap:12}},
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\u2744\ufe0f Winter interest"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\ud83c\udf74 Edible"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\u2615 Medicinal"),
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.concerns.indexOf("nospread")>=0,onChange:function(){togCx("nospread");},style:{accentColor:"#2e5339"}}),"\ud83d\udeab No spreaders")
+                      )
+                    )
+                  ),
+                  ),
+                h("div",{style:{borderTop:"1px solid #e0ddd5",padding:"12px 18px",display:"flex",justifyContent:"flex-end",flexShrink:0,background:"white"}},
+                    h("button",{onClick:function(){setOpenPop(null);},style:{padding:"7px 20px",borderRadius:20,background:"#2e5339",color:"white",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"Apply")
+                  )
                 )
               )
-            )
-          )
-        )), // end desktop filters, end plants+mix tab controls
+            ),
+            openPop&&h("div",{style:{position:"fixed",inset:0,zIndex:200},onClick:function(){setOpenPop(null);}})        )), // end desktop filters, end plants+mix tab controls
 
       )
     ),
@@ -2010,15 +2048,8 @@ function App(){
         activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");}}):        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         activeTab==="mix"?h("div",null,
-          h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 18px",marginBottom:14,display:"flex",alignItems:"center",gap:12}},
-            h("div",{style:{fontSize:22,flexShrink:0}},"\ud83c\udf3f"),
-            h("div",null,
-              h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"A layered mix of the best plants for your site"),
-              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Use the filters above to set your site conditions \u2014 sun, moisture, concerns \u2014 and the mix will draw from those results. "),
-              h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5}},"Structured in layers from canopy trees to groundcovers. Remove any plant you don\u2019t like or can\u2019t source and the next best option fills its spot. A mix of heights and types \u2014 including canopy trees \u2014 supports the most biodiversity and ecosystem function.")
-            )
-          ),
-          h(HabitatView,{plants:noFilters?plants:filtered,concerns:filters.concerns,heightCap:filters.heightCap,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
+          h("div",{id:"ppb-mix-info",style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"12px 16px",marginBottom:14,display:(function(){try{return localStorage.getItem("ppb_mix_info")?"none":"flex";}catch(e){return "flex";}})(),alignItems:"flex-start",gap:10}},h("div",{style:{fontSize:20,flexShrink:0}},"??"),h("div",{style:{flex:1}},h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"A layered mix for your site"),h("div",{style:{fontSize:12,color:"#888",lineHeight:1.5}},"Set site conditions above \u2014 sun, moisture. Remove any plant you can't source and the next best fills in.")),h("button",{onClick:function(){try{localStorage.setItem("ppb_mix_info","1");}catch(e){}document.getElementById("ppb-mix-info").style.display="none";},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",flexShrink:0,lineHeight:1,padding:2}},"\u00d7")),
+          h(HabitatView,{plants:mixFiltered,concerns:filters.concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
           onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
@@ -2036,7 +2067,7 @@ function App(){
             filters.heightCap&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"Under "+filters.heightCap+" ft",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{heightCap:null});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:20,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
+            h("button",{onClick:function(){setZone(null);setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:20,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
           showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
@@ -2066,7 +2097,7 @@ function App(){
     ),
 
     // Mobile bottom nav
-    isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)"}},
+    isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Plants",   icon:"\ud83d\udd0d"},
         {key:"mix",     label:"Mix",      icon:"\ud83e\udde9"},
