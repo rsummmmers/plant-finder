@@ -1602,7 +1602,7 @@ function FilterDrawer(props){
                 h("div",{style:{fontSize:13,color:"#555",width:70,flexShrink:0}},row.title),
                 h("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
                   [{v:null,l:"Any"},{v:"high",l:"Resistant"},{v:"mod",l:"Highly resistant"}].map(function(o){
-                    return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:P(o.l,row.val===o.v,null)},o.l);
+                    return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:pill(row.val===o.v,row.val===o.v)},o.l);
                   })
                 )
               );
