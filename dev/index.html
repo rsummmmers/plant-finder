@@ -1531,7 +1531,7 @@ function FilterDrawer(props){
   }
 
   return h("div",null,
-    h("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();}}),
+    h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",overflowY:"auto",overscrollBehavior:"contain"}},
       h("div",{style:{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}}),
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}},
@@ -1591,6 +1591,40 @@ function FilterDrawer(props){
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+          h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+            [{title:"\ud83e\udd8c Deer",key:"deerLevel",val:f.deerLevel,setFn:function(v){set({deerLevel:v});}},
+             {title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",val:f.rabbitLevel,setFn:function(v){set({rabbitLevel:v});}},
+             {title:"\ud83d\udc2d Vole",key:"voleLevel",val:f.voleLevel,setFn:function(v){set({voleLevel:v});}}].map(function(row){
+              return h("div",{key:row.key,style:{display:"flex",alignItems:"center",gap:8}},
+                h("div",{style:{fontSize:13,color:"#555",width:70,flexShrink:0}},row.title),
+                h("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
+                  [{v:null,l:"Any"},{v:"high",l:"Resistant"},{v:"mod",l:"Highly resistant"}].map(function(o){
+                    return h("button",{key:String(o.v),onClick:function(){row.setFn(o.v);},style:P(o.l,row.val===o.v,null)},o.l);
+                  })
+                )
+              );
+            })
+          )
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety \u2014 exclude toxic plants for:"),
+          h("div",{style:{display:"flex",gap:16,flexWrap:"wrap"}},
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.dogsLevel,onChange:function(ev){set({dogsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc15 Dogs"
+            ),
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.catsLevel,onChange:function(ev){set({catsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc08 Cats"
+            ),
+            h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
+              h("input",{type:"checkbox",checked:!!f.childrenLevel,onChange:function(ev){set({childrenLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
+              "\ud83d\udc76 Children"
+            )
+          )
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
@@ -1871,7 +1905,7 @@ function App(){
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
-            h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search "+plants.length+" Massachusetts plants\u2026",style:{flex:1,padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
+            h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{flex:1,padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
             search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}},"\u00d7"),
             activeTab==="plants"&&!isMobile&&h("button",{onClick:function(){setActiveTab("mix");},style:{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,whiteSpace:"nowrap"}},"\ud83c\udf31 Design a habitat patch")
           ),
@@ -1937,7 +1971,7 @@ function App(){
 
               h("span",{style:{position:"relative",display:"inline-flex"}},
                 h("button",{onClick:function(){togglePop("more");},style:pill(moreCount>0,false)},"More"+(moreCount>0?" ("+moreCount+")":"")+" "+(openPop==="more"?"\u25b2":"\u25bc")),
-                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",minWidth:340,maxWidth:"min(520px,90vw)",maxHeight:"80vh",overflowY:"auto"}},
+                openPop==="more"&&h("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,left:"auto",zIndex:300,background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 18px",boxShadow:"0 6px 24px rgba(0,0,0,0.10)",maxHeight:"70vh",overflowY:"auto",minWidth:340,maxWidth:"min(520px,90vw)",maxHeight:"80vh",overflowY:"auto"}},
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
                     h("div",null,
                       h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Nativeness"),
@@ -1981,11 +2015,11 @@ function App(){
                         h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.rwinter,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{rwinter:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\u2744\ufe0f Winter interest"),
                         h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.edibleOnly,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{edibleOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\ud83c\udf74 Edible"),
                         h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.medicinalOnly||false,onChange:function(ev){setFilters(function(f){return Object.assign({},f,{medicinalOnly:ev.target.checked});});},style:{accentColor:"#2e5339"}}),"\u2615 Medicinal"),
-                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.concerns.indexOf("nospread")>=0,onChange:function(){togCx("nospread");},style:{accentColor:"#2e5339"}}),"\ud83dude\ufe0f No spreaders")
+                        h("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:13}},h("input",{type:"checkbox",checked:filters.concerns.indexOf("nospread")>=0,onChange:function(){togCx("nospread");},style:{accentColor:"#2e5339"}}),"\ud83d\udeab No spreaders")
                       )
                     )
                   ),
-                  h("div",{style:{borderTop:"1px solid #e0ddd5",marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end"}},
+                  h("div",{style:{borderTop:"1px solid #e0ddd5",marginTop:14,paddingTop:12,display:"flex",justifyContent:"flex-end",position:"sticky",bottom:0,background:"white",marginLeft:-18,marginRight:-18,paddingLeft:18,paddingRight:18,paddingBottom:12}},
                     h("button",{onClick:function(){setOpenPop(null);},style:{padding:"7px 20px",borderRadius:20,background:"#2e5339",color:"white",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500}},"Apply")
                   )
                 )
