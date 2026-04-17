@@ -6,7 +6,7 @@ function App(){
   var _e=useState(null),error=_e[0],setError=_e[1];
 
   var initURL=useMemo(readURL,[]);
-  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"mix":initURL.view==="plants"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":"home";
+  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"mix":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":"home";
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
@@ -153,7 +153,7 @@ function App(){
         (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{flex:1,padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
-            search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#aaa"}},"\u00d7"),
+            search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7"),
             activeTab==="plants"&&!isMobile&&h("button",{onClick:function(){setActiveTab("mix");},style:{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,whiteSpace:"nowrap"}},"\ud83c\udf31 Design a habitat patch")
           ),
           isMobile?h("div",{style:{paddingBottom:10}},
@@ -304,7 +304,6 @@ function App(){
         ):
         // Plants tab
         h("div",null,
-          h(ShareBar,{label:label,onLabelChange:setLabel}),
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
             zone&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone),h("span",{onClick:function(){setZone(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.concerns.map(function(c){var opt=CONCERN_OPTS.find(function(o){return o.key===c;});return opt?h("div",{key:c,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},opt.emoji+" "+opt.label,h("span",{onClick:function(){togCx(c);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),

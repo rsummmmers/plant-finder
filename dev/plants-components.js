@@ -1259,7 +1259,6 @@ function PaletteView(props){
   var hearts=props.hearts,plants=props.plants,onHeart=props.onHeart,onClear=props.onClear,onGoToPlants=props.onGoToPlants;
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
-  var _lb=useState(""),label=_lb[0],setLabel=_lb[1];
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
   var results=useMemo(function(){
@@ -1276,8 +1275,8 @@ function PaletteView(props){
 
   function copyLink(){
     var p=new URLSearchParams();
+    p.set("view","palette");
     p.set("hearts",hearts.join(","));
-    if(label)p.set("label",label);
     navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
       .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});
   }
@@ -1286,7 +1285,6 @@ function PaletteView(props){
     // Palette header bar
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
-        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1.5px solid #e0ddd5",borderRadius:8,padding:"6px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}}),
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
