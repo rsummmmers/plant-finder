@@ -65,10 +65,17 @@ function App(){
 
   var inferredSun=useMemo(function(){var z=MICROZONES.find(function(z){return z.key===zone;});return z?z.impliesSun||null:null;},[zone]);
   var effectiveSun=inferredSun||filters.sun;
-  var effectiveFilters=Object.assign({},filters,{sun:effectiveSun,search:search});
+  var searchActive=search.trim().length>0;
+  var allStatuses=["native","nearnative","cultivar","nonnative","invasive","caution"];
+  var effectiveFilters=Object.assign({},filters,{
+    sun:searchActive?null:effectiveSun,
+    moisture:searchActive?null:filters.moisture,
+    statuses:searchActive?allStatuses:filters.statuses,
+    search:search
+  });
 
-  var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,zone);},[plants,JSON.stringify(effectiveFilters),zone]);
-  var mixFilters=useMemo(function(){return Object.assign({},effectiveFilters,{ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[effectiveFilters]);
+  var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
+  var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
   var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);
   var results=useMemo(function(){return sortPlants(filtered,sortBy,zone);},[filtered,sortBy,zone]);
 
@@ -290,7 +297,7 @@ function App(){
 
       !loading&&!error&&(
         activeTab==="home"?h(HomeView,{onNavigate:function(tab){setActiveTab(tab);},isMobile:isMobile}):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,zone:zone,sun:filters.sun,moisture:filters.moisture,onSetZone:setZone,onSetSun:function(v){setFilters(function(f){return Object.assign({},f,{sun:v});});},onSetMoisture:function(v){setFilters(function(f){return Object.assign({},f,{moisture:v});});},onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
