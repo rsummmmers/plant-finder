@@ -1117,15 +1117,15 @@ function ShareBar(props){
   );
 }
 
-// ── FilterDrawer (mobile) ─────────────────────────────────────────────────
+// ── FilterDrawer ──────────────────────────────────────────────────────────
 function FilterDrawer(props){
   var open=props.open,onClose=props.onClose,filters=props.filters,
       onChange=props.onChange,flowerColors=props.flowerColors,
-      inferredSun=props.inferredSun;
+      inferredSun=props.inferredSun,isMobile=props.isMobile,
+      zone=props.zone,onSetZone=props.onSetZone;
   if(!open)return null;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
-  function tog(field,k){set(function(x){var arr=x[field];return{[field]:arr.indexOf(k)>=0?arr.filter(function(v){return v!==k;}):[...arr,k]};});}
   function togSt(k){set({statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});}
   function togCx(k){set({concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});}
   function togPt(k){set({ptypes:f.ptypes.indexOf(k)>=0?f.ptypes.filter(function(v){return v!==k;}):[...f.ptypes,k]});}
@@ -1135,15 +1135,29 @@ function FilterDrawer(props){
     return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
+  var panelStyle=isMobile
+    ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
+    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+
+  var handleStyle=isMobile
+    ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
+    :null;
+
   return h("div",null,
     h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
-    h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}},
-      h("div",{style:{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}},
+    h("div",{style:panelStyle},
+      isMobile&&h("div",{style:handleStyle}),
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
       h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
+        h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Site type"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
+            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"7px 10px",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?"#2e5339":"#e0ddd5"),background:on?"#2e5339":"transparent",color:on?"white":"#666",textAlign:"left",display:"flex",alignItems:"center",gap:6}},z.emoji," ",z.label);})
+          )
+        ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},STATUS_OPTS.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
@@ -1258,6 +1272,7 @@ function FilterDrawer(props){
 function PaletteView(props){
   var hearts=props.hearts,plants=props.plants,onHeart=props.onHeart,onClear=props.onClear,onGoToPlants=props.onGoToPlants;
   var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
+  var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1290,6 +1305,7 @@ function PaletteView(props){
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
+        h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
@@ -1303,7 +1319,6 @@ function PaletteView(props){
     ),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h("div",{style:{fontSize:12,color:"#888",marginBottom:12,lineHeight:1.5}},"A layered mix based on your site filters. Remove any plant you can\u2019t source and the next best fills in."),
       h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen})
     ),
     // Search within palette
