@@ -982,9 +982,12 @@ function SeedCalendar(props){
       if(!p.seedStart&&!p.seedNotes&&!p.propagNotes)return false;
       var s=p.status.toLowerCase().replace(/[-\s]/g,"");
       if(s==="invasive"||s==="caution")return false;
+      if(search.trim()){
+        var q=search.toLowerCase();
+        return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;
+      }
       if(!matchStatus(p,statuses))return false;
       if(typeFilter&&p.typeKey!==typeFilter)return false;
-      if(search.trim()){var q=search.toLowerCase();if(p.common.toLowerCase().indexOf(q)<0&&p.latin.toLowerCase().indexOf(q)<0)return false;}
       return true;
     });
   },[plants,statuses,typeFilter,search]);
