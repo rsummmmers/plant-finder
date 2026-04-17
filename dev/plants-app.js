@@ -24,6 +24,9 @@ function App(){
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
+  var _mz=useState(null),mixZone=_mz[0],setMixZone=_mz[1];
+  var _ms=useState(null),mixSun=_ms[0],setMixSun=_ms[1];
+  var _mm=useState(null),mixMoisture=_mm[0],setMixMoisture=_mm[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
 
@@ -75,8 +78,10 @@ function App(){
   });
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
-  var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
-  var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);
+  var mixInferredSun=useMemo(function(){var z=MICROZONES.find(function(z){return z.key===mixZone;});return z?z.impliesSun||null:null;},[mixZone]);
+  var mixEffectiveSun=mixInferredSun||mixSun;
+  var mixFilters=useMemo(function(){return {statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:mixMoisture,sun:mixEffectiveSun,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,search:""};},[mixZone,mixEffectiveSun,mixMoisture]);
+  var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,mixZone);},[plants,mixFilters,mixZone]);
   var results=useMemo(function(){return sortPlants(filtered,sortBy,zone);},[filtered,sortBy,zone]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
@@ -297,7 +302,7 @@ function App(){
 
       !loading&&!error&&(
         activeTab==="home"?h(HomeView,{onNavigate:function(tab){setActiveTab(tab);},isMobile:isMobile}):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,zone:zone,sun:filters.sun,moisture:filters.moisture,onSetZone:setZone,onSetSun:function(v){setFilters(function(f){return Object.assign({},f,{sun:v});});},onSetMoisture:function(v){setFilters(function(f){return Object.assign({},f,{moisture:v});});},onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:[],zone:mixZone,sun:mixSun,moisture:mixMoisture,onSetZone:setMixZone,onSetSun:setMixSun,onSetMoisture:setMixMoisture,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
