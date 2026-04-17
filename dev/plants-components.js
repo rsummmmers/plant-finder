@@ -1257,8 +1257,10 @@ function FilterDrawer(props){
 // ── PaletteView ───────────────────────────────────────────────────────────
 function PaletteView(props){
   var hearts=props.hearts,plants=props.plants,onHeart=props.onHeart,onClear=props.onClear,onGoToPlants=props.onGoToPlants;
+  var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
+  var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
   var results=useMemo(function(){
@@ -1287,6 +1289,7 @@ function PaletteView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
+        h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
@@ -1297,6 +1300,11 @@ function PaletteView(props){
           );
         })
       )
+    ),
+    // Mix suggestion panel
+    showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
+      h("div",{style:{fontSize:12,color:"#888",marginBottom:12,lineHeight:1.5}},"A layered mix based on your site filters. Remove any plant you can\u2019t source and the next best fills in."),
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -1328,7 +1336,7 @@ function HomeView(props){
   var cards=[
     {key:"plants", emoji:"🔍", title:"Build a native-forward palette",
      body:"Browse 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"mix",    emoji:"🧩", title:"Design a habitat mix",
+    {key:"palette", emoji:"🧩", title:"Design a habitat mix",
      body:"Tell us about your site and get a layered planting combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
     {key:"bloom",  emoji:"🌸", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},

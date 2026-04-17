@@ -6,7 +6,7 @@ function App(){
   var _e=useState(null),error=_e[0],setError=_e[1];
 
   var initURL=useMemo(readURL,[]);
-  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"mix":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":"home";
+  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"palette":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":"home";
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
@@ -127,7 +127,6 @@ function App(){
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
           [
             {key:"plants", label:"🔍 Plants"},
-            {key:"mix",    label:"🧩 Build a mix"},
             {key:"bloom",  label:"🌸 Bloom calendar"},
             {key:"seeds",  label:"🌰 Seed calendar"},
             {key:"palette",label:"♥ My palette",count:hearts.length},
@@ -150,13 +149,12 @@ function App(){
     // Sticky filter bar
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
-        (activeTab==="plants"||activeTab==="mix")&&h("div",{style:{padding:"10px 20px 0"}},
+        activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
               h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{width:"100%",padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
-            ),
-            activeTab==="plants"&&!isMobile&&h("button",{onClick:function(){setActiveTab("mix");},style:{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:10,border:"2px solid #2e5339",background:"white",color:"#2e5339",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,whiteSpace:"nowrap"}},"\ud83c\udf31 Design a habitat patch")
+            )
           ),
           isMobile?h("div",{style:{paddingBottom:10}},
             h("button",{onClick:function(){setDrawerOpen(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2e5339":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2e5339":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
@@ -292,18 +290,12 @@ function App(){
 
       !loading&&!error&&(
         activeTab==="home"?h(HomeView,{onNavigate:function(tab){setActiveTab(tab);},isMobile:isMobile}):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");}}):        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
-        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
-        activeTab==="mix"?h("div",null,
-          h("div",{id:"ppb-mix-info",style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"12px 16px",marginBottom:14,display:(function(){try{return localStorage.getItem("ppb_mix_info")?"none":"flex";}catch(e){return "flex";}})(),alignItems:"flex-start",gap:10}},h("div",{style:{fontSize:20,flexShrink:0}},"\ud83c\udf3f"),h("div",{style:{flex:1}},h("div",{style:{fontWeight:500,fontSize:14,marginBottom:3}},"A layered mix for your site"),h("div",{style:{fontSize:12,color:"#888",lineHeight:1.5}},"Set site conditions above \u2014 sun, moisture. Remove any plant you can't source and the next best fills in.")),h("button",{onClick:function(){try{localStorage.setItem("ppb_mix_info","1");}catch(e){}document.getElementById("ppb-mix-info").style.display="none";},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",flexShrink:0,lineHeight:1,padding:2}},"\u00d7")),
-          h(HabitatView,{plants:mixFiltered,concerns:filters.concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:toggleHeart,
-          onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
-          }
-          })
-        ):
+          }}):
+        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         // Plants tab
         h("div",null,
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
@@ -346,7 +338,6 @@ function App(){
     isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Plants",   icon:"\ud83d\udd0d"},
-        {key:"mix",     label:"Mix",      icon:"\ud83e\udde9"},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
