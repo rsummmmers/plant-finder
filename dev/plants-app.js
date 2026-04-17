@@ -171,7 +171,6 @@ function App(){
           )
         )),
 
-      )
     ),
 
     // Filter drawer — mobile bottom sheet, desktop right panel
@@ -191,6 +190,7 @@ function App(){
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
+        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
         h("div",null,
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
