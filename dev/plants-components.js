@@ -1349,10 +1349,10 @@ function PaletteView(props){
 function HomeView(props){
   var onNavigate=props.onNavigate,isMobile=props.isMobile;
   var cards=[
-    {key:"plants", emoji:"🔍", title:"Build a native-forward palette",
-     body:"Browse 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"palette", emoji:"🧩", title:"Design a habitat mix",
-     body:"Tell us about your site and get a layered planting combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
+    {key:"plants", emoji:"🔍", title:"Browse & discover plants",
+     body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
+    {key:"palette", emoji:"♥", title:"Build your palette",
+     body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
     {key:"bloom",  emoji:"🌸", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
     {key:"seeds",  emoji:"🌰", title:"Save seeds & propagate",
