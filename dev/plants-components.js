@@ -1335,7 +1335,7 @@ function PaletteView(props){
 
   return h("div",null,
     // Palette header bar — sticky on desktop only
-    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:0,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
+    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
