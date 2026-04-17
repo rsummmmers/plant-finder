@@ -520,6 +520,8 @@ function HabitatView(props){
     };
   },[base,sortBy,patchSize]);
 
+  useEffect(function(){if(props.onLayersChange)props.onLayersChange(layers);},[layers]);
+
   var total=Object.values(layers).reduce(function(s,a){return s+a.length;},0);
   var thinLayers=Object.entries(layers).filter(function(kv){return kv[1].length<(HT[kv[0]]||0)/2;});
   var hasNearNative=base.some(function(p){return p.status==="Near-Native"||p.status==="Near Native";});
@@ -973,15 +975,22 @@ function SeedCalendar(props){
   var _m=useState(now.getMonth()),monthIdx=_m[0],setMonthIdx=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _t=useState(null),typeFilter=_t[0],setTypeFilter=_t[1];
+  var _q=useState(""),search=_q[0],setSearch=_q[1];
 
   var eligible=useMemo(function(){
     return plants.filter(function(p){
       if(!p.seedStart&&!p.seedNotes&&!p.propagNotes)return false;
+      var s=p.status.toLowerCase().replace(/[-\s]/g,"");
+      if(s==="invasive"||s==="caution")return false;
+      if(search.trim()){
+        var q=search.toLowerCase();
+        return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;
+      }
       if(!matchStatus(p,statuses))return false;
       if(typeFilter&&p.typeKey!==typeFilter)return false;
       return true;
     });
-  },[plants,statuses,typeFilter]);
+  },[plants,statuses,typeFilter,search]);
 
   var monthCounts=useMemo(function(){
     var c=new Array(12).fill(0);
@@ -1070,8 +1079,14 @@ function SeedCalendar(props){
         )
       )
     ),
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+      h("div",{style:{position:"relative"}},
+        h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:14,background:"white",outline:"none",color:"#2c2c2c"}}),
+        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
+      )
+    ),
     h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
-      STATUS_OPTS.map(function(opt){
+      STATUS_OPTS.filter(function(opt){return opt.key!=="invasive"&&opt.key!=="caution";}).map(function(opt){
         var on=statuses.indexOf(opt.key)>=0;
         return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666"}},opt.label);
       }),
@@ -1117,36 +1132,73 @@ function ShareBar(props){
   );
 }
 
-// ── FilterDrawer (mobile) ─────────────────────────────────────────────────
+// ── FilterDrawer ──────────────────────────────────────────────────────────
 function FilterDrawer(props){
   var open=props.open,onClose=props.onClose,filters=props.filters,
       onChange=props.onChange,flowerColors=props.flowerColors,
-      inferredSun=props.inferredSun;
+      inferredSun=props.inferredSun,isMobile=props.isMobile,
+      zone=props.zone,onSetZone=props.onSetZone,source=props.source;
   if(!open)return null;
+  var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
-  function tog(field,k){set(function(x){var arr=x[field];return{[field]:arr.indexOf(k)>=0?arr.filter(function(v){return v!==k;}):[...arr,k]};});}
-  function togSt(k){set({statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});}
+  function togSt(k){
+    var badPlants=["invasive","caution"];
+    var goodPlants=["native","nearnative","cultivar","nonnative"];
+    set({statuses:(function(){
+      var cur=f.statuses;
+      if(cur.indexOf(k)>=0) return cur.filter(function(v){return v!==k;});
+      var next=[...cur,k];
+      if(badPlants.indexOf(k)>=0) next=next.filter(function(v){return badPlants.indexOf(v)>=0;});
+      if(goodPlants.indexOf(k)>=0) next=next.filter(function(v){return goodPlants.indexOf(v)>=0;});
+      return next;
+    })()});
+  }
   function togCx(k){set({concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});}
   function togPt(k){set({ptypes:f.ptypes.indexOf(k)>=0?f.ptypes.filter(function(v){return v!==k;}):[...f.ptypes,k]});}
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
+
+  useEffect(function(){
+    var prev=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    return function(){document.body.style.overflow=prev;};
+  },[]);
+
+  function resetAll(){
+    onChange({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onSetZone(null);
+  }
 
   function P(label,active,onClick,bg,fg){
     return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
+  var panelStyle=isMobile
+    ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
+    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+
+  var handleStyle=isMobile
+    ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
+    :null;
+
   return h("div",null,
     h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
-    h("div",{style:{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"85vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}},
-      h("div",{style:{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px 0"}},
+    h("div",{style:panelStyle},
+      isMobile&&h("div",{style:handleStyle}),
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
       h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
         h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Site type"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
+            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"7px 10px",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?"#2e5339":"#e0ddd5"),background:on?"#2e5339":"transparent",color:on?"white":"#666",textAlign:"left",display:"flex",alignItems:"center",gap:6}},z.emoji," ",z.label);})
+          )
+        ),
+        h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},STATUS_OPTS.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
@@ -1247,8 +1299,9 @@ function FilterDrawer(props){
           )
         ),
         ),
-      h("div",{style:{padding:"12px 20px",paddingBottom:"calc(80px + env(safe-area-inset-bottom,0px))",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white"}},
-        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,width:"100%"})},"Show results")
+      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(20px + env(safe-area-inset-bottom,0px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
+        h("button",{onClick:resetAll,style:btn("#f0ede4","#555",{borderRadius:10,padding:"13px",fontSize:14,flex:1})},"Reset all"),
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
     )
   );
@@ -1257,48 +1310,78 @@ function FilterDrawer(props){
 // ── PaletteView ───────────────────────────────────────────────────────────
 function PaletteView(props){
   var hearts=props.hearts,plants=props.plants,onHeart=props.onHeart,onClear=props.onClear,onGoToPlants=props.onGoToPlants;
+  var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
+  var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
+  var isMobile=props.isMobile||false;
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
-  var _lb=useState(""),label=_lb[0],setLabel=_lb[1];
+  var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
+  var _ml=useState(null),mixLayers=_ml[0],setMixLayers=_ml[1];
+  var _tf=useState(null),typeFilter=_tf[0],setTypeFilter=_tf[1];
+  var resultsRef=useRef(null);
+
+  function handleTileClick(key){
+    setTypeFilter(function(cur){return cur===key?null:key;});
+    setTimeout(function(){if(resultsRef.current)resultsRef.current.scrollIntoView({behavior:"smooth",block:"start"});},50);
+  }
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
-  var results=useMemo(function(){
-    if(!search.trim())return hearted;
-    var q=search.toLowerCase();
-    return hearted.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
-  },[hearted,search]);
 
-  var mix=useMemo(function(){
+  var LAYER_KEY_MAP={trees:"tree",woody:"shrub",perennial:"perennial",grass:"grass",ground:"ground"};
+  var counts=useMemo(function(){
     var c={tree:0,shrub:0,perennial:0,grass:0,fern:0,ground:0,vine:0};
     hearted.forEach(function(p){if(c[p.typeKey]!==undefined)c[p.typeKey]++;});
+    if(showMix&&mixLayers){
+      var heartedSet=new Set(hearted.map(function(p){return p.latin;}));
+      Object.entries(mixLayers).forEach(function(kv){
+        var tileKey=LAYER_KEY_MAP[kv[0]];
+        if(!tileKey)return;
+        kv[1].forEach(function(p){if(!heartedSet.has(p.latin))c[tileKey]++;});
+      });
+    }
     return c;
-  },[hearted]);
+  },[hearted,showMix,mixLayers]);
+
+  var results=useMemo(function(){
+    var base=hearted;
+    if(typeFilter)base=base.filter(function(p){return p.typeKey===typeFilter;});
+    if(!search.trim())return base;
+    var q=search.toLowerCase();
+    return base.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
+  },[hearted,search,typeFilter]);
 
   function copyLink(){
     var p=new URLSearchParams();
+    p.set("view","palette");
     p.set("hearts",hearts.join(","));
-    if(label)p.set("label",label);
     navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
       .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});
   }
 
   return h("div",null,
-    // Palette header bar
-    h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
+    // Palette header bar — sticky on desktop only
+    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
+    h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
-        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1.5px solid #e0ddd5",borderRadius:8,padding:"6px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}}),
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
+        h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
+        h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
-      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
-        [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"}].map(function(x){
-          return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"6px 10px",textAlign:"center"}},
-            h("div",{style:{fontSize:18,fontWeight:500,color:mix[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},mix[x.k]),
-            h("div",{style:{fontSize:10,color:"#888",marginTop:1}},x.e+" "+x.l)
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
+        [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"},{k:"fern",e:"\ud83c\udf3f",l:"Ferns"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"},{k:"vine",e:"\ud83c\udf3f",l:"Vines"}].map(function(x){
+          var on=typeFilter===x.k;
+          return h("div",{key:x.k,onClick:function(){handleTileClick(x.k);},style:{background:on?"#e1f5ee":"#f0ede4",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer",border:"1.5px solid "+(on?"#2e5339":"transparent")}},
+            h("div",{style:{fontSize:16,fontWeight:500,color:counts[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},counts[x.k]),
+            h("div",{style:{fontSize:9,color:on?"#2e5339":"#888",marginTop:1}},x.l)
           );
         })
       )
+    )),
+    // Mix suggestion panel
+    showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -1306,21 +1389,33 @@ function PaletteView(props){
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
-    hearted.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
+    hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
-      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:12}},"Your palette is empty"),
-      h("button",{onClick:onGoToPlants,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
+      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your palette is empty"),
+      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
+      h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
+        h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
+        h("button",{onClick:onGoToPlants,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
+      )
     ),
-    // No search results → suggest a plant
+    // No results
     hearted.length>0&&results.length===0&&h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
-      h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette or our database yet."),
-      h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+      typeFilter&&!search?
+        h("div",{style:{fontStyle:"italic",fontSize:15}},
+          "No "+typeFilter+"s in your palette yet."
+        ):
+        h("div",null,
+          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette yet."),
+          h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+        )
     ),
     // Plant cards
-    results.map(function(p){
-      return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart});
-    })
+    h("div",{ref:resultsRef},
+      results.map(function(p){
+        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart});
+      })
+    )
   );
 }
 
@@ -1328,10 +1423,10 @@ function PaletteView(props){
 function HomeView(props){
   var onNavigate=props.onNavigate,isMobile=props.isMobile;
   var cards=[
-    {key:"plants", emoji:"🔍", title:"Build a native-forward palette",
-     body:"Browse 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"mix",    emoji:"🧩", title:"Design a habitat mix",
-     body:"Tell us about your site and get a layered planting combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
+    {key:"plants", emoji:"🔍", title:"Browse & discover plants",
+     body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
+    {key:"palette", emoji:"♥", title:"Build your palette",
+     body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
     {key:"bloom",  emoji:"🌸", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
     {key:"seeds",  emoji:"🌰", title:"Save seeds & propagate",
