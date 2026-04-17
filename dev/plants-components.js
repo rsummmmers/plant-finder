@@ -1124,8 +1124,9 @@ function FilterDrawer(props){
   var open=props.open,onClose=props.onClose,filters=props.filters,
       onChange=props.onChange,flowerColors=props.flowerColors,
       inferredSun=props.inferredSun,isMobile=props.isMobile,
-      zone=props.zone,onSetZone=props.onSetZone;
+      zone=props.zone,onSetZone=props.onSetZone,source=props.source;
   if(!open)return null;
+  var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){set({statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});}
@@ -1173,7 +1174,7 @@ function FilterDrawer(props){
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},STATUS_OPTS.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
