@@ -1373,11 +1373,17 @@ function PaletteView(props){
         h("button",{onClick:onGoToPlants,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
       )
     ),
-    // No search results → suggest a plant
+    // No results
     hearted.length>0&&results.length===0&&h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
-      h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette or our database yet."),
-      h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+      typeFilter&&!search?
+        h("div",{style:{fontStyle:"italic",fontSize:15}},
+          "No "+typeFilter+"s in your palette yet."
+        ):
+        h("div",null,
+          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette yet."),
+          h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+        )
     ),
     // Plant cards
     h("div",{ref:resultsRef},
