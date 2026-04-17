@@ -520,6 +520,8 @@ function HabitatView(props){
     };
   },[base,sortBy,patchSize]);
 
+  useEffect(function(){if(props.onLayersChange)props.onLayersChange(layers);},[layers]);
+
   var total=Object.values(layers).reduce(function(s,a){return s+a.length;},0);
   var thinLayers=Object.entries(layers).filter(function(kv){return kv[1].length<(HT[kv[0]]||0)/2;});
   var hasNearNative=base.some(function(p){return p.status==="Near-Native"||p.status==="Near Native";});
@@ -1276,19 +1278,33 @@ function PaletteView(props){
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
+  var _ml=useState(null),mixLayers=_ml[0],setMixLayers=_ml[1];
+  var _tf=useState(null),typeFilter=_tf[0],setTypeFilter=_tf[1];
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
-  var results=useMemo(function(){
-    if(!search.trim())return hearted;
-    var q=search.toLowerCase();
-    return hearted.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
-  },[hearted,search]);
 
-  var mix=useMemo(function(){
+  var LAYER_KEY_MAP={trees:"tree",woody:"shrub",perennial:"perennial",grass:"grass",ground:"ground"};
+  var counts=useMemo(function(){
     var c={tree:0,shrub:0,perennial:0,grass:0,fern:0,ground:0,vine:0};
     hearted.forEach(function(p){if(c[p.typeKey]!==undefined)c[p.typeKey]++;});
+    if(showMix&&mixLayers){
+      var heartedSet=new Set(hearted.map(function(p){return p.latin;}));
+      Object.entries(mixLayers).forEach(function(kv){
+        var tileKey=LAYER_KEY_MAP[kv[0]];
+        if(!tileKey)return;
+        kv[1].forEach(function(p){if(!heartedSet.has(p.latin))c[tileKey]++;});
+      });
+    }
     return c;
-  },[hearted]);
+  },[hearted,showMix,mixLayers]);
+
+  var results=useMemo(function(){
+    var base=hearted;
+    if(typeFilter)base=base.filter(function(p){return p.typeKey===typeFilter;});
+    if(!search.trim())return base;
+    var q=search.toLowerCase();
+    return base.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
+  },[hearted,search,typeFilter]);
 
   function copyLink(){
     var p=new URLSearchParams();
@@ -1308,18 +1324,19 @@ function PaletteView(props){
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
-      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}},
-        [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"}].map(function(x){
-          return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"6px 10px",textAlign:"center"}},
-            h("div",{style:{fontSize:18,fontWeight:500,color:mix[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},mix[x.k]),
-            h("div",{style:{fontSize:10,color:"#888",marginTop:1}},x.e+" "+x.l)
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
+        [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"},{k:"fern",e:"\ud83c\udf3f",l:"Ferns"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"},{k:"vine",e:"\ud83c\udf3f",l:"Vines"}].map(function(x){
+          var on=typeFilter===x.k;
+          return h("div",{key:x.k,onClick:function(){setTypeFilter(on?null:x.k);},style:{background:on?"#e1f5ee":"#f0ede4",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer",border:"1.5px solid "+(on?"#2e5339":"transparent")}},
+            h("div",{style:{fontSize:16,fontWeight:500,color:counts[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},counts[x.k]),
+            h("div",{style:{fontSize:9,color:on?"#2e5339":"#888",marginTop:1}},x.l)
           );
         })
       )
     ),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen})
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -1327,10 +1344,14 @@ function PaletteView(props){
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
-    hearted.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
+    hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
-      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:12}},"Your palette is empty"),
-      h("button",{onClick:onGoToPlants,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
+      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your palette is empty"),
+      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
+      h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
+        h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
+        h("button",{onClick:onGoToPlants,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
+      )
     ),
     // No search results → suggest a plant
     hearted.length>0&&results.length===0&&h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#888"}},
