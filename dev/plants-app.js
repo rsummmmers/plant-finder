@@ -285,7 +285,7 @@ function App(){
     h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"0 16px 120px":"0 20px 80px"}},
+    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
