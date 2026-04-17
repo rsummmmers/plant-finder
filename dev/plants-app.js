@@ -131,11 +131,10 @@ function App(){
 
       // Tab row — desktop only
       !isMobile&&h("div",{className:"no-print",style:{background:"#fafaf7",borderBottom:"1px solid #e0ddd5"}},
-        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",padding:"0 12px"}},
+        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"stretch",padding:"0 12px"}},
           [
             {key:"plants", label:"🔍 Plants"},
             {key:"bloom",  label:"🌸 Bloom calendar"},
-            {key:"seeds",  label:"🌰 Seed calendar"},
             {key:"palette",label:"♥ My palette",count:hearts.length},
           ].map(function(tab){
             var active=activeTab===tab.key;
@@ -148,7 +147,15 @@ function App(){
               tab.label,
               tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
             );
-          })
+          }).concat([
+            h("div",{key:"divider",style:{width:1,background:"#e0ddd5",margin:"8px 8px",flexShrink:0}}),
+            h("button",{key:"seeds",onClick:function(){setActiveTab("seeds");},
+              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"?"500":"normal",
+                color:activeTab==="seeds"?"#2e5339":"#aaa",background:"none",border:"none",
+                borderBottom:"2px solid "+(activeTab==="seeds"?"#2e5339":"transparent"),
+                cursor:"pointer",whiteSpace:"nowrap"}
+            },"🌰 Seed calendar")
+          ])
         )
       )
     ),
@@ -234,8 +241,8 @@ function App(){
       [
         {key:"plants",  label:"Plants",   icon:"\ud83d\udd0d"},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
-        {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
+        {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
       ].map(function(tab){
         var active=activeTab===tab.key;
         return h("button",{key:tab.key,

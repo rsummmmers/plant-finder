@@ -1133,6 +1133,17 @@ function FilterDrawer(props){
   function togPt(k){set({ptypes:f.ptypes.indexOf(k)>=0?f.ptypes.filter(function(v){return v!==k;}):[...f.ptypes,k]});}
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
+  useEffect(function(){
+    var prev=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    return function(){document.body.style.overflow=prev;};
+  },[]);
+
+  function resetAll(){
+    onChange({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onSetZone(null);
+  }
+
   function P(label,active,onClick,bg,fg){
     return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
@@ -1263,8 +1274,9 @@ function FilterDrawer(props){
           )
         ),
         ),
-      h("div",{style:{padding:"12px 20px",paddingBottom:"calc(80px + env(safe-area-inset-bottom,0px))",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white"}},
-        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,width:"100%"})},"Show results")
+      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(20px + env(safe-area-inset-bottom,0px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
+        h("button",{onClick:resetAll,style:btn("#f0ede4","#555",{borderRadius:10,padding:"13px",fontSize:14,flex:1})},"Reset all"),
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
     )
   );
@@ -1280,6 +1292,12 @@ function PaletteView(props){
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
   var _ml=useState(null),mixLayers=_ml[0],setMixLayers=_ml[1];
   var _tf=useState(null),typeFilter=_tf[0],setTypeFilter=_tf[1];
+  var resultsRef=useRef(null);
+
+  function handleTileClick(key){
+    setTypeFilter(function(cur){return cur===key?null:key;});
+    setTimeout(function(){if(resultsRef.current)resultsRef.current.scrollIntoView({behavior:"smooth",block:"start"});},50);
+  }
 
   var hearted=useMemo(function(){return plants.filter(function(p){return hearts.indexOf(p.latin)>=0;});},[plants,hearts]);
 
@@ -1327,7 +1345,7 @@ function PaletteView(props){
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
         [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"},{k:"fern",e:"\ud83c\udf3f",l:"Ferns"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"},{k:"vine",e:"\ud83c\udf3f",l:"Vines"}].map(function(x){
           var on=typeFilter===x.k;
-          return h("div",{key:x.k,onClick:function(){setTypeFilter(on?null:x.k);},style:{background:on?"#e1f5ee":"#f0ede4",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer",border:"1.5px solid "+(on?"#2e5339":"transparent")}},
+          return h("div",{key:x.k,onClick:function(){handleTileClick(x.k);},style:{background:on?"#e1f5ee":"#f0ede4",borderRadius:8,padding:"6px 4px",textAlign:"center",cursor:"pointer",border:"1.5px solid "+(on?"#2e5339":"transparent")}},
             h("div",{style:{fontSize:16,fontWeight:500,color:counts[x.k]>0?"#2e5339":"#ccc",lineHeight:1.2}},counts[x.k]),
             h("div",{style:{fontSize:9,color:on?"#2e5339":"#888",marginTop:1}},x.l)
           );
@@ -1360,9 +1378,11 @@ function PaletteView(props){
       h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
     ),
     // Plant cards
-    results.map(function(p){
-      return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart});
-    })
+    h("div",{ref:resultsRef},
+      results.map(function(p){
+        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart});
+      })
+    )
   );
 }
 
