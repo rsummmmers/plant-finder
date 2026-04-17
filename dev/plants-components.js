@@ -975,6 +975,7 @@ function SeedCalendar(props){
   var _m=useState(now.getMonth()),monthIdx=_m[0],setMonthIdx=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _t=useState(null),typeFilter=_t[0],setTypeFilter=_t[1];
+  var _q=useState(""),search=_q[0],setSearch=_q[1];
 
   var eligible=useMemo(function(){
     return plants.filter(function(p){
@@ -983,9 +984,10 @@ function SeedCalendar(props){
       if(s==="invasive"||s==="caution")return false;
       if(!matchStatus(p,statuses))return false;
       if(typeFilter&&p.typeKey!==typeFilter)return false;
+      if(search.trim()){var q=search.toLowerCase();if(p.common.toLowerCase().indexOf(q)<0&&p.latin.toLowerCase().indexOf(q)<0)return false;}
       return true;
     });
-  },[plants,statuses,typeFilter]);
+  },[plants,statuses,typeFilter,search]);
 
   var monthCounts=useMemo(function(){
     var c=new Array(12).fill(0);
@@ -1072,6 +1074,12 @@ function SeedCalendar(props){
             );
           })
         )
+      )
+    ),
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+      h("div",{style:{position:"relative"}},
+        h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:14,background:"white",outline:"none",color:"#2c2c2c"}}),
+        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
       )
     ),
     h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
