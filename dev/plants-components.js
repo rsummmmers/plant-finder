@@ -979,6 +979,8 @@ function SeedCalendar(props){
   var eligible=useMemo(function(){
     return plants.filter(function(p){
       if(!p.seedStart&&!p.seedNotes&&!p.propagNotes)return false;
+      var s=p.status.toLowerCase().replace(/[-\s]/g,"");
+      if(s==="invasive"||s==="caution")return false;
       if(!matchStatus(p,statuses))return false;
       if(typeFilter&&p.typeKey!==typeFilter)return false;
       return true;
@@ -1073,7 +1075,7 @@ function SeedCalendar(props){
       )
     ),
     h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
-      STATUS_OPTS.map(function(opt){
+      STATUS_OPTS.filter(function(opt){return opt.key!=="invasive"&&opt.key!=="caution";}).map(function(opt){
         var on=statuses.indexOf(opt.key)>=0;
         return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666"}},opt.label);
       }),
@@ -1129,7 +1131,18 @@ function FilterDrawer(props){
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
-  function togSt(k){set({statuses:f.statuses.indexOf(k)>=0?f.statuses.filter(function(v){return v!==k;}):[...f.statuses,k]});}
+  function togSt(k){
+    var badPlants=["invasive","caution"];
+    var goodPlants=["native","nearnative","cultivar","nonnative"];
+    set({statuses:(function(){
+      var cur=f.statuses;
+      if(cur.indexOf(k)>=0) return cur.filter(function(v){return v!==k;});
+      var next=[...cur,k];
+      if(badPlants.indexOf(k)>=0) next=next.filter(function(v){return badPlants.indexOf(v)>=0;});
+      if(goodPlants.indexOf(k)>=0) next=next.filter(function(v){return goodPlants.indexOf(v)>=0;});
+      return next;
+    })()});
+  }
   function togCx(k){set({concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});}
   function togPt(k){set({ptypes:f.ptypes.indexOf(k)>=0?f.ptypes.filter(function(v){return v!==k;}):[...f.ptypes,k]});}
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
