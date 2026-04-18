@@ -148,6 +148,19 @@ function dedupePlants(plants){
   return plants.filter(function(p){if(seen[p.latin])return false;seen[p.latin]=true;return true;});
 }
 
+function GoBotanyLink({ latinName }) {
+  if (!latinName) return null;
+  var parts = latinName.trim().toLowerCase().split(/\s+/);
+  if (parts.length < 2) return null;
+  var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
+  return React.createElement("a", {
+    href: url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    title: "View on Go Botany (Native Plant Trust) — not all plants may be in their database",
+    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
+  }, "Native Plant Trust ↗");
+}
 // ── localStorage ──────────────────────────────────────────────────────────
 var LS_KEY="ppb_hearts_v2";
 function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(err){return[];}}
@@ -363,6 +376,8 @@ function sortPlants(plants,sortBy,siteKey){
     return(b.caterpillars||0)-(a.caterpillars||0);
   });
 }
+
+
 
 // ── Style helpers ─────────────────────────────────────────────────────────
 function pill(active,dark){
