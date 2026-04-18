@@ -287,7 +287,7 @@ plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#
             plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
             plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
             plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-            cats>0&&h("div",{style:{gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species"))
+            cats>0&&h("div",{style:{gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"\ud83e\udd8b CaterpillarX host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species"))
           ),
           h(RiskBadges,{plant:plant}),
           h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
