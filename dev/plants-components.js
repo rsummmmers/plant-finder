@@ -1299,7 +1299,7 @@ function FilterDrawer(props){
           )
         ),
         ),
-      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(32px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
+      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(48px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
         h("button",{onClick:resetAll,style:btn("#f0ede4","#555",{borderRadius:10,padding:"13px",fontSize:14,flex:1})},"Reset all"),
         h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
