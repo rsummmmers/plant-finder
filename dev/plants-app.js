@@ -190,7 +190,15 @@ function App(){
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
 
       !loading&&!error&&(
-        activeTab==="home"?h(HomeView,{onNavigate:function(tab){setActiveTab(tab);},isMobile:isMobile}):
+   activeTab==="home"?h("div",null,
+  h(HomeView,{onNavigate:function(tab){setActiveTab(tab);},isMobile:isMobile}),
+  h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"24px 16px 8px":"32px 20px 8px",borderTop:"1px solid #e0ddd5"}},
+    h("div",{style:{fontSize:13,fontWeight:500,color:"#2e5339",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}},"About this tool"),
+    h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7,marginBottom:10}},"This tool is designed for gardeners and garden designers — not conservation databases or academic research. It\u2019s built to help you make good planting decisions faster, with real site conditions in mind."),
+    h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7,marginBottom:10}},"Plant data is drawn from public sources including iNaturalist, BONAP, and published research on caterpillar host relationships. It has been curated and combined by hand. While we\u2019ve worked to be accurate, errors exist \u2014 if precision matters for your project, please cross-check with primary sources."),
+    h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
+  )
+):
         activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
