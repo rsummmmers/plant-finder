@@ -301,8 +301,9 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-  cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}))
 ),
+h(RiskBadges,{plant:plant}),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
 h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
