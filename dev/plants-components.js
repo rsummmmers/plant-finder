@@ -246,6 +246,7 @@ function PlantCard(props){
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:"bold",fontSize:16}},plant.common),
           h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:4}},plant.latin),
+          h(GoBotanyLink, { latinName: plant.latin }),
           h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
             h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 7px",borderRadius:10,fontWeight:"bold"}},ss.label),
             h("span",{style:{background:"#f0ede4",color:"#666",fontSize:11,padding:"2px 7px",borderRadius:10}},plant.category),
