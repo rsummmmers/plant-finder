@@ -44,6 +44,21 @@ function Lightbox(props){
     h("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:4}},"Swipe or use arrow keys \u00b7 click outside to close")
   );
 }
+//gobotany
+
+function GoBotanyLink({ latinName }) {
+  if (!latinName) return null;
+  var parts = latinName.trim().toLowerCase().split(/\s+/);
+  if (parts.length < 2) return null;
+  var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
+  return h("a", {
+    href: url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    title: "View on Go Botany (Native Plant Trust) — not all plants may be in their database",
+    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
+  }, "Native Plant Trust ↗");
+}
 
 // ── PlantThumb ────────────────────────────────────────────────────────────
 function PlantThumb(props){
