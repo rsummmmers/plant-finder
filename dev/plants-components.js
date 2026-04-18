@@ -293,19 +293,21 @@ function PlantCard(props){
   h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts.")
 )),
 plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}},plant.notes),
-          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
-            plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
-            plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
-            plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
-            plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
-            plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
-            plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
-            plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}))            h(RiskBadges,{plant:plant}),
-          h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
-          h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
-        )
-      ),
+h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
+  plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
+  plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
+  plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
+  plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
+  plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
+  plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
+  plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
+  cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}))
+),
+h(RiskBadges,{plant:plant}),
+h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
+h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
+
+        
       siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&h("div",{style:{marginTop:14}},
         h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
         h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
