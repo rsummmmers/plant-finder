@@ -153,7 +153,7 @@ function GoBotanyLink({ latinName }) {
   var parts = latinName.trim().toLowerCase().split(/\s+/);
   if (parts.length < 2) return null;
   var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
-  return React.createElement("a", {
+  return h("a", {
     href: url,
     target: "_blank",
     rel: "noopener noreferrer",
