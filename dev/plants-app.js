@@ -325,8 +325,6 @@ function matchStatus(plant,statuses){
   if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s==="nonnative"||s.indexOf("hybrid")>=0))return true;
   if(statuses.indexOf("invasive")>=0&&s==="invasive")return true;
   if(statuses.indexOf("caution")>=0&&(s==="caution"||s.indexOf("aggressive")>=0))return true;
-  // Unknown status: show rather than silently hide, unless it's explicitly invasive/caution (handled by hard-exclude in applyFilters)
-  if(s!=="invasive"&&s!=="caution")return true;
   return false;
 }
 
