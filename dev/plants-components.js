@@ -128,18 +128,19 @@ function PhotoGallery(props){
     var name=taxonQ(plant.latin);
     var cur=plant.curatedImage;
     if(!name){setPhotos(cur?[{medium:cur,large:cur,thumb:cur,credit:""}]:[]);return;}
-    fetch("https://api.inaturalist.org/v1/observations?taxon_name="+encodeURIComponent(name)+"&quality_grade=research&photos=true&per_page=5&order_by=votes")
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
       .then(function(r){return r.json();})
       .then(function(d){
         var imgs=[];
         if(cur)imgs.push({medium:cur,large:cur,thumb:cur,credit:""});
-        (d.results||[]).forEach(function(obs){
-          (obs.photos||[]).forEach(function(ph){
-            if(imgs.length>=5)return;
-            var med=(ph.url||"").replace("square","medium");
-            if(med.indexOf("http")<0||med===cur)return;
-            imgs.push({thumb:ph.url||"",medium:med,large:(ph.url||"").replace("square","large"),credit:(ph.attribution||"").replace(/\(c\)/g,"\u00a9")});
-          });
+        var taxon=(d.results||[])[0];
+        ((taxon&&taxon.taxon_photos)||[]).forEach(function(tp){
+          if(imgs.length>=5)return;
+          var ph=tp.photo;
+          if(!ph||!ph.url)return;
+          var med=ph.url.replace("square","medium");
+          if(med===cur)return;
+          imgs.push({thumb:ph.url,medium:med,large:ph.url.replace("square","large"),credit:(ph.attribution||"").replace(/\(c\)/g,"\u00a9")});
         });
         if(!imgs.length&&plant.inatImage)imgs.push({medium:plant.inatImage,large:plant.inatImage,thumb:plant.inatImage,credit:""});
         setPhotos(imgs);
