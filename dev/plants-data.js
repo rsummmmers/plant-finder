@@ -323,7 +323,7 @@ function matchStatus(plant,statuses){
   if(statuses.indexOf("cultivar")>=0&&s.indexOf("cultivar")>=0)return true;
   if(statuses.indexOf("nearnative")>=0&&(s==="nearnative"||s==="nearnative"))return true;
   if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s==="nonnative"||s.indexOf("hybrid")>=0))return true;
-  if(statuses.indexOf("invasive")>=0&&s==="invasive")return true;
+  if(statuses.indexOf("invasive")>=0&&s.indexOf("invasive")>=0)return true;
   if(statuses.indexOf("caution")>=0&&(s==="caution"||s.indexOf("aggressive")>=0))return true;
   return false;
 }
@@ -332,7 +332,7 @@ function applyFilters(plants,f,siteKey){
   return plants.filter(function(p){
     if(!p.hasScores&&!f.search)return false;
     var s=p.status.toLowerCase().replace(/[-\s]/g,"");
-    if(s==="invasive"&&f.statuses.indexOf("invasive")<0)return false;
+    if(s.indexOf("invasive")>=0&&f.statuses.indexOf("invasive")<0)return false;
     if(s==="caution"&&f.statuses.indexOf("caution")<0)return false;
     if(!matchStatus(p,f.statuses))return false;
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
