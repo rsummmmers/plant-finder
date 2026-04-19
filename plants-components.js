@@ -128,20 +128,32 @@ function PhotoGallery(props){
     var name=taxonQ(plant.latin);
     var cur=plant.curatedImage;
     if(!name){setPhotos(cur?[{medium:cur,large:cur,thumb:cur,credit:""}]:[]);return;}
-    fetch("https://api.inaturalist.org/v1/observations?taxon_name="+encodeURIComponent(name)+"&quality_grade=research&photos=true&per_page=5&order_by=votes")
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
       .then(function(r){return r.json();})
       .then(function(d){
+        var taxon=(d.results||[])[0];
+        if(!taxon)return Promise.reject("no taxon");
+        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=5&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd");
+      })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var seen={};
         var imgs=[];
-        if(cur)imgs.push({medium:cur,large:cur,thumb:cur,credit:""});
+        function addImg(medium,thumb,large,credit){
+          if(!medium||seen[medium])return;
+          seen[medium]=true;
+          imgs.push({thumb:thumb,medium:medium,large:large,credit:(credit||"").replace(/\(c\)/g,"\u00a9")});
+        }
+        if(cur){addImg(cur,cur,cur,"");seen[cur]=true;}
+        if(plant.inatImage){var im=plant.inatImage;addImg(im,im.replace("medium","square"),im.replace("medium","large"),"");}
         (d.results||[]).forEach(function(obs){
           (obs.photos||[]).forEach(function(ph){
             if(imgs.length>=5)return;
             var med=(ph.url||"").replace("square","medium");
-            if(med.indexOf("http")<0||med===cur)return;
-            imgs.push({thumb:ph.url||"",medium:med,large:(ph.url||"").replace("square","large"),credit:(ph.attribution||"").replace(/\(c\)/g,"\u00a9")});
+            if(med.indexOf("http")<0)return;
+            addImg(med,ph.url||"",( ph.url||"").replace("square","large"),ph.attribution||"");
           });
         });
-        if(!imgs.length&&plant.inatImage)imgs.push({medium:plant.inatImage,large:plant.inatImage,thumb:plant.inatImage,credit:""});
         setPhotos(imgs);
       })
       .catch(function(){
