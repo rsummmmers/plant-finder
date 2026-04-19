@@ -254,7 +254,7 @@ function monthIdx(s){
 function rowToPlant(row){
   var scores={};
   ZONE_KEYS.forEach(function(k){var m=(row[k]||"").match(/\d/);scores[k]=m?parseInt(m[0]):0;});
-  if(!Object.values(scores).some(function(s){return s>0;}))return null;
+  var hasScores=Object.values(scores).some(function(s){return s>0;});
   var cur=row["curated image url"]||"";
   var inat=row["inaturalist image url"]||"";
   var status=row["Ecological Status"]||"";
@@ -293,7 +293,7 @@ function rowToPlant(row){
     isCultivar:status.indexOf("Cultivar")>=0,
     isWoody:!!WOODY_SET[cat]||(cat.toLowerCase().indexOf("tree")>=0||cat.toLowerCase().indexOf("shrub")>=0||cat.toLowerCase().indexOf("canopy")>=0||cat.toLowerCase().indexOf("evergreen")>=0||cat.toLowerCase().indexOf("vine")>=0),
     isCanopy:!!CANOPY_SET[cat]||(cat.toLowerCase().indexOf("canopy")>=0||(cat.toLowerCase().indexOf("tree")>=0&&cat.toLowerCase().indexOf("small")<0&&cat.toLowerCase().indexOf("midstory")<0)),
-    typeKey:getTypeKey(cat),scores:scores,
+    typeKey:getTypeKey(cat),scores:scores,hasScores:hasScores,
   };
 }
 
@@ -330,6 +330,7 @@ function matchStatus(plant,statuses){
 
 function applyFilters(plants,f,siteKey){
   return plants.filter(function(p){
+    if(!p.hasScores&&!f.search)return false;
     var s=p.status.toLowerCase().replace(/[-\s]/g,"");
     if(s==="invasive"&&f.statuses.indexOf("invasive")<0)return false;
     if(s==="caution"&&f.statuses.indexOf("caution")<0)return false;
