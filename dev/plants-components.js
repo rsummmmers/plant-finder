@@ -47,15 +47,22 @@ function Lightbox(props){
 //gobotany
 
 function INatLink({ latinName }) {
-  if (!latinName) return null;
-  var url = "https://www.inaturalist.org/taxa/search?q=" + encodeURIComponent(latinName.trim());
-  return h("a", {
-    href: url,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    title: "View on iNaturalist — photos, maps, and observations",
-    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
-  }, "iNaturalist ↗");
+  var _u=useState(null),url=_u[0],setUrl=_u[1];
+  useEffect(function(){
+    if(!latinName||url)return;
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(latinName.trim())+"&per_page=1")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var t=(d.results||[])[0];
+        if(t)setUrl("https://www.inaturalist.org/taxa/"+t.id+"-"+t.name.replace(/ /g,"-"));
+      })
+      .catch(function(){});
+  },[latinName]);
+  if(!url)return null;
+  return h("a",{href:url,target:"_blank",rel:"noopener noreferrer",
+    title:"View on iNaturalist — photos, maps, and observations",
+    style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
+  },"iNaturalist \u2197");
 }
 
 function GoBotanyLink({ latinName }) {
