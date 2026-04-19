@@ -133,7 +133,7 @@ function PhotoGallery(props){
       .then(function(d){
         var taxon=(d.results||[])[0];
         if(!taxon)return Promise.reject("no taxon");
-        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=5&order_by=votes");
+        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=5&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd");
       })
       .then(function(r){return r.json();})
       .then(function(d){
