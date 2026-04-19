@@ -46,6 +46,18 @@ function Lightbox(props){
 }
 //gobotany
 
+function INatLink({ latinName }) {
+  if (!latinName) return null;
+  var url = "https://www.inaturalist.org/taxa/search?q=" + encodeURIComponent(latinName.trim());
+  return h("a", {
+    href: url,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    title: "View on iNaturalist — photos, maps, and observations",
+    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
+  }, "iNaturalist ↗");
+}
+
 function GoBotanyLink({ latinName }) {
   if (!latinName) return null;
   var parts = latinName.trim().toLowerCase().split(/\s+/);
@@ -299,11 +311,15 @@ function PlantCard(props){
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
   h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
-  h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",marginTop:4,display:"inline-block"}},"MA Invasives list \u2197")
+  h("div",{style:{display:"flex",gap:12,marginTop:4}},
+    h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list \u2197"),
+    h(INatLink,{latinName:plant.latin})
+  )
 )),
 (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},
   h("strong",null,"\u26a0\ufe0f Use with caution"),
-  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts.")
+  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),
+  h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin}))
 )),
 plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}},plant.notes),
 h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
@@ -314,7 +330,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}),h(INatLink,{latinName:plant.latin}))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
