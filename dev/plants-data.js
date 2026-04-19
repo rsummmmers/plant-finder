@@ -322,9 +322,9 @@ function matchStatus(plant,statuses){
   if(statuses.indexOf("native")>=0&&s==="native")return true;
   if(statuses.indexOf("cultivar")>=0&&s.indexOf("cultivar")>=0)return true;
   if(statuses.indexOf("nearnative")>=0&&(s==="nearnative"||s==="nearnative"))return true;
-  if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s.indexOf("hybrid")>=0))return true;
+  if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s==="nonnative"||s.indexOf("hybrid")>=0))return true;
   if(statuses.indexOf("invasive")>=0&&s==="invasive")return true;
-  if(statuses.indexOf("caution")>=0&&s==="caution")return true;
+  if(statuses.indexOf("caution")>=0&&(s==="caution"||s.indexOf("aggressive")>=0))return true;
   return false;
 }
 
