@@ -286,7 +286,8 @@ function PlantCard(props){
         h("div",{style:{flex:1,minWidth:180}},
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
-  h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting.")
+  h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
+  h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",marginTop:4,display:"inline-block"}},"MA Invasives list \u2197")
 )),
 (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},
   h("strong",null,"\u26a0\ufe0f Use with caution"),
