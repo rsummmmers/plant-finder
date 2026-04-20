@@ -1290,7 +1290,7 @@ function FilterDrawer(props){
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Concerns"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="concern"||c.group==="safety";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="concern";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         flowerColors.length>0&&h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
