@@ -67,9 +67,7 @@ function INatLink({ latinName }) {
 
 function GoBotanyLink({ latinName }) {
   if (!latinName) return null;
-  var parts = latinName.trim().toLowerCase().split(/\s+/);
-  if (parts.length < 2) return null;
-  var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
+  var url = "https://gobotany.nativeplanttrust.org/simple/?q=" + encodeURIComponent(latinName.trim());
   return h("a", {
     href: url,
     target: "_blank",
