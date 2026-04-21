@@ -67,9 +67,7 @@ function INatLink({ latinName }) {
 
 function GoBotanyLink({ latinName }) {
   if (!latinName) return null;
-  var parts = latinName.trim().toLowerCase().split(/\s+/);
-  if (parts.length < 2) return null;
-  var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
+  var url = "https://gobotany.nativeplanttrust.org/simple/?q=" + encodeURIComponent(latinName.trim());
   return h("a", {
     href: url,
     target: "_blank",
@@ -328,7 +326,7 @@ function PlantCard(props){
   h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),
   h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin}))
 )),
-plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444"}},plant.notes),
+plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
 h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
   plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
   plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
