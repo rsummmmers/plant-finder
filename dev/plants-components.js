@@ -44,8 +44,6 @@ function Lightbox(props){
     h("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:4}},"Swipe or use arrow keys \u00b7 click outside to close")
   );
 }
-//gobotany
-
 function INatLink({ latinName }) {
   var _u=useState(null),url=_u[0],setUrl=_u[1];
   useEffect(function(){
@@ -63,22 +61,6 @@ function INatLink({ latinName }) {
     title:"View on iNaturalist — photos, maps, and observations",
     style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
   },"iNaturalist \u2197");
-}
-
-function GoBotanyLink({ latinName, status }) {
-  if (!latinName) return null;
-  var s=(status||"").toLowerCase().replace(/[-\s]/g,"");
-  if(s!=="native"&&s!=="nearnative"&&s!=="nativecultivar")return null;
-  var parts = latinName.trim().toLowerCase().replace(/['''][^''']*[''']/g,"").trim().split(/\s+/);
-  if (parts.length < 2) return null;
-  var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
-  return h("a", {
-    href: url,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    title: "View on Go Botany (Native Plant Trust)",
-    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
-  }, "Native Plant Trust ↗");
 }
 
 // ── PlantThumb ────────────────────────────────────────────────────────────
@@ -339,7 +321,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin,status:plant.status}),h(INatLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
