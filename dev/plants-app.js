@@ -67,12 +67,9 @@ function App(){
   var effectiveSun=inferredSun||filters.sun;
   var searchActive=search.trim().length>0;
   var allStatuses=["native","nearnative","cultivar","nonnative","invasive","caution"];
-  var effectiveFilters=Object.assign({},filters,{
-    sun:searchActive?null:effectiveSun,
-    moisture:searchActive?null:filters.moisture,
-    statuses:searchActive?allStatuses:filters.statuses,
-    search:search
-  });
+  var effectiveFilters=searchActive
+    ?{statuses:allStatuses,search:search,ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null}
+    :Object.assign({},filters,{sun:effectiveSun,search:search});
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
   var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
