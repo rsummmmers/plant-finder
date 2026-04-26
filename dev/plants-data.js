@@ -267,7 +267,7 @@ function rowToPlant(row){
     bloomStart:row["bloom_start_idx"]!==undefined&&row["bloom_start_idx"]!==""?parseInt(row["bloom_start_idx"]):-1,
     bloomEnd:row["bloom_end_idx"]!==undefined&&row["bloom_end_idx"]!==""?parseInt(row["bloom_end_idx"]):-1,
     flowerColorHex:row["flower_color_hex"]||"",
-    evergreen:row["Evergreen"]||"",height:row["Height Class"]||"",
+    evergreen:row["Evergreen"]||"",
     heightFt:parseFloat(row["Max Height (ft)"])||0,
     sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
     notes:row["Notes"]||"",
