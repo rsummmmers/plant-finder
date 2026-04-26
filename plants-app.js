@@ -6,7 +6,7 @@ function App(){
   var _e=useState(null),error=_e[0],setError=_e[1];
 
   var initURL=useMemo(readURL,[]);
-  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"palette":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":"home";
+  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"palette":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.view==="main"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":initURL.search?"plants":"home";
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
