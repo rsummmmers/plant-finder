@@ -204,6 +204,7 @@ function pushURL(s){
   if(s.rwinter)p.set("wi","1");
   if(s.sortBy&&s.sortBy!=="fit")p.set("sb",s.sortBy);
   if(s.label)p.set("label",s.label);
+  if(s.view==="palette"&&s.hearts&&s.hearts.length)p.set("hearts",s.hearts.join(","));
   var str=p.toString();
   window.history.replaceState(null,"",str?location.pathname+"?"+str:location.pathname);
 }
