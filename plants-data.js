@@ -267,7 +267,7 @@ function rowToPlant(row){
     bloomStart:row["bloom_start_idx"]!==undefined&&row["bloom_start_idx"]!==""?parseInt(row["bloom_start_idx"]):-1,
     bloomEnd:row["bloom_end_idx"]!==undefined&&row["bloom_end_idx"]!==""?parseInt(row["bloom_end_idx"]):-1,
     flowerColorHex:row["flower_color_hex"]||"",
-    evergreen:row["Evergreen"]||"",height:row["Height Class"]||"",
+    evergreen:row["Evergreen"]||"",
     heightFt:parseFloat(row["Max Height (ft)"])||0,
     sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
     notes:row["Notes"]||"",
@@ -359,7 +359,7 @@ function applyFilters(plants,f,siteKey){
     if(f.catsLevel==="mild"&&(p.toxicCats==="yes"||p.toxicCats==="mild"))return false;
     if(f.childrenLevel==="strict"&&p.toxicChildren==="yes")return false;
     if(f.childrenLevel==="mild"&&(p.toxicChildren==="yes"||p.toxicChildren==="mild"))return false;
-    if(cx.indexOf("nospread")>=0&&p.aggressive==="Y")return false;
+    if(cx.indexOf("nospread")>=0&&(p.aggressive==="Y"||p.aggressive==="M"))return false;
     if(f.sun){var sun=(p.sun||"").toLowerCase();if(f.sun==="full"&&sun.indexOf("full sun")<0)return false;if(f.sun==="shade"&&sun.indexOf("shade")<0)return false;if(f.sun==="part"&&sun.indexOf("part")<0)return false;}
     if(f.moisture){var m=(p.moisture||"").toLowerCase();var eff=f.irrigated?(f.moisture==="dry"?"average":f.moisture==="average"?"moist":"moist"):f.moisture;if(eff==="dry"&&m.indexOf("dry")<0&&m.indexOf("mesic")<0)return false;if(eff==="moist"&&m.indexOf("moist")<0&&m.indexOf("wet")<0)return false;if(eff==="average"&&m.indexOf("mesic")<0)return false;}
     if(f.rflower&&f.rflower.length){var cols=p.flowerColor.split(/\s*[|]\s*/).map(function(c){return c.trim().toLowerCase();});if(!f.rflower.some(function(rc){return cols.indexOf(rc)>=0;}))return false;}
