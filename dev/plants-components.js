@@ -1391,7 +1391,7 @@ function PaletteView(props){
     p.set("view","palette");
     p.set("hearts",hearts.join(","));
     var url=location.origin+location.pathname+"?"+p.toString();
-    if(navigator.share){
+    if(isMobile&&navigator.share){
       navigator.share({title:"My plant palette",url:url}).catch(function(){});
     } else {
       navigator.clipboard.writeText(url)
