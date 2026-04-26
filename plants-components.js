@@ -1389,8 +1389,21 @@ function PaletteView(props){
     var p=new URLSearchParams();
     p.set("view","palette");
     p.set("hearts",hearts.join(","));
-    navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
-      .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});
+    var url=location.origin+location.pathname+"?"+p.toString();
+    if(navigator.share){
+      navigator.share({title:"My plant palette",url:url}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url)
+        .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);})
+        .catch(function(){
+          var ta=document.createElement("textarea");
+          ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
+          document.body.appendChild(ta);ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          setCopied(true);setTimeout(function(){setCopied(false);},2000);
+        });
+    }
   }
 
   return h("div",null,
