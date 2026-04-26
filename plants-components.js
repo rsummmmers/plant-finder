@@ -44,8 +44,6 @@ function Lightbox(props){
     h("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:4}},"Swipe or use arrow keys \u00b7 click outside to close")
   );
 }
-//gobotany
-
 function INatLink({ latinName }) {
   var _u=useState(null),url=_u[0],setUrl=_u[1];
   useEffect(function(){
@@ -63,18 +61,6 @@ function INatLink({ latinName }) {
     title:"View on iNaturalist — photos, maps, and observations",
     style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
   },"iNaturalist \u2197");
-}
-
-function GoBotanyLink({ latinName }) {
-  if (!latinName) return null;
-  var url = "https://gobotany.nativeplanttrust.org/simple/?q=" + encodeURIComponent(latinName.trim());
-  return h("a", {
-    href: url,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    title: "View on Go Botany (Native Plant Trust) — not all plants may be in their database",
-    style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
-  }, "Native Plant Trust ↗");
 }
 
 // ── PlantThumb ────────────────────────────────────────────────────────────
@@ -335,7 +321,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(GoBotanyLink,{latinName:plant.latin}),h(INatLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
@@ -1412,7 +1398,7 @@ function PaletteView(props){
     h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
-        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
+        hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},copied?"\u2713 Link copied!":"\ud83d\udd17 Share this plant list"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
