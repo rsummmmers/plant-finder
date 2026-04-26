@@ -41,7 +41,7 @@ function App(){
   },[]);
 
   useEffect(function(){
-    pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab==="home"?"":activeTab,search:search,zone:zone,sortBy:sortBy,label:label},filters));
+    pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab==="home"?"":activeTab,search:search,zone:zone,sortBy:sortBy,label:label,hearts:hearts},filters));
   },[activeTab,search,zone,filters,sortBy,label]);
 
   useEffect(function(){
