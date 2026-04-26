@@ -102,6 +102,7 @@ function RiskBadges(props){
   else if(plant.voleRisk==="medium")b.push({t:"\ud83d\udc2d Vole: moderate",bg:"#faeeda",fg:"#854f0b"});
   else if(plant.voleRisk==="low")b.push({t:"\ud83d\udc2d Vole: resistant",bg:"#eaf3de",fg:"#3b6d11"});
   if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
+  if(plant.aggressive==="M")b.push({t:"\ud83c\udf3f Moderate spreader",bg:"#fff8e1",fg:"#f57f17"});
   if(plant.toxicDogs==="yes")b.push({t:"\ud83d\udc15 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
   else if(plant.toxicDogs==="medium"||plant.toxicDogs==="mild")b.push({t:"\ud83d\udc15 Mildly toxic to dogs",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicCats==="yes")b.push({t:"\ud83d\udc08 Toxic to cats",bg:"#fce4ec",fg:"#c62828"});
