@@ -1116,7 +1116,7 @@ function SeedCalendar(props){
     ),
     h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
       h("div",{style:{position:"relative"}},
-        h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:14,background:"white",outline:"none",color:"#2c2c2c"}}),
+        h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
         search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
       )
     ),
@@ -1420,7 +1420,7 @@ function PaletteView(props){
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
-      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your palette\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:15,background:"white",outline:"none",color:"#2c2c2c"}}),
+      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your palette\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
