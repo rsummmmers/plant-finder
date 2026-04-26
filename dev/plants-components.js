@@ -1348,7 +1348,6 @@ function PaletteView(props){
   var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
   var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var isMobile=props.isMobile||false;
-  var label=props.label||"",onLabelChange=props.onLabelChange||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1390,7 +1389,6 @@ function PaletteView(props){
     var p=new URLSearchParams();
     p.set("view","palette");
     p.set("hearts",hearts.join(","));
-    if(label.trim())p.set("label",label.trim());
     navigator.clipboard.writeText(location.origin+location.pathname+"?"+p.toString())
       .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});
   }
@@ -1399,9 +1397,8 @@ function PaletteView(props){
     // Palette header bar — sticky on desktop only
     h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
-      h("input",{value:label,onChange:function(ev){onLabelChange(ev.target.value);},placeholder:"Name this palette\u2026",style:{width:"100%",padding:"7px 12px",border:"1.5px solid #e0ddd5",borderRadius:8,fontFamily:"inherit",fontSize:14,marginBottom:10,boxSizing:"border-box",outline:"none",color:"#2c2c2c"}}),
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
-        h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"6px 14px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Share"),
+        hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},copied?"\u2713 Link copied!":"\ud83d\udd17 Share this plant list"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
