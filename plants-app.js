@@ -41,7 +41,7 @@ function App(){
   },[]);
 
   useEffect(function(){
-    pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab==="home"?"":activeTab,search:search,zone:zone,sortBy:sortBy,label:label},filters));
+    pushURL(Object.assign({view:activeTab==="plants"?"main":activeTab==="home"?"":activeTab,search:search,zone:zone,sortBy:sortBy,label:label,hearts:hearts},filters));
   },[activeTab,search,zone,filters,sortBy,label]);
 
   useEffect(function(){
@@ -116,7 +116,7 @@ function App(){
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
-    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200}},
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#162216"}},
 
       // Green photo bar
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
@@ -199,7 +199,7 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
