@@ -101,7 +101,7 @@ function RiskBadges(props){
   if(plant.voleRisk==="high")b.push({t:"\ud83d\udc2d Vole: high risk",bg:"#fcebeb",fg:"#a32d2d"});
   else if(plant.voleRisk==="medium")b.push({t:"\ud83d\udc2d Vole: moderate",bg:"#faeeda",fg:"#854f0b"});
   else if(plant.voleRisk==="low")b.push({t:"\ud83d\udc2d Vole: resistant",bg:"#eaf3de",fg:"#3b6d11"});
-  if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
+  if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Aggressive spreader",bg:"#e8f5e9",fg:"#2e7d32"});
   if(plant.aggressive==="M")b.push({t:"\ud83c\udf3f Moderate spreader",bg:"#fff8e1",fg:"#f57f17"});
   if(plant.toxicDogs==="yes")b.push({t:"\ud83d\udc15 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
   else if(plant.toxicDogs==="medium"||plant.toxicDogs==="mild")b.push({t:"\ud83d\udc15 Mildly toxic to dogs",bg:"#fff3e0",fg:"#e65100"});
@@ -320,7 +320,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
   plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
-  plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
+  plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
 cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
