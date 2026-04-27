@@ -327,7 +327,7 @@ h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
 h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
         )
       ),
-      siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&h("div",{style:{marginTop:14}},
+      h("div",{style:{marginTop:14}},
         h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
         h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
           MICROZONES.map(function(z){
