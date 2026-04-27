@@ -322,24 +322,24 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
 cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
-h(RiskBadges,{plant:plant}),
-h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
-h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
-        )
-      ),
-      h("div",{style:{marginTop:14}},
+h("div",{style:{marginTop:14}},
         h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
         h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
           MICROZONES.map(function(z){
             var s=plant.scores[z.key]||0;
             return h("div",{key:z.key,style:{display:"flex",alignItems:"center",gap:8}},
-              h("div",{style:{fontSize:11,width:148,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
+              h("div",{style:{fontSize:11,width:120,minWidth:80,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
               h("div",{style:{flex:1,height:5,background:"#f0ede4",borderRadius:3,overflow:"hidden"}},
                 h("div",{style:{width:(s/5*100)+"%",height:"100%",background:SCORE_COLORS[s],borderRadius:3}})
               ),
-              h("div",{style:{fontSize:11,color:"#aaa",width:54}},SCORE_LABELS[s])
+              h("div",{style:{fontSize:11,color:"#aaa",width:44}},SCORE_LABELS[s])
             );
           })
+        )
+      ),
+h(RiskBadges,{plant:plant}),
+h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
+h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
         )
       )
     )
