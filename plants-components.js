@@ -101,8 +101,6 @@ function RiskBadges(props){
   if(plant.voleRisk==="high")b.push({t:"\ud83d\udc2d Vole: high risk",bg:"#fcebeb",fg:"#a32d2d"});
   else if(plant.voleRisk==="medium")b.push({t:"\ud83d\udc2d Vole: moderate",bg:"#faeeda",fg:"#854f0b"});
   else if(plant.voleRisk==="low")b.push({t:"\ud83d\udc2d Vole: resistant",bg:"#eaf3de",fg:"#3b6d11"});
-  if(plant.aggressive==="Y")b.push({t:"\ud83c\udf3f Fills space well",bg:"#e8f5e9",fg:"#2e7d32"});
-  if(plant.aggressive==="M")b.push({t:"\ud83c\udf3f Moderate spreader",bg:"#fff8e1",fg:"#f57f17"});
   if(plant.toxicDogs==="yes")b.push({t:"\ud83d\udc15 Toxic to dogs",bg:"#fce4ec",fg:"#c62828"});
   else if(plant.toxicDogs==="medium"||plant.toxicDogs==="mild")b.push({t:"\ud83d\udc15 Mildly toxic to dogs",bg:"#fff3e0",fg:"#e65100"});
   if(plant.toxicCats==="yes")b.push({t:"\ud83d\udc08 Toxic to cats",bg:"#fce4ec",fg:"#c62828"});
@@ -320,28 +318,28 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
   plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
-  plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"\ud83c\udf3f Fills space well":plant.aggressive==="M"?"Moderately":"Stays put"),
+  plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
 cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
-h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
-        )
-      ),
-      siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&h("div",{style:{marginTop:14}},
+h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly}),
+plant.hasScores&&h("div",{style:{marginTop:14}},
         h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
         h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
           MICROZONES.map(function(z){
             var s=plant.scores[z.key]||0;
             return h("div",{key:z.key,style:{display:"flex",alignItems:"center",gap:8}},
-              h("div",{style:{fontSize:11,width:148,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
+              h("div",{style:{fontSize:11,width:120,minWidth:80,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
               h("div",{style:{flex:1,height:5,background:"#f0ede4",borderRadius:3,overflow:"hidden"}},
                 h("div",{style:{width:(s/5*100)+"%",height:"100%",background:SCORE_COLORS[s],borderRadius:3}})
               ),
-              h("div",{style:{fontSize:11,color:"#aaa",width:54}},SCORE_LABELS[s])
+              h("div",{style:{fontSize:11,color:"#aaa",width:44}},SCORE_LABELS[s])
             );
           })
+        )
+      )
         )
       )
     )
@@ -1203,6 +1201,7 @@ function FilterDrawer(props){
   function resetAll(){
     onChange({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
     onSetZone(null);
+    if(props.onClearSearch)props.onClearSearch();
   }
 
   function P(label,active,onClick,bg,fg){
@@ -1336,7 +1335,7 @@ function FilterDrawer(props){
         ),
         ),
       h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
-        h("button",{onClick:resetAll,style:btn("#f0ede4","#555",{borderRadius:10,padding:"13px",fontSize:14,flex:1})},"Reset all"),
+        h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:10,padding:"13px",fontSize:14,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
         h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
     )
