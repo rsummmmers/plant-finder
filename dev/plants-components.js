@@ -322,6 +322,9 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
 cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
 ),
+h(RiskBadges,{plant:plant}),
+h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
+h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly}),
 plant.hasScores&&h("div",{style:{marginTop:14}},
         h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
         h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
@@ -336,10 +339,7 @@ plant.hasScores&&h("div",{style:{marginTop:14}},
             );
           })
         )
-      ),
-h(RiskBadges,{plant:plant}),
-h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
-h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly})
+      )
         )
       )
     )
