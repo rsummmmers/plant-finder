@@ -273,7 +273,7 @@ function rowToPlant(row){
     notes:row["Notes"]||"",
     image:cur||inat,curatedImage:cur,inatImage:inat,
     role:row["Habitat Patch Role"]||"",aggressive:row["Aggressive"]||"",
-    flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",
+    flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",showyBloom:row["showy_bloom"]||"",
     deerPressure:row["deer_pressure"]||"",rabbitDamage:row["rabbit_damage"]||"",voleRisk:row["vole_girdling_risk"]||"",
     toxicDogs:row["toxic_dogs"]||"",toxicCats:row["toxic_cats"]||"",
     toxicChildren:row["toxic_children"]||"",
