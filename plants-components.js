@@ -708,6 +708,7 @@ function BloomCalendar(props){
       if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
       if(exclude.indexOf("grass")>=0&&(p.typeKey==="grass"||p.typeKey==="fern"))return false;
       if(!showNonShowy){
+        if(p.showyBloom==="No")return false;
         var first=(p.flowerColor||"").split("|")[0].trim().toLowerCase();
         if(!first||NONSHOWY_COLORS[first])return false;
       }
