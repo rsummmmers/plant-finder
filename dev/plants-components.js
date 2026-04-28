@@ -1475,13 +1475,13 @@ function PaletteView(props){
 function HomeView(props){
   var onNavigate=props.onNavigate,isMobile=props.isMobile;
   var cards=[
-    {key:"plants", emoji:"🔍", title:"Browse & discover plants",
+    {key:"plants", img:"/images/explore.jpeg", title:"Browse & discover plants",
      body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"palette", emoji:"♥", title:"Build your palette",
+    {key:"palette", img:"/images/palette.jpeg", title:"Build your palette",
      body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
-    {key:"bloom",  emoji:"🌸", title:"Explore bloom by month",
+    {key:"bloom",  img:"/images/bloom.heic", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
-    {key:"seeds",  emoji:"🌰", title:"Save seeds & propagate",
+    {key:"seeds",  img:"/images/seeds.jpg", title:"Save seeds & propagate",
      body:"Know what's ripening when, how to collect it, and how to grow more of what you already have."},
   ];
   return h("div",{style:{maxWidth:860,margin:"0 auto",padding:isMobile?"24px 20px 80px":"40px 20px 80px"}},
@@ -1492,14 +1492,16 @@ function HomeView(props){
       cards.map(function(c){
         return h("div",{key:c.key,
           onClick:function(){onNavigate(c.key);},
-          style:{background:"white",border:"1.5px solid #e0ddd5",borderRadius:14,padding:"22px 24px",cursor:"pointer",
+          style:{background:"white",border:"1.5px solid #e0ddd5",borderRadius:14,overflow:"hidden",cursor:"pointer",
             transition:"border-color 0.15s,box-shadow 0.15s",boxShadow:"none"}
           ,onMouseEnter:function(e){e.currentTarget.style.borderColor="#2e5339";e.currentTarget.style.boxShadow="0 4px 16px rgba(46,83,57,0.10)";}
           ,onMouseLeave:function(e){e.currentTarget.style.borderColor="#e0ddd5";e.currentTarget.style.boxShadow="none";}
         },
-          h("div",{style:{fontSize:28,marginBottom:10}},c.emoji),
-          h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
-          h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
+          h("img",{src:c.img,alt:c.title,style:{width:"100%",height:160,objectFit:"cover",display:"block"}}),
+          h("div",{style:{padding:"18px 22px"}},
+            h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
+            h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
+          )
         );
       })
     )
