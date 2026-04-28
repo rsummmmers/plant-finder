@@ -264,7 +264,7 @@ function PlantCard(props){
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
 
-  return h("div",{className:"print-card",style:{background:"white",border:"1px solid #e0ddd5",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 16px rgba(0,0,0,0.08)":"none",marginBottom:8}},
+  return h("div",{className:"print-card",style:{background:"white",border:"none",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 20px rgba(0,0,0,0.18)":"0 2px 8px rgba(0,0,0,0.12)",marginBottom:8,borderLeft:"4px solid "+(ss.text||"#ccc")}},
     h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}},
       score!==null&&h("div",{style:{background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:8,minWidth:52,textAlign:"center",padding:"4px 5px",flexShrink:0}},
         h("div",{style:{fontSize:13,fontWeight:"bold",letterSpacing:-1}},"\u25cf".repeat(score)),
@@ -273,7 +273,7 @@ function PlantCard(props){
       h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}},
         h(PlantThumb,{plant:plant,size:50,radius:8}),
         h("div",{style:{flex:1,minWidth:0}},
-          h("div",{style:{fontWeight:"bold",fontSize:16}},plant.common),
+          h("div",{style:{fontWeight:"bold",fontSize:16,fontFamily:"'Literata',serif"}},plant.common),
           h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:4}},plant.latin),
           h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
             h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 7px",borderRadius:10,fontWeight:"bold"}},ss.label),
@@ -1209,7 +1209,7 @@ function FilterDrawer(props){
   }
 
   function P(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
   var panelStyle=isMobile
@@ -1412,7 +1412,7 @@ function PaletteView(props){
 
   return h("div",null,
     // Palette header bar — sticky on desktop only
-    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
+    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#243b2c",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
