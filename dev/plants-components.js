@@ -1479,7 +1479,7 @@ function HomeView(props){
      body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
     {key:"palette", img:"/images/palette.jpeg", title:"Build your palette",
      body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
-    {key:"bloom",  img:"/images/bloom.heic", title:"Explore bloom by month",
+    {key:"bloom",  img:"/images/bloom.jpg", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
     {key:"seeds",  img:"/images/seeds.jpg", title:"Save seeds & propagate",
      body:"Know what's ripening when, how to collect it, and how to grow more of what you already have."},
