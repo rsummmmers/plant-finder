@@ -137,8 +137,8 @@ function App(){
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"flex-end",padding:"0 20px",gap:2}},
           [
             {key:"plants", label:"Plants"},
-            {key:"bloom",  label:"Bloom"},
             {key:"palette",label:"Palette",count:hearts.length},
+            {key:"bloom",  label:"Bloom"},
           ].map(function(tab){
             var active=activeTab===tab.key;
             return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
@@ -258,8 +258,8 @@ function App(){
     isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Plants",   icon:"\ud83d\udd0d"},
-        {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
+        {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
       ].map(function(tab){
         var active=activeTab===tab.key;
