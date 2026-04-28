@@ -264,7 +264,7 @@ function PlantCard(props){
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
 
-  return h("div",{className:"print-card",style:{background:"white",border:"1px solid #e0ddd5",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 16px rgba(0,0,0,0.08)":"none",marginBottom:8}},
+  return h("div",{className:"print-card",style:{background:"white",border:"none",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 20px rgba(0,0,0,0.15)":"0 1px 4px rgba(0,0,0,0.10)",marginBottom:8}},
     h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}},
       score!==null&&h("div",{style:{background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:8,minWidth:52,textAlign:"center",padding:"4px 5px",flexShrink:0}},
         h("div",{style:{fontSize:13,fontWeight:"bold",letterSpacing:-1}},"\u25cf".repeat(score)),
@@ -273,7 +273,7 @@ function PlantCard(props){
       h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}},
         h(PlantThumb,{plant:plant,size:50,radius:8}),
         h("div",{style:{flex:1,minWidth:0}},
-          h("div",{style:{fontWeight:"bold",fontSize:16}},plant.common),
+          h("div",{style:{fontWeight:"bold",fontSize:16,fontFamily:"'Literata',serif"}},plant.common),
           h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:4}},plant.latin),
           h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
             h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 7px",borderRadius:10,fontWeight:"bold"}},ss.label),
@@ -1209,7 +1209,7 @@ function FilterDrawer(props){
   }
 
   function P(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
   var panelStyle=isMobile
@@ -1412,7 +1412,7 @@ function PaletteView(props){
 
   return h("div",null,
     // Palette header bar — sticky on desktop only
-    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#fafaf7",paddingBottom:8,marginBottom:4}},
+    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#D9D9BF",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
@@ -1475,13 +1475,13 @@ function PaletteView(props){
 function HomeView(props){
   var onNavigate=props.onNavigate,isMobile=props.isMobile;
   var cards=[
-    {key:"plants", emoji:"🔍", title:"Browse & discover plants",
+    {key:"plants", img:"/images/explore.jpeg", title:"Browse & discover plants",
      body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"palette", emoji:"♥", title:"Build your palette",
+    {key:"palette", img:"/images/palette.jpeg", title:"Build your palette",
      body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
-    {key:"bloom",  emoji:"🌸", title:"Explore bloom by month",
+    {key:"bloom",  img:"/images/bloom.jpg", title:"Explore bloom by month",
      body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
-    {key:"seeds",  emoji:"🌰", title:"Save seeds & propagate",
+    {key:"seeds",  img:"/images/seeds.jpg", title:"Save seeds & propagate",
      body:"Know what's ripening when, how to collect it, and how to grow more of what you already have."},
   ];
   return h("div",{style:{maxWidth:860,margin:"0 auto",padding:isMobile?"24px 20px 80px":"40px 20px 80px"}},
@@ -1492,14 +1492,16 @@ function HomeView(props){
       cards.map(function(c){
         return h("div",{key:c.key,
           onClick:function(){onNavigate(c.key);},
-          style:{background:"white",border:"1.5px solid #e0ddd5",borderRadius:14,padding:"22px 24px",cursor:"pointer",
+          style:{background:"white",border:"1.5px solid #e0ddd5",borderRadius:14,overflow:"hidden",cursor:"pointer",
             transition:"border-color 0.15s,box-shadow 0.15s",boxShadow:"none"}
           ,onMouseEnter:function(e){e.currentTarget.style.borderColor="#2e5339";e.currentTarget.style.boxShadow="0 4px 16px rgba(46,83,57,0.10)";}
           ,onMouseLeave:function(e){e.currentTarget.style.borderColor="#e0ddd5";e.currentTarget.style.boxShadow="none";}
         },
-          h("div",{style:{fontSize:28,marginBottom:10}},c.emoji),
-          h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
-          h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
+          h("img",{src:c.img,alt:c.title,style:{width:"100%",height:160,objectFit:"cover",display:"block"}}),
+          h("div",{style:{padding:"18px 22px"}},
+            h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
+            h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
+          )
         );
       })
     )
