@@ -681,15 +681,16 @@ function HabitatView(props){
       return h("div",{key:ld.key,style:{marginBottom:20}},
         h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
           h("span",{style:{fontSize:22}},ld.emoji),
-          h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:"#2e5339"}},ld.title),
+          h("span",{style:{fontFamily:"'Literata',serif",fontSize:22,color:"#2e5339"}},ld.title),
           h("span",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},ld.plants.length)
         ),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}},
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
-            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant})
+            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true})
           );
-        })
+        }))
       );
     })
   );
