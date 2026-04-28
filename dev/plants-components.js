@@ -264,7 +264,7 @@ function PlantCard(props){
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
 
-  return h("div",{className:"print-card",style:{background:"white",border:"none",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 20px rgba(0,0,0,0.18)":"0 2px 8px rgba(0,0,0,0.12)",marginBottom:8,borderLeft:"4px solid "+(ss.text||"#ccc")}},
+  return h("div",{className:"print-card",style:{background:"white",border:"none",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 20px rgba(0,0,0,0.15)":"0 1px 4px rgba(0,0,0,0.10)",marginBottom:8}},
     h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}},
       score!==null&&h("div",{style:{background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:8,minWidth:52,textAlign:"center",padding:"4px 5px",flexShrink:0}},
         h("div",{style:{fontSize:13,fontWeight:"bold",letterSpacing:-1}},"\u25cf".repeat(score)),
@@ -1412,7 +1412,7 @@ function PaletteView(props){
 
   return h("div",null,
     // Palette header bar — sticky on desktop only
-    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#243b2c",paddingBottom:8,marginBottom:4}},
+    h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#D9D9BF",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
