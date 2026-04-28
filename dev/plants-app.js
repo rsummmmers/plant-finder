@@ -116,10 +116,10 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#243b2c",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#1e1710",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
-    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#162216"}},
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
 
       // Green photo bar
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
@@ -133,7 +133,7 @@ function App(){
       ),
 
       // Tab row — desktop only
-      !isMobile&&h("div",{className:"no-print",style:{background:"#162216",borderBottom:"1px solid rgba(255,255,255,0.1)"}},
+      !isMobile&&h("div",{className:"no-print",style:{background:"#150f09",borderBottom:"1px solid rgba(255,255,255,0.1)"}},
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"stretch",padding:"0 12px"}},
           [
             {key:"plants", label:"🔍 Plants"},
@@ -164,7 +164,7 @@ function App(){
     ),
 
     // Sticky filter bar
-    activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#243b2c",borderBottom:"1px solid rgba(255,255,255,0.08)"}},
+    activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#1e1710",borderBottom:"1px solid rgba(255,255,255,0.08)"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
