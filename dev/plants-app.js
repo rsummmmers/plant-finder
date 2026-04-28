@@ -28,7 +28,7 @@ function App(){
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
   var searchRef=useRef(null);
 
-  function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
+  function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
 
   var toggleHeart=useCallback(function(latin){
     setHearts(function(prev){
@@ -168,8 +168,8 @@ function App(){
             },"Seeds"),
             h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"search",onClick:function(){
-              if(searchActive){setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
-              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
+              if(searchActive){setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
             },
               style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:searchActive?700:400,
                 color:searchActive?"white":"rgba(255,255,255,0.55)",
