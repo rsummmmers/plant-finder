@@ -278,6 +278,9 @@ function PlantCard(props){
           h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
             h("span",{style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 7px",borderRadius:10,fontWeight:"bold"}},ss.label),
             h("span",{style:{background:"#f0ede4",color:"#666",fontSize:11,padding:"2px 7px",borderRadius:10}},plant.category),
+            plant.sun&&h("span",{title:plant.sun,style:{fontSize:13,lineHeight:1,color:(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})()}},
+              (function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})()
+            ),
             plant.flowerColor&&h(ColorDots,{colorStr:plant.flowerColor,size:9}),
             cats>0&&h("span",{style:{fontSize:11,color:icolor,fontWeight:"bold"}},"\ud83e\udd8b"+ilabel)
           )
