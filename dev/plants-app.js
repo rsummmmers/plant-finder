@@ -28,7 +28,7 @@ function App(){
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
   var searchRef=useRef(null);
 
-  function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.select();}},80);}
+  function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
 
   var toggleHeart=useCallback(function(latin){
     setHearts(function(prev){
@@ -128,7 +128,7 @@ function App(){
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
         h("img",{src:"./header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
         h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
-        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px"},onClick:function(){setActiveTab("home");},style:{cursor:"pointer"}},
+        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
           h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
           !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
@@ -147,8 +147,8 @@ function App(){
             return h("button",{key:tab.key,onClick:function(){
               setSearch("");
               setActiveTab(tab.key);
-              if(tab.key==="plants")setDrawerOpen(true);
-              else setShowSuggest(false);
+              if(tab.key==="plants"){setDrawerOpen(true);}
+              else{setDrawerOpen(false);setShowSuggest(false);}
             },
               style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:400,
                 color:active?"white":"rgba(255,255,255,0.55)",
@@ -160,7 +160,7 @@ function App(){
             );
           }).concat([
             h("div",{key:"divider",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
-            h("button",{key:"seeds",onClick:function(){setSearch("");setActiveTab("seeds");},
+            h("button",{key:"seeds",onClick:function(){setSearch("");setActiveTab("seeds");setDrawerOpen(false);},
               style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"&&!searchActive?700:400,
                 color:activeTab==="seeds"&&!searchActive?"white":"rgba(255,255,255,0.55)",
                 background:"none",border:"none",
@@ -168,8 +168,8 @@ function App(){
             },"Seeds"),
             h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"search",onClick:function(){
-              if(searchActive){setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.select();}},80);}
-              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.select();}},80);}
+              if(searchActive){setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
+              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current){searchRef.current.focus();setTimeout(function(){searchRef.current.select();},20);}},80);}
             },
               style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:searchActive?700:400,
                 color:searchActive?"white":"rgba(255,255,255,0.55)",
@@ -285,7 +285,7 @@ function App(){
             else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
           } else {
             setSearch("");setActiveTab(tab.key);
-            if(tab.key==="plants")setDrawerOpen(true);else setShowSuggest(false);
+            if(tab.key==="plants"){setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
           }
         };
         return h("button",{key:tab.key,
