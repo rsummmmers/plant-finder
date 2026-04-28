@@ -116,7 +116,7 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#B08A64",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#CCCCB1",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
     h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
