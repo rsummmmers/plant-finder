@@ -257,12 +257,87 @@ function SeedSection(props){
 // ── PlantCard ─────────────────────────────────────────────────────────────
 function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
+  var gridMode=props.gridMode||false;
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
+
+  if(gridMode){
+    var img=plant.image;
+    var sunIc=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
+    var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
+    return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
+      h("div",{onClick:function(){setOpen(true);},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
+        img&&h("img",{src:img,alt:plant.common,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
+        !img&&h("div",{style:{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,color:"rgba(46,83,57,0.25)"}},"🌿"),
+        score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
+        h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
+      ),
+      h("div",{onClick:function(){setOpen(true);},style:{padding:"11px 13px 13px",cursor:"pointer",flex:1}},
+        h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:15,lineHeight:1.3,marginBottom:2}},plant.common),
+        h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
+        h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
+          h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold"}},ss.label),
+          plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
+          plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
+          cats>0&&h("span",{style:{fontSize:10,color:icolor,fontWeight:"bold"}},"🦋"+ilabel)
+        )
+      ),
+      open&&h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.65)",overflowY:"auto",padding:"16px 16px 80px"}},
+        h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
+          h("button",{onClick:function(){setOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
+          h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
+            h("div",{style:{padding:"16px 20px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+              h("div",null,
+                h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:20,lineHeight:1.2}},plant.common),
+                h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginTop:2}},plant.latin)
+              ),
+              h("button",{onClick:function(){onHeart(plant.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:26,color:hearted?"#e57373":"#ddd",lineHeight:1,padding:4,flexShrink:0}},hearted?"♥":"♡")
+            ),
+            h("div",{style:{padding:"0 14px 16px"}},
+              h("div",{style:{display:"flex",gap:16,marginTop:14,flexWrap:"wrap"}},
+                h(PhotoGallery,{plant:plant}),
+                h("div",{style:{flex:1,minWidth:180}},
+                  (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{display:"flex",gap:12,marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗"),h(INatLink,{latinName:plant.latin})))),
+                  (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin})))),
+                  plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
+                  h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
+                    plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
+                    plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
+                    plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
+                    plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
+                    plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
+                    plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
+                    plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
+                    cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"🦋 Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
+                  ),
+                  h(RiskBadges,{plant:plant}),
+                  h(SeedSection,{plant:plant,defaultOpen:false}),
+                  h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly}),
+                  plant.hasScores&&h("div",{style:{marginTop:14}},
+                    h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
+                    h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
+                      MICROZONES.map(function(z){
+                        var s=plant.scores[z.key]||0;
+                        return h("div",{key:z.key,style:{display:"flex",alignItems:"center",gap:8}},
+                          h("div",{style:{fontSize:11,width:120,minWidth:80,color:z.key===siteKey?"#2e5339":"#666",fontWeight:z.key===siteKey?"bold":"normal"}},z.emoji+" "+z.label),
+                          h("div",{style:{flex:1,height:5,background:"#f0ede4",borderRadius:3,overflow:"hidden"}},h("div",{style:{width:(s/5*100)+"%",height:"100%",background:SCORE_COLORS[s],borderRadius:3}})),
+                          h("div",{style:{fontSize:11,color:"#aaa",width:44}},SCORE_LABELS[s])
+                        );
+                      })
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+  }
 
   return h("div",{className:"print-card",style:{background:"white",border:"none",borderRadius:10,overflow:"hidden",boxShadow:open?"0 4px 20px rgba(0,0,0,0.15)":"0 1px 4px rgba(0,0,0,0.10)",marginBottom:8}},
     h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px"}},
