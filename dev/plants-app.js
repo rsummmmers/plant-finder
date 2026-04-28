@@ -119,7 +119,7 @@ function App(){
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#CCCCB1",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
-    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#CCCCB1"}},
 
       // Green photo bar
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
@@ -133,7 +133,7 @@ function App(){
       ),
 
       // Tab row — desktop only
-      !isMobile&&h("div",{className:"no-print",style:{background:"#150f09",borderBottom:"1px solid rgba(255,255,255,0.1)"}},
+      !isMobile&&h("div",{className:"no-print",style:{background:"#CCCCB1",borderBottom:"1px solid rgba(255,255,255,0.1)"}},
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"stretch",padding:"0 12px"}},
           [
             {key:"plants", label:"🔍 Plants"},
