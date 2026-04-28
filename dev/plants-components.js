@@ -1538,7 +1538,7 @@ function PaletteView(props){
         )
     ),
     // Plant cards
-    h("div",{ref:resultsRef,style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:isMobile?10:16,marginTop:4}},
+    h("div",{ref:resultsRef,style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
       results.map(function(p){
         return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true});
       })
