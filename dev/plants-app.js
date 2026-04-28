@@ -150,7 +150,7 @@ function App(){
               if(tab.key==="plants"){setDrawerOpen(true);}
               else{setDrawerOpen(false);setShowSuggest(false);}
             },
-              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:400,
+              style:{padding:"14px 28px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:400,
                 color:active?"white":"rgba(255,255,255,0.55)",
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
