@@ -128,15 +128,10 @@ function App(){
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
         h("img",{src:"./header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
         h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
-        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}},
-          h("div",{onClick:function(){setActiveTab("home");},style:{cursor:"pointer"}},
-            h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2}},"Summers EcoScaping"),
-            h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1}},"Ecoscaping Planner"),
-            !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
-          ),
-          h("button",{onClick:focusSearch,style:{background:"none",border:"1px solid rgba(255,255,255,0.3)",borderRadius:6,color:"rgba(255,255,255,0.8)",cursor:"pointer",padding:"6px 14px",fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}},
-            h("span",{style:{fontSize:15}},"⌕")," Search"
-          )
+        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px"},onClick:function(){setActiveTab("home");},style:{cursor:"pointer"}},
+          h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
+          h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
+          !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
         )
       ),
 
@@ -148,8 +143,13 @@ function App(){
             {key:"palette",label:"Palette",count:hearts.length},
             {key:"bloom",  label:"Bloom"},
           ].map(function(tab){
-            var active=activeTab===tab.key;
-            return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key==="plants")setDrawerOpen(true);else setShowSuggest(false);},
+            var active=activeTab===tab.key&&!searchActive;
+            return h("button",{key:tab.key,onClick:function(){
+              setSearch("");
+              setActiveTab(tab.key);
+              if(tab.key==="plants")setDrawerOpen(true);
+              else setShowSuggest(false);
+            },
               style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:400,
                 color:active?"white":"rgba(255,255,255,0.55)",
                 background:"none",border:"none",
@@ -160,12 +160,22 @@ function App(){
             );
           }).concat([
             h("div",{key:"divider",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
-            h("button",{key:"seeds",onClick:function(){setActiveTab("seeds");},
-              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"?700:400,
-                color:activeTab==="seeds"?"white":"rgba(255,255,255,0.55)",
+            h("button",{key:"seeds",onClick:function(){setSearch("");setActiveTab("seeds");},
+              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"&&!searchActive?700:400,
+                color:activeTab==="seeds"&&!searchActive?"white":"rgba(255,255,255,0.55)",
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap"}
-            },"Seeds")
+            },"Seeds"),
+            h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
+            h("button",{key:"search",onClick:function(){
+              if(searchActive){setSearch("");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+            },
+              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:searchActive?700:400,
+                color:searchActive?"white":"rgba(255,255,255,0.55)",
+                background:"none",border:"none",
+                cursor:"pointer",whiteSpace:"nowrap"}
+            },"Search")
           ])
         )
       )
@@ -266,11 +276,21 @@ function App(){
         {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
+        {key:"search",  label:"Search",   icon:"\u2315"},
       ].map(function(tab){
-        var active=activeTab===tab.key;
+        var active=tab.key==="search"?searchActive:(activeTab===tab.key&&!searchActive);
+        var handleClick=function(){
+          if(tab.key==="search"){
+            if(searchActive){setSearch("");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+            else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+          } else {
+            setSearch("");setActiveTab(tab.key);
+            if(tab.key==="plants")setDrawerOpen(true);else setShowSuggest(false);
+          }
+        };
         return h("button",{key:tab.key,
-          onTouchEnd:function(e){e.preventDefault();setActiveTab(tab.key);if(tab.key==="plants")setDrawerOpen(true);else setShowSuggest(false);},
-          onClick:function(){setActiveTab(tab.key);if(tab.key==="plants")setDrawerOpen(true);else setShowSuggest(false);},
+          onTouchEnd:function(e){e.preventDefault();handleClick();},
+          onClick:handleClick,
           style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
             padding:"8px 4px 6px",background:"none",border:"none",borderTop:"2px solid "+(active?"#2e5339":"transparent"),cursor:"pointer",
             color:active?"#2e5339":"#aaa",fontFamily:"inherit",position:"relative",touchAction:"manipulation",WebkitTapHighlightColor:"transparent"}
