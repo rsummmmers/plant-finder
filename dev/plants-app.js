@@ -286,7 +286,7 @@ function App(){
             else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
           } else {
             setSearch("");setActiveTab(tab.key);
-            if(tab.key==="plants"){setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
+            if(tab.key==="plants"){if(!isMobile)setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
           }
         };
         return h("button",{key:tab.key,
