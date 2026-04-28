@@ -116,10 +116,10 @@ function App(){
   }
 
   // ── Render ──
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#CCCCB1",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
-    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#CCCCB1"}},
+    h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
 
       // Green photo bar
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
@@ -133,38 +133,41 @@ function App(){
       ),
 
       // Tab row — desktop only
-      !isMobile&&h("div",{className:"no-print",style:{background:"#CCCCB1",borderBottom:"1px solid rgba(255,255,255,0.1)"}},
-        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"stretch",padding:"0 12px"}},
+      !isMobile&&h("div",{className:"no-print",style:{background:"#150f09",borderBottom:"none"}},
+        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"flex-end",padding:"0 20px",gap:2}},
           [
-            {key:"plants", label:"🔍 Plants"},
-            {key:"bloom",  label:"🌸 Bloom calendar"},
-            {key:"palette",label:"♥ My palette",count:hearts.length},
+            {key:"plants", label:"Plants"},
+            {key:"bloom",  label:"Bloom"},
+            {key:"palette",label:"Palette",count:hearts.length},
           ].map(function(tab){
             var active=activeTab===tab.key;
             return h("button",{key:tab.key,onClick:function(){setActiveTab(tab.key);if(tab.key!=="plants")setShowSuggest(false);},
-              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:active?"500":"normal",
-                color:active?"white":"rgba(255,255,255,0.5)",background:"none",border:"none",
-                borderBottom:"2px solid "+(active?"white":"transparent"),
-                cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
+              style:{padding:"9px 20px",fontFamily:"'Literata',serif",fontSize:14,fontWeight:active?700:400,
+                color:active?"#2c2c2c":"rgba(255,255,255,0.6)",
+                background:active?"#D9D9BF":"transparent",
+                border:"none",borderRadius:"6px 6px 0 0",
+                cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6,
+                transition:"background 0.15s"}
             },
               tab.label,
-              tab.count>0&&h("span",{style:{background:active?"#2e5339":"#e57373",color:"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:500}},tab.count)
+              tab.count>0&&h("span",{style:{background:active?"#2e5339":"rgba(255,255,255,0.3)",color:active?"white":"white",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:600}},tab.count)
             );
           }).concat([
-            h("div",{key:"divider",style:{width:1,background:"#e0ddd5",margin:"8px 8px",flexShrink:0}}),
+            h("div",{key:"divider",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"seeds",onClick:function(){setActiveTab("seeds");},
-              style:{padding:"11px 16px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"?"500":"normal",
-                color:activeTab==="seeds"?"#2e5339":"#aaa",background:"none",border:"none",
-                borderBottom:"2px solid "+(activeTab==="seeds"?"#2e5339":"transparent"),
+              style:{padding:"9px 20px",fontFamily:"'Literata',serif",fontSize:14,fontWeight:activeTab==="seeds"?700:400,
+                color:activeTab==="seeds"?"#2c2c2c":"rgba(255,255,255,0.6)",
+                background:activeTab==="seeds"?"#D9D9BF":"transparent",
+                border:"none",borderRadius:"6px 6px 0 0",
                 cursor:"pointer",whiteSpace:"nowrap"}
-            },"🌰 Seed calendar")
+            },"Seeds")
           ])
         )
       )
     ),
 
     // Sticky filter bar
-    activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#1e1710",borderBottom:"1px solid rgba(255,255,255,0.08)"}},
+    activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#D9D9BF",borderBottom:"1px solid rgba(0,0,0,0.08)"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
