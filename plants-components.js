@@ -455,7 +455,7 @@ var p=new URLSearchParams();
     h("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:199}}),
     h("div",{style:{position:"fixed",right:0,top:0,bottom:0,width:W,background:"white",boxShadow:"-4px 0 24px rgba(0,0,0,0.12)",zIndex:200,display:"flex",flexDirection:"column"}},
       h("div",{style:{background:"#2e5339",color:"white",padding:"18px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
-        h("div",{style:{fontFamily:"'Literata',serif",fontSize:20}},"My palette"),
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:20}},"My list"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer"}},"\u2715")
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
@@ -555,7 +555,7 @@ function SuggestPanel(props){
       })
     ),
     h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-      h("button",{onClick:function(){Object.values(suggested).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});onClose();},style:btn("#2e5339","white")},"\u2665 Save all to my palette"),
+      h("button",{onClick:function(){Object.values(suggested).flat().forEach(function(p){if(hearts.indexOf(p.latin)<0)onHeart(p.latin);});onClose();},style:btn("#2e5339","white")},"\u2665 Save all to my list"),
       h("button",{onClick:onClose,style:btn("#f0ede4","#2c2c2c")},"Browse all matches below \u2193")
     )
   );
@@ -869,7 +869,7 @@ function BloomCalendar(props){
         h("div",{style:{display:"flex",flexWrap:"wrap",gap:isMobile?5:8,alignItems:"center",marginBottom:isMobile?6:10}},
           // All plants / My palette pills
           h("button",{onClick:function(){setSource("all");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="all"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="all"?"rgba(255,255,255,0.2)":"transparent",color:source==="all"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="all"?"500":"normal"}},isMobile?"All":"All plants"),
-          h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My palette"),
+          h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My list"),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
             var on=statuses.indexOf(opt.key)>=0;
