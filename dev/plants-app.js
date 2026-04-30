@@ -131,7 +131,7 @@ function App(){
         h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
           h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
-          !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Plant Planner")
+          !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native plants for Massachusetts")
         )
       ),
 
@@ -192,7 +192,7 @@ function App(){
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
             )
           ),
-          isMobile&&h("div",{style:{paddingBottom:10}},
+          h("div",{style:{paddingBottom:10}},
             h("button",{onClick:function(){setDrawerOpen(true);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"1.5px solid "+(activeFilterCount>0?"#2e5339":"#e0ddd5"),background:activeFilterCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:activeFilterCount>0?"#2e5339":"#555",fontWeight:activeFilterCount>0?"500":"normal"}},
               "\u25a4 Filters",
               activeFilterCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},activeFilterCount)
@@ -202,8 +202,8 @@ function App(){
 
     ),
 
-    // Filter drawer — mobile only (desktop uses sidebar in tab content)
-    isMobile&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:true,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants"}),
+    // Filter drawer — mobile bottom sheet, desktop right panel
+    h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants"}),
 
     // Main content
     h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
@@ -221,22 +221,15 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h("div",{style:{display:isMobile?"block":"flex",alignItems:"flex-start"}},
-          !isMobile&&h(FilterDrawer,{sidebar:true,open:true,filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:false,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"palette",activeFilterCount:activeFilterCount}),
-          h("div",{style:{flex:1,minWidth:0}},
-            h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,onLoosen:function(type){
-              if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
-              if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
-              if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
-            }})
-          )
-        ):
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,onLoosen:function(type){
+            if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
+            if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
+            if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
+          }}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
-        h("div",{style:{display:isMobile?"block":"flex",alignItems:"flex-start"}},
-          !isMobile&&h(FilterDrawer,{sidebar:true,open:true,filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:false,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",activeFilterCount:activeFilterCount}),
-          h("div",{style:{flex:1,minWidth:0}},
+        h("div",null,
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
             zone&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83d\udccd "+(zoneInfo?zoneInfo.label:zone),h("span",{onClick:function(){setZone(null);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.concerns.map(function(c){var opt=CONCERN_OPTS.find(function(o){return o.key===c;});return opt?h("div",{key:c,style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},opt.emoji+" "+opt.label,h("span",{onClick:function(){togCx(c);},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")):null;}),
@@ -274,7 +267,6 @@ function App(){
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),
             h("div",{style:{fontSize:13}},"Try loosening the height cap, removing a concern, or broadening moisture or sun settings.")
           )
-        )
         )
       )
     ),
