@@ -1261,7 +1261,8 @@ function FilterDrawer(props){
       onChange=props.onChange,flowerColors=props.flowerColors,
       inferredSun=props.inferredSun,isMobile=props.isMobile,
       zone=props.zone,onSetZone=props.onSetZone,source=props.source;
-  if(!open)return null;
+  var sidebar=props.sidebar||false;
+  if(!open&&!sidebar)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
@@ -1282,10 +1283,11 @@ function FilterDrawer(props){
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
   useEffect(function(){
+    if(sidebar)return;
     var prev=document.body.style.overflow;
     document.body.style.overflow="hidden";
     return function(){document.body.style.overflow=prev;};
-  },[]);
+  },[sidebar]);
 
   function resetAll(){
     onChange({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
@@ -1297,21 +1299,25 @@ function FilterDrawer(props){
     return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
-  var panelStyle=isMobile
-    ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
-    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+  var panelStyle=sidebar
+    ?{width:260,background:"white",borderRight:"1px solid #e0ddd5",display:"flex",flexDirection:"column",alignSelf:"flex-start",position:"sticky",top:140,maxHeight:"calc(100vh - 140px)",flexShrink:0}
+    :isMobile
+      ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
+      :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
 
-  var handleStyle=isMobile
+  var handleStyle=isMobile&&!sidebar
     ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
     :null;
 
   return h("div",null,
-    h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
+    !sidebar&&h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:panelStyle},
-      isMobile&&h("div",{style:handleStyle}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
-        h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
+      isMobile&&!sidebar&&h("div",{style:handleStyle}),
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:sidebar?16:18}},"Filters"),
+        sidebar
+          ?activeFilterCount>0&&h("button",{onClick:resetAll,style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:5,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"\u2715 Clear")
+          :h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
       h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
         h("div",null,
@@ -1422,8 +1428,8 @@ function FilterDrawer(props){
             "\u2615 Medicinal"
           )
         ),
-        ),
-      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
+      ),
+      !sidebar&&h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
         h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:10,padding:"13px",fontSize:14,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
         h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
