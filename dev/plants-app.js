@@ -275,7 +275,6 @@ function App(){
             h("div",{style:{fontSize:13}},"Try loosening the height cap, removing a concern, or broadening moisture or sun settings.")
           )
         )
-          )
         )
       )
     ),
