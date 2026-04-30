@@ -272,7 +272,16 @@ function PlantCard(props){
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){setOpen(true);},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
-        !img&&h("div",{style:{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,color:"rgba(46,83,57,0.25)"}},"🌿"),
+        !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
+          h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
+            h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),
+            h("line",{x1:"40",y1:"6",x2:"40",y2:"74",stroke:"#2e5339",strokeWidth:1.8}),
+            h("line",{x1:"40",y1:"33",x2:"20",y2:"50",stroke:"#2e5339",strokeWidth:1.2}),
+            h("line",{x1:"40",y1:"46",x2:"22",y2:"62",stroke:"#2e5339",strokeWidth:1.2}),
+            h("line",{x1:"40",y1:"33",x2:"60",y2:"50",stroke:"#2e5339",strokeWidth:1.2}),
+            h("line",{x1:"40",y1:"46",x2:"58",y2:"62",stroke:"#2e5339",strokeWidth:1.2})
+          )
+        ),
         score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
         h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
       ),
