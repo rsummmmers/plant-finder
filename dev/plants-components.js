@@ -1257,10 +1257,11 @@ function ShareBar(props){
 
 // ── FilterDrawer ──────────────────────────────────────────────────────────
 function FilterDrawer(props){
-  var open=props.open,onClose=props.onClose,filters=props.filters,
+  var open=props.open,onClose=props.onClose||function(){},filters=props.filters,
       onChange=props.onChange,flowerColors=props.flowerColors,
       inferredSun=props.inferredSun,isMobile=props.isMobile,
-      zone=props.zone,onSetZone=props.onSetZone,source=props.source;
+      zone=props.zone,onSetZone=props.onSetZone,source=props.source,
+      activeFilterCount=props.activeFilterCount||0;
   var sidebar=props.sidebar||false;
   if(!open&&!sidebar)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
