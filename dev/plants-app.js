@@ -168,6 +168,7 @@ function App(){
             },"Seeds"),
             h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"search",onClick:function(){
+              setDrawerOpen(false);
               if(searchActive){setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
               else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
             },
