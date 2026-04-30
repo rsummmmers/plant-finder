@@ -140,7 +140,7 @@ function App(){
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
           [
             {key:"plants", label:"Explore"},
-            {key:"palette",label:"Palette",count:hearts.length},
+            {key:"palette",label:"My List",count:hearts.length},
             {key:"bloom",  label:"Bloom"},
           ].map(function(tab){
             var active=activeTab===tab.key&&!searchActive;
@@ -168,6 +168,7 @@ function App(){
             },"Seeds"),
             h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"search",onClick:function(){
+              setDrawerOpen(false);
               if(searchActive){setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
               else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
             },
@@ -274,7 +275,7 @@ function App(){
     isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Explore",   icon:"\ud83d\udd0d"},
-        {key:"palette", label:"Palette",  icon:"\u2665", count:hearts.length},
+        {key:"palette", label:"My List",  icon:"\u2665", count:hearts.length},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"search",  label:"Search",   icon:"\u2315"},
