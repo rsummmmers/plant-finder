@@ -468,7 +468,7 @@ var p=new URLSearchParams();
         h("button",{onClick:onClose,style:{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer"}},"\u2715")
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this list (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
+        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Mix"),
@@ -483,7 +483,7 @@ var p=new URLSearchParams();
         tips.map(function(t,i){return h("div",{key:i,style:{fontSize:12,color:"#f57f17",marginTop:6,fontStyle:"italic"}},"\ud83d\udca1 "+t);})
       ),
       h("div",{style:{flex:1,overflowY:"auto",padding:"12px 16px"}},
-        hearted.length===0&&h("div",{style:{textAlign:"center",padding:"30px 0",color:"#aaa",fontStyle:"italic",fontSize:14}},"Heart plants to build your list"),
+        hearted.length===0&&h("div",{style:{textAlign:"center",padding:"30px 0",color:"#aaa",fontStyle:"italic",fontSize:14}},"Heart plants to build your palette"),
         hearted.map(function(p){
           return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f5f3ef"}},
             h(PlantThumb,{plant:p,size:38,radius:7}),
@@ -497,7 +497,7 @@ var p=new URLSearchParams();
       h("div",{style:{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c")},"\ud83d\udda8\ufe0f Print / save PDF"),
-        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
+        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
       )
     )
   );
@@ -538,7 +538,7 @@ function SuggestPanel(props){
 
   return h("div",{style:{background:"white",border:"2px solid #2e5339",borderRadius:12,padding:20,marginBottom:16}},
     h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
-      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested list \u2014 "+total+" plants"),
+      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested palette \u2014 "+total+" plants"),
       h("button",{onClick:onClose,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:0,lineHeight:1}},"\u2715")
     ),
     h("div",{style:{fontSize:13,color:"#888",marginBottom:16}},"Best-fit plants for your site \u00b7 ranked by wildlife value + suitability \u00b7 tap \u2661 to save"),
@@ -1051,7 +1051,7 @@ function BloomCalendar(props){
         // Suggestions for palette view
         source==="hearts"&&h("div",null,
           h("div",{style:{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:1,textTransform:"uppercase",marginBottom:10,marginTop:4}},
-            suggestions.length>0?"Suggest more for "+MONTHS[selMonth]:"Your list covers "+MONTHS[selMonth]+" well \u2713"
+            suggestions.length>0?"Suggest more for "+MONTHS[selMonth]:"Your palette covers "+MONTHS[selMonth]+" well \u2713"
           ),
           suggestions.length>0&&h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}},
             suggestions.map(function(p){
@@ -1244,11 +1244,11 @@ function ShareBar(props){
   function copy(){navigator.clipboard.writeText(window.location.href).then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});}
   return h("div",{className:"no-print",style:{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center",background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"9px 14px",marginTop:10,marginBottom:4}},
     editing?h("div",{style:{display:"flex",gap:7,flex:1,flexWrap:"wrap"}},
-      h("input",{autoFocus:true,value:val,onChange:function(ev){setVal(ev.target.value);},onKeyDown:function(ev){if(ev.key==="Enter")save();if(ev.key==="Escape")setEditing(false);},placeholder:"Name this list\u2026",style:{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}}),
+      h("input",{autoFocus:true,value:val,onChange:function(ev){setVal(ev.target.value);},onKeyDown:function(ev){if(ev.key==="Enter")save();if(ev.key==="Escape")setEditing(false);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}}),
       h("button",{onClick:save,style:btn("#2e5339","white",{padding:"5px 14px",fontSize:13})},"Save"),
       h("button",{onClick:function(){setEditing(false);},style:btn("#f0ede4","#555",{padding:"5px 10px",fontSize:13})},"Cancel")
     ):h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
-      h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this list"),
+      h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this palette"),
       h("button",{onClick:copy,style:btn(copied?"#e8f5e9":"#f0ede4",copied?"#2e7d32":"#555",{fontSize:13,padding:"5px 12px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Copy link"),
       h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},"\ud83d\udda8\ufe0f Print")
     )
@@ -1257,13 +1257,11 @@ function ShareBar(props){
 
 // ── FilterDrawer ──────────────────────────────────────────────────────────
 function FilterDrawer(props){
-  var open=props.open,onClose=props.onClose||function(){},filters=props.filters,
+  var open=props.open,onClose=props.onClose,filters=props.filters,
       onChange=props.onChange,flowerColors=props.flowerColors,
       inferredSun=props.inferredSun,isMobile=props.isMobile,
-      zone=props.zone,onSetZone=props.onSetZone,source=props.source,
-      activeFilterCount=props.activeFilterCount||0;
-  var sidebar=props.sidebar||false;
-  if(!open&&!sidebar)return null;
+      zone=props.zone,onSetZone=props.onSetZone,source=props.source;
+  if(!open)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
@@ -1284,11 +1282,10 @@ function FilterDrawer(props){
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
   useEffect(function(){
-    if(sidebar)return;
     var prev=document.body.style.overflow;
     document.body.style.overflow="hidden";
     return function(){document.body.style.overflow=prev;};
-  },[sidebar]);
+  },[]);
 
   function resetAll(){
     onChange({statuses:["native","nearnative"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
@@ -1300,25 +1297,21 @@ function FilterDrawer(props){
     return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
   }
 
-  var panelStyle=sidebar
-    ?{width:260,background:"white",borderRight:"1px solid #e0ddd5",display:"flex",flexDirection:"column",alignSelf:"flex-start",position:"sticky",top:140,maxHeight:"calc(100vh - 140px)",flexShrink:0}
-    :isMobile
-      ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
-      :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+  var panelStyle=isMobile
+    ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
+    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
 
-  var handleStyle=isMobile&&!sidebar
+  var handleStyle=isMobile
     ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
     :null;
 
   return h("div",null,
-    !sidebar&&h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
+    h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:panelStyle},
-      isMobile&&!sidebar&&h("div",{style:handleStyle}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("div",{style:{fontFamily:"'Literata',serif",fontSize:sidebar?16:18}},"Filters"),
-        sidebar
-          ?activeFilterCount>0&&h("button",{onClick:resetAll,style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:5,padding:"3px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"\u2715 Clear")
-          :h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
+      isMobile&&h("div",{style:handleStyle}),
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
+        h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
       h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
         h("div",null,
@@ -1429,8 +1422,8 @@ function FilterDrawer(props){
             "\u2615 Medicinal"
           )
         ),
-      ),
-      !sidebar&&h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
+        ),
+      h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
         h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:10,padding:"13px",fontSize:14,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
         h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
       )
@@ -1487,7 +1480,7 @@ function PaletteView(props){
     p.set("hearts",hearts.join(","));
     var url=location.origin+location.pathname+"?"+p.toString();
     if(isMobile&&navigator.share){
-      navigator.share({title:"My plant list",url:url}).catch(function(){});
+      navigator.share({title:"My plant palette",url:url}).catch(function(){});
     } else {
       navigator.clipboard.writeText(url)
         .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);})
@@ -1511,7 +1504,7 @@ function PaletteView(props){
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
-        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
+        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
         [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"},{k:"fern",e:"\ud83c\udf3f",l:"Ferns"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"},{k:"vine",e:"\ud83c\udf3f",l:"Vines"}].map(function(x){
@@ -1529,13 +1522,13 @@ function PaletteView(props){
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
-      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your list\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
+      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your palette\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
     hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
-      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your list is empty"),
+      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your palette is empty"),
       h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
       h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
         h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
@@ -1547,10 +1540,10 @@ function PaletteView(props){
       h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
       typeFilter&&!search?
         h("div",{style:{fontStyle:"italic",fontSize:15}},
-          "No "+typeFilter+"s in your list yet."
+          "No "+typeFilter+"s in your palette yet."
         ):
         h("div",null,
-          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your list yet."),
+          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette yet."),
           h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
         )
     ),
@@ -1569,10 +1562,10 @@ function HomeView(props){
   var cards=[
     {key:"plants", img:"/images/explore.jpeg", title:"Browse & discover plants",
      body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"palette", img:"/images/palette.jpeg", title:"Build your list",
+    {key:"palette", img:"/images/palette.jpeg", title:"Build your palette",
      body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
     {key:"bloom",  img:"/images/bloom.jpg", title:"Explore bloom by month",
-     body:"See what's flowering when across your whole plant list. Filter by color, type, and list to plan for season-long interest."},
+     body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
     {key:"seeds",  img:"/images/seeds.jpg", title:"Save seeds & propagate",
      body:"Know what's ripening when, how to collect it, and how to grow more of what you already have."},
   ];
