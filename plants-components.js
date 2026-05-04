@@ -76,7 +76,7 @@ function PlantThumb(props){
       h("div",{style:{fontSize:size*0.18,fontWeight:"bold",color:fg}},plant.common.charAt(0))
     );
   }
-  return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
+  return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
 }
 
 // ── ColorDots ─────────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ function PlantCard(props){
     var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){setOpen(true);},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
-        img&&h("img",{src:img,alt:plant.common,style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
+        img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
             h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),
