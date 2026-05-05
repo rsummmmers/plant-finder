@@ -258,7 +258,11 @@ function SeedSection(props){
 function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var gridMode=props.gridMode||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
+  var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
+  var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
+  var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
@@ -283,6 +287,7 @@ function PlantCard(props){
           )
         ),
         score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
+        h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
         h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
       ),
       h("div",{onClick:function(){setOpen(true);},style:{padding:"11px 13px 13px",cursor:"pointer",flex:1}},
@@ -343,6 +348,42 @@ function PlantCard(props){
               )
             )
           )
+        )
+      ),
+      listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+        h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
+          h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("div",null,
+              h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
+              h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
+            ),
+            h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+          ),
+          lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
+          lists.map(function(list){
+            var inList=list.plants.indexOf(plant.latin)>=0;
+            return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
+              h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
+              h("span",{style:{fontSize:14,flex:1}},list.name),
+              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
+            );
+          }),
+          newListMode
+            ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
+                h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
+                  onKeyDown:function(ev){
+                    if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
+                    if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
+                  },
+                  placeholder:"List name…",
+                  style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
+                }),
+                h("div",{style:{display:"flex",gap:6,marginTop:8}},
+                  h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
+                  h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+                )
+              )
+            :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
         )
       )
     );
@@ -468,7 +509,7 @@ var p=new URLSearchParams();
         h("button",{onClick:onClose,style:{background:"none",border:"none",color:"white",fontSize:22,cursor:"pointer"}},"\u2715")
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this palette (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
+        h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this list (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Mix"),
@@ -483,7 +524,7 @@ var p=new URLSearchParams();
         tips.map(function(t,i){return h("div",{key:i,style:{fontSize:12,color:"#f57f17",marginTop:6,fontStyle:"italic"}},"\ud83d\udca1 "+t);})
       ),
       h("div",{style:{flex:1,overflowY:"auto",padding:"12px 16px"}},
-        hearted.length===0&&h("div",{style:{textAlign:"center",padding:"30px 0",color:"#aaa",fontStyle:"italic",fontSize:14}},"Heart plants to build your palette"),
+        hearted.length===0&&h("div",{style:{textAlign:"center",padding:"30px 0",color:"#aaa",fontStyle:"italic",fontSize:14}},"Heart plants to build your list"),
         hearted.map(function(p){
           return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f5f3ef"}},
             h(PlantThumb,{plant:p,size:38,radius:7}),
@@ -497,7 +538,7 @@ var p=new URLSearchParams();
       h("div",{style:{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c")},"\ud83d\udda8\ufe0f Print / save PDF"),
-        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
+        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
       )
     )
   );
@@ -538,7 +579,7 @@ function SuggestPanel(props){
 
   return h("div",{style:{background:"white",border:"2px solid #2e5339",borderRadius:12,padding:20,marginBottom:16}},
     h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
-      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested palette \u2014 "+total+" plants"),
+      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested list \u2014 "+total+" plants"),
       h("button",{onClick:onClose,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:0,lineHeight:1}},"\u2715")
     ),
     h("div",{style:{fontSize:13,color:"#888",marginBottom:16}},"Best-fit plants for your site \u00b7 ranked by wildlife value + suitability \u00b7 tap \u2661 to save"),
@@ -1051,7 +1092,7 @@ function BloomCalendar(props){
         // Suggestions for palette view
         source==="hearts"&&h("div",null,
           h("div",{style:{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:1,textTransform:"uppercase",marginBottom:10,marginTop:4}},
-            suggestions.length>0?"Suggest more for "+MONTHS[selMonth]:"Your palette covers "+MONTHS[selMonth]+" well \u2713"
+            suggestions.length>0?"Suggest more for "+MONTHS[selMonth]:"Your list covers "+MONTHS[selMonth]+" well \u2713"
           ),
           suggestions.length>0&&h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}},
             suggestions.map(function(p){
@@ -1244,11 +1285,11 @@ function ShareBar(props){
   function copy(){navigator.clipboard.writeText(window.location.href).then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);});}
   return h("div",{className:"no-print",style:{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center",background:"white",border:"1px solid #e0ddd5",borderRadius:10,padding:"9px 14px",marginTop:10,marginBottom:4}},
     editing?h("div",{style:{display:"flex",gap:7,flex:1,flexWrap:"wrap"}},
-      h("input",{autoFocus:true,value:val,onChange:function(ev){setVal(ev.target.value);},onKeyDown:function(ev){if(ev.key==="Enter")save();if(ev.key==="Escape")setEditing(false);},placeholder:"Name this palette\u2026",style:{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}}),
+      h("input",{autoFocus:true,value:val,onChange:function(ev){setVal(ev.target.value);},onKeyDown:function(ev){if(ev.key==="Enter")save();if(ev.key==="Escape")setEditing(false);},placeholder:"Name this list\u2026",style:{flex:1,minWidth:140,border:"1px solid #ddd",borderRadius:6,padding:"5px 10px",fontSize:14,fontFamily:"inherit",outline:"none"}}),
       h("button",{onClick:save,style:btn("#2e5339","white",{padding:"5px 14px",fontSize:13})},"Save"),
       h("button",{onClick:function(){setEditing(false);},style:btn("#f0ede4","#555",{padding:"5px 10px",fontSize:13})},"Cancel")
     ):h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
-      h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this palette"),
+      h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this list"),
       h("button",{onClick:copy,style:btn(copied?"#e8f5e9":"#f0ede4",copied?"#2e7d32":"#555",{fontSize:13,padding:"5px 12px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Copy link"),
       h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},"\ud83d\udda8\ufe0f Print")
     )
@@ -1437,6 +1478,7 @@ function PaletteView(props){
   var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
   var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var isMobile=props.isMobile||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1480,7 +1522,7 @@ function PaletteView(props){
     p.set("hearts",hearts.join(","));
     var url=location.origin+location.pathname+"?"+p.toString();
     if(isMobile&&navigator.share){
-      navigator.share({title:"My plant palette",url:url}).catch(function(){});
+      navigator.share({title:"My plant list",url:url}).catch(function(){});
     } else {
       navigator.clipboard.writeText(url)
         .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);})
@@ -1504,7 +1546,7 @@ function PaletteView(props){
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
-        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your palette?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
+        hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
         [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennials"},{k:"grass",e:"\ud83c\udf3e",l:"Grasses"},{k:"fern",e:"\ud83c\udf3f",l:"Ferns"},{k:"ground",e:"\ud83c\udf40",l:"Groundcover"},{k:"vine",e:"\ud83c\udf3f",l:"Vines"}].map(function(x){
@@ -1522,13 +1564,13 @@ function PaletteView(props){
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
-      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your palette\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
+      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your list\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
     hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
-      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your palette is empty"),
+      h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your list is empty"),
       h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
       h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
         h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
@@ -1540,17 +1582,17 @@ function PaletteView(props){
       h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
       typeFilter&&!search?
         h("div",{style:{fontStyle:"italic",fontSize:15}},
-          "No "+typeFilter+"s in your palette yet."
+          "No "+typeFilter+"s in your list yet."
         ):
         h("div",null,
-          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your palette yet."),
+          h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your list yet."),
           h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
         )
     ),
     // Plant cards
     h("div",{ref:resultsRef,style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
       results.map(function(p){
-        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true});
+        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
       })
     )
   );
@@ -1562,10 +1604,10 @@ function HomeView(props){
   var cards=[
     {key:"plants", img:"/images/explore.jpeg", title:"Browse & discover plants",
      body:"Explore 400+ plants vetted for Massachusetts — natives, near-natives, and ecologically compatible species. Filter by sun, moisture, site conditions, and more."},
-    {key:"palette", img:"/images/palette.jpeg", title:"Build your palette",
+    {key:"palette", img:"/images/palette.jpeg", title:"Build your list",
      body:"Save plants you love, then use Suggest a mix to get a layered habitat combination — canopy, shrubs, perennials, and groundcovers — ranked by wildlife value."},
     {key:"bloom",  img:"/images/bloom.jpg", title:"Explore bloom by month",
-     body:"See what's flowering when across your whole plant list. Filter by color, type, and palette to plan for season-long interest."},
+     body:"See what's flowering when across your whole plant list. Filter by color, type, and list to plan for season-long interest."},
     {key:"seeds",  img:"/images/seeds.jpg", title:"Save seeds & propagate",
      body:"Know what's ripening when, how to collect it, and how to grow more of what you already have."},
   ];
@@ -1587,6 +1629,135 @@ function HomeView(props){
             h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
             h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
           )
+        );
+      })
+    )
+  );
+}
+
+// ── SavedListsView ────────────────────────────────────────────────────────────
+function SavedListsView(props){
+  var lists=props.lists||[],plants=props.plants||[];
+  var onCreateList=props.onCreateList||function(){};
+  var onDeleteList=props.onDeleteList||function(){};
+  var onRenameList=props.onRenameList||function(){};
+  var onToggleInList=props.onToggleInList||function(){};
+  var onGoToExplore=props.onGoToExplore||function(){};
+  var isMobile=props.isMobile||false;
+
+  var _oi=useState(null),openId=_oi[0],setOpenId=_oi[1];
+  var _nm=useState(false),newMode=_nm[0],setNewMode=_nm[1];
+  var _nn=useState(""),newName=_nn[0],setNewName=_nn[1];
+  var _ri=useState(null),renamingId=_ri[0],setRenamingId=_ri[1];
+  var _rn=useState(""),renameName=_rn[0],setRenameName=_rn[1];
+  var _cp=useState(false),copied=_cp[0],setCopied=_cp[1];
+
+  var openList=openId?lists.find(function(l){return l.id===openId;})||null:null;
+  var openPlants=openList?plants.filter(function(p){return openList.plants.indexOf(p.latin)>=0;}):[];
+
+  function copyLink(list){
+    var p=new URLSearchParams();
+    p.set("view","palette");
+    p.set("listname",list.name);
+    p.set("hearts",list.plants.join(","));
+    var url=location.origin+location.pathname+"?"+p.toString();
+    if(isMobile&&navigator.share){
+      navigator.share({title:list.name,url:url}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url)
+        .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);})
+        .catch(function(){
+          var ta=document.createElement("textarea");ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
+          document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+          setCopied(true);setTimeout(function(){setCopied(false);},2000);
+        });
+    }
+  }
+
+  // ── List detail view ──
+  if(openList){
+    return h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}},
+        h("button",{onClick:function(){setOpenId(null);setCopied(false);setRenamingId(null);},style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4,padding:"6px 0",fontWeight:500}},"← All lists"),
+        renamingId===openList.id
+          ?h("input",{autoFocus:true,value:renameName,
+              onChange:function(ev){setRenameName(ev.target.value);},
+              onKeyDown:function(ev){
+                if(ev.key==="Enter"&&renameName.trim()){onRenameList(openList.id,renameName.trim());setRenamingId(null);}
+                if(ev.key==="Escape"){setRenamingId(null);}
+              },
+              onBlur:function(){if(renameName.trim())onRenameList(openList.id,renameName.trim());setRenamingId(null);},
+              style:{flex:1,fontFamily:"'Literata',serif",fontSize:20,fontWeight:600,border:"none",borderBottom:"2px solid #2e5339",outline:"none",background:"transparent",padding:"2px 0",minWidth:0}
+            })
+          :h("div",{onClick:function(){setRenamingId(openList.id);setRenameName(openList.name);},style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600,cursor:"pointer",flex:1,minWidth:0},title:"Click to rename"},openList.name)
+      ),
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}},
+        h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
+        h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
+        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
+      ),
+      h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
+      openPlants.length===0
+        ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
+            h("div",{style:{fontSize:36,marginBottom:12}},"🌿"),
+            h("div",{style:{fontStyle:"italic",marginBottom:16}},"This list is empty."),
+            h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
+          )
+        :h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            openPlants.map(function(p){
+              var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+              return h("div",{key:p.latin,style:{background:"white",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}},
+                h(PlantThumb,{plant:p,size:42,radius:6}),
+                h("div",{style:{flex:1,minWidth:0}},
+                  h("div",{style:{fontWeight:600,fontSize:14,lineHeight:1.3}},p.common),
+                  h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic"}},p.latin),
+                  h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"1px 6px",borderRadius:4,fontWeight:"bold",display:"inline-block",marginTop:2}},ss.label)
+                ),
+                h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},style:{background:"none",border:"none",cursor:"pointer",color:"#ccc",fontSize:20,padding:"4px 6px",lineHeight:1,flexShrink:0},title:"Remove from list"},"×")
+              );
+            })
+          )
+    );
+  }
+
+  // ── Lists index view ──
+  return h("div",null,
+    h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}},
+      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600}},"Saved Lists"),
+      h("button",{onClick:function(){setNewMode(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"+ New list")
+    ),
+    newMode&&h("div",{style:{background:"white",borderRadius:10,padding:"14px 16px",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}},
+      h("input",{autoFocus:true,value:newName,
+        onChange:function(ev){setNewName(ev.target.value);},
+        onKeyDown:function(ev){
+          if(ev.key==="Enter"&&newName.trim()){onCreateList(newName.trim());setNewName("");setNewMode(false);}
+          if(ev.key==="Escape"){setNewName("");setNewMode(false);}
+        },
+        placeholder:"List name…",
+        style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:15,fontFamily:"inherit",outline:"none",marginBottom:8}
+      }),
+      h("div",{style:{display:"flex",gap:6}},
+        h("button",{onClick:function(){if(newName.trim()){onCreateList(newName.trim());setNewName("");setNewMode(false);}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create"),
+        h("button",{onClick:function(){setNewName("");setNewMode(false);},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+      )
+    ),
+    lists.length===0&&!newMode&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#aaa"}},
+      h("div",{style:{fontSize:40,marginBottom:12}},"📝"),
+      h("div",{style:{fontStyle:"italic",marginBottom:6,fontSize:16}},"No saved lists yet."),
+      h("div",{style:{fontSize:13,color:"#bbb",marginBottom:4}},"Use \"+ New list\" to create your first one,"),
+      h("div",{style:{fontSize:13,color:"#bbb"}},"then add plants with the \"+List\" button on any plant card.")
+    ),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+      lists.map(function(list){
+        return h("div",{key:list.id,
+          onClick:function(){setOpenId(list.id);},
+          style:{background:"white",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}
+        },
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontWeight:600,fontSize:15,marginBottom:2}},list.name),
+            h("div",{style:{fontSize:12,color:"#aaa"}},list.plants.length+" plant"+(list.plants.length!==1?"s":""))
+          ),
+          h("span",{style:{color:"#ccc",fontSize:20}},"›")
         );
       })
     )

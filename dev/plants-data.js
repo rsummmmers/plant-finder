@@ -166,6 +166,10 @@ var LS_KEY="ppb_hearts_v2";
 function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(err){return[];}}
 function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch(err){}}
 
+var LS_LISTS_KEY="ppb_lists_v1";
+function loadLists(){try{return JSON.parse(localStorage.getItem(LS_LISTS_KEY)||"[]");}catch(err){return[];}}
+function saveLists(a){try{localStorage.setItem(LS_LISTS_KEY,JSON.stringify(a));}catch(err){}}
+
 // ── URL helpers ────────────────────────────────────────────────────────────
 function readURL(){
 var p=new URLSearchParams(window.location.search);

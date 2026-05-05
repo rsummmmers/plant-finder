@@ -258,7 +258,11 @@ function SeedSection(props){
 function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var gridMode=props.gridMode||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
+  var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
+  var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
+  var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
@@ -283,6 +287,7 @@ function PlantCard(props){
           )
         ),
         score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
+        h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
         h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
       ),
       h("div",{onClick:function(){setOpen(true);},style:{padding:"11px 13px 13px",cursor:"pointer",flex:1}},
@@ -343,6 +348,42 @@ function PlantCard(props){
               )
             )
           )
+        )
+      ),
+      listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+        h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
+          h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("div",null,
+              h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
+              h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
+            ),
+            h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+          ),
+          lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
+          lists.map(function(list){
+            var inList=list.plants.indexOf(plant.latin)>=0;
+            return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
+              h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
+              h("span",{style:{fontSize:14,flex:1}},list.name),
+              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
+            );
+          }),
+          newListMode
+            ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
+                h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
+                  onKeyDown:function(ev){
+                    if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
+                    if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
+                  },
+                  placeholder:"List name…",
+                  style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
+                }),
+                h("div",{style:{display:"flex",gap:6,marginTop:8}},
+                  h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
+                  h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+                )
+              )
+            :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
         )
       )
     );
@@ -1437,6 +1478,7 @@ function PaletteView(props){
   var mixFiltered=props.mixFiltered||[],patchSize=props.patchSize||20,concerns=props.concerns||[],onLoosen=props.onLoosen||function(){};
   var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var isMobile=props.isMobile||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1550,7 +1592,7 @@ function PaletteView(props){
     // Plant cards
     h("div",{ref:resultsRef,style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
       results.map(function(p){
-        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true});
+        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
       })
     )
   );
@@ -1587,6 +1629,135 @@ function HomeView(props){
             h("div",{style:{fontFamily:"'Literata',serif",fontSize:17,fontWeight:600,color:"#2e5339",marginBottom:8,lineHeight:1.3}},c.title),
             h("div",{style:{fontSize:13,color:"#888",lineHeight:1.6}},c.body)
           )
+        );
+      })
+    )
+  );
+}
+
+// ── SavedListsView ────────────────────────────────────────────────────────────
+function SavedListsView(props){
+  var lists=props.lists||[],plants=props.plants||[];
+  var onCreateList=props.onCreateList||function(){};
+  var onDeleteList=props.onDeleteList||function(){};
+  var onRenameList=props.onRenameList||function(){};
+  var onToggleInList=props.onToggleInList||function(){};
+  var onGoToExplore=props.onGoToExplore||function(){};
+  var isMobile=props.isMobile||false;
+
+  var _oi=useState(null),openId=_oi[0],setOpenId=_oi[1];
+  var _nm=useState(false),newMode=_nm[0],setNewMode=_nm[1];
+  var _nn=useState(""),newName=_nn[0],setNewName=_nn[1];
+  var _ri=useState(null),renamingId=_ri[0],setRenamingId=_ri[1];
+  var _rn=useState(""),renameName=_rn[0],setRenameName=_rn[1];
+  var _cp=useState(false),copied=_cp[0],setCopied=_cp[1];
+
+  var openList=openId?lists.find(function(l){return l.id===openId;})||null:null;
+  var openPlants=openList?plants.filter(function(p){return openList.plants.indexOf(p.latin)>=0;}):[];
+
+  function copyLink(list){
+    var p=new URLSearchParams();
+    p.set("view","palette");
+    p.set("listname",list.name);
+    p.set("hearts",list.plants.join(","));
+    var url=location.origin+location.pathname+"?"+p.toString();
+    if(isMobile&&navigator.share){
+      navigator.share({title:list.name,url:url}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url)
+        .then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);})
+        .catch(function(){
+          var ta=document.createElement("textarea");ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
+          document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+          setCopied(true);setTimeout(function(){setCopied(false);},2000);
+        });
+    }
+  }
+
+  // ── List detail view ──
+  if(openList){
+    return h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}},
+        h("button",{onClick:function(){setOpenId(null);setCopied(false);setRenamingId(null);},style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4,padding:"6px 0",fontWeight:500}},"← All lists"),
+        renamingId===openList.id
+          ?h("input",{autoFocus:true,value:renameName,
+              onChange:function(ev){setRenameName(ev.target.value);},
+              onKeyDown:function(ev){
+                if(ev.key==="Enter"&&renameName.trim()){onRenameList(openList.id,renameName.trim());setRenamingId(null);}
+                if(ev.key==="Escape"){setRenamingId(null);}
+              },
+              onBlur:function(){if(renameName.trim())onRenameList(openList.id,renameName.trim());setRenamingId(null);},
+              style:{flex:1,fontFamily:"'Literata',serif",fontSize:20,fontWeight:600,border:"none",borderBottom:"2px solid #2e5339",outline:"none",background:"transparent",padding:"2px 0",minWidth:0}
+            })
+          :h("div",{onClick:function(){setRenamingId(openList.id);setRenameName(openList.name);},style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600,cursor:"pointer",flex:1,minWidth:0},title:"Click to rename"},openList.name)
+      ),
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}},
+        h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
+        h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
+        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
+      ),
+      h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
+      openPlants.length===0
+        ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
+            h("div",{style:{fontSize:36,marginBottom:12}},"🌿"),
+            h("div",{style:{fontStyle:"italic",marginBottom:16}},"This list is empty."),
+            h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
+          )
+        :h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            openPlants.map(function(p){
+              var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+              return h("div",{key:p.latin,style:{background:"white",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}},
+                h(PlantThumb,{plant:p,size:42,radius:6}),
+                h("div",{style:{flex:1,minWidth:0}},
+                  h("div",{style:{fontWeight:600,fontSize:14,lineHeight:1.3}},p.common),
+                  h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic"}},p.latin),
+                  h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"1px 6px",borderRadius:4,fontWeight:"bold",display:"inline-block",marginTop:2}},ss.label)
+                ),
+                h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},style:{background:"none",border:"none",cursor:"pointer",color:"#ccc",fontSize:20,padding:"4px 6px",lineHeight:1,flexShrink:0},title:"Remove from list"},"×")
+              );
+            })
+          )
+    );
+  }
+
+  // ── Lists index view ──
+  return h("div",null,
+    h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}},
+      h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600}},"Saved Lists"),
+      h("button",{onClick:function(){setNewMode(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"+ New list")
+    ),
+    newMode&&h("div",{style:{background:"white",borderRadius:10,padding:"14px 16px",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}},
+      h("input",{autoFocus:true,value:newName,
+        onChange:function(ev){setNewName(ev.target.value);},
+        onKeyDown:function(ev){
+          if(ev.key==="Enter"&&newName.trim()){onCreateList(newName.trim());setNewName("");setNewMode(false);}
+          if(ev.key==="Escape"){setNewName("");setNewMode(false);}
+        },
+        placeholder:"List name…",
+        style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:15,fontFamily:"inherit",outline:"none",marginBottom:8}
+      }),
+      h("div",{style:{display:"flex",gap:6}},
+        h("button",{onClick:function(){if(newName.trim()){onCreateList(newName.trim());setNewName("");setNewMode(false);}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create"),
+        h("button",{onClick:function(){setNewName("");setNewMode(false);},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+      )
+    ),
+    lists.length===0&&!newMode&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#aaa"}},
+      h("div",{style:{fontSize:40,marginBottom:12}},"📝"),
+      h("div",{style:{fontStyle:"italic",marginBottom:6,fontSize:16}},"No saved lists yet."),
+      h("div",{style:{fontSize:13,color:"#bbb",marginBottom:4}},"Use \"+ New list\" to create your first one,"),
+      h("div",{style:{fontSize:13,color:"#bbb"}},"then add plants with the \"+List\" button on any plant card.")
+    ),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+      lists.map(function(list){
+        return h("div",{key:list.id,
+          onClick:function(){setOpenId(list.id);},
+          style:{background:"white",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}
+        },
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontWeight:600,fontSize:15,marginBottom:2}},list.name),
+            h("div",{style:{fontSize:12,color:"#aaa"}},list.plants.length+" plant"+(list.plants.length!==1?"s":""))
+          ),
+          h("span",{style:{color:"#ccc",fontSize:20}},"›")
         );
       })
     )

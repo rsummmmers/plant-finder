@@ -26,6 +26,7 @@ function App(){
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
+  var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
   var searchRef=useRef(null);
 
   function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
@@ -34,6 +35,28 @@ function App(){
     setHearts(function(prev){
       var next=prev.indexOf(latin)>=0?prev.filter(function(x){return x!==latin;}):[...prev,latin];
       saveHearts(next);return next;
+    });
+  },[]);
+  var createList=useCallback(function(name){
+    var id="list_"+Date.now();
+    var newList={id:id,name:name.trim(),plants:[],created:Date.now(),updated:Date.now()};
+    setLists(function(prev){var next=[...prev,newList];saveLists(next);return next;});
+    return id;
+  },[]);
+  var deleteList=useCallback(function(id){
+    setLists(function(prev){var next=prev.filter(function(l){return l.id!==id;});saveLists(next);return next;});
+  },[]);
+  var renameList=useCallback(function(id,name){
+    setLists(function(prev){var next=prev.map(function(l){return l.id===id?Object.assign({},l,{name:name,updated:Date.now()}):l;});saveLists(next);return next;});
+  },[]);
+  var togglePlantInList=useCallback(function(latin,listId){
+    setLists(function(prev){
+      var next=prev.map(function(l){
+        if(l.id!==listId)return l;
+        var plants=l.plants.indexOf(latin)>=0?l.plants.filter(function(p){return p!==latin;}):[...l.plants,latin];
+        return Object.assign({},l,{plants:plants,updated:Date.now()});
+      });
+      saveLists(next);return next;
     });
   },[]);
 
@@ -140,7 +163,8 @@ function App(){
         h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
           [
             {key:"plants", label:"Explore"},
-            {key:"palette",label:"My List",count:hearts.length},
+            {key:"palette",label:"My Plants",count:hearts.length},
+            {key:"lists",  label:"Saved Lists",count:lists.length},
             {key:"bloom",  label:"Bloom"},
           ].map(function(tab){
             var active=activeTab===tab.key&&!searchActive;
@@ -221,11 +245,12 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
@@ -261,7 +286,7 @@ function App(){
             )
           ),
           h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true});})),
+            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),
@@ -275,7 +300,8 @@ function App(){
     isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Explore",   icon:"\ud83d\udd0d"},
-        {key:"palette", label:"My List",  icon:"\u2665", count:hearts.length},
+        {key:"palette", label:"My Plants", icon:"\u2665", count:hearts.length},
+        {key:"lists",   label:"Lists",    icon:"\u2630"},
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"search",  label:"Search",   icon:"\u2315"},
