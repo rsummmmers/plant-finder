@@ -59,6 +59,17 @@ function App(){
       saveLists(next);return next;
     });
   },[]);
+  var bulkAddToList=useCallback(function(latins,listId){
+    setLists(function(prev){
+      var next=prev.map(function(l){
+        if(l.id!==listId)return l;
+        var existing=new Set(l.plants);
+        latins.forEach(function(lat){existing.add(lat);});
+        return Object.assign({},l,{plants:Array.from(existing),updated:Date.now()});
+      });
+      saveLists(next);return next;
+    });
+  },[]);
 
   var _prevSearch=useRef("");
   useEffect(function(){
@@ -245,12 +256,12 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
