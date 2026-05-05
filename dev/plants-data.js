@@ -344,7 +344,7 @@ function applyFilters(plants,f,siteKey){
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.search){var q=f.search.toLowerCase();if(p.common.toLowerCase().indexOf(q)<0&&p.latin.toLowerCase().indexOf(q)<0)return false;}
-    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<1)return false;
+    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<3)return false;
     var cx=f.concerns||[];
     if(cx.indexOf("shadedby_norway")>=0&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
     if(cx.indexOf("shadedby_pine")>=0&&(p.whitePine==="avoid"||!p.whitePine))return false;
