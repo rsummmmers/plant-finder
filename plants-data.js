@@ -46,7 +46,7 @@ var PLANT_TYPES=[
  cats:{"Tree - Large":1,"Tree - Small":1,"Tall Canopy Tree":1,"Midstory Tree":1}},
 {key:"shrub",  label:"Shrubs", emoji:"🌿", tip:"Shrubs of all sizes — multi-stemmed woody plants",
  cats:{"Shrub":1,"Shrub \u2013 Large":1,"Shrub \u2013 Small":1,"Flowering Shrub":1,"Broadleaf Evergreen":1}},
-  {key:"perennial",label:"Perennials & Annuals",emoji:"\ud83c\udf3c",cats:{"Flowering Perennial":1,"Foliage Perennial":1,"Annual":1,"Flowering Annual":1}},
+  {key:"perennial",label:"Perennials & Annuals",emoji:"\ud83c\udf3c",cats:{"Flowering Perennial":1,"Foliage Perennial":1,"Annual":1,"Flowering Annual":1,"Biennial":1,"Bulb":1}},
   {key:"grass",   label:"Grasses & sedges", emoji:"\ud83c\udf3e",cats:{"Grass":1}},
   {key:"fern",    label:"Ferns",            emoji:"\ud83c\udf3f",cats:{"Fern":1}},
   {key:"ground",  label:"Groundcovers",     emoji:"\ud83c\udf40",cats:{"Groundcover":1}},
@@ -67,25 +67,31 @@ var CONCERN_OPTS=[
 
 var CAT_EMOJI={
   "Tree - Large":"\ud83c\udf33","Tree - Small":"\ud83c\udf32","Tall Canopy Tree":"\ud83c\udf33",
-  "Midstory Tree":"\ud83c\udf3f","Shrub":"\ud83c\udf3e","Shrub \u2013 Large":"\ud83c\udf3e",
+  "Midstory Tree":"\ud83c\udf3f","Tree":"\ud83c\udf33",
+  "Shrub":"\ud83c\udf3e","Shrub \u2013 Large":"\ud83c\udf3e",
   "Shrub \u2013 Small":"\ud83c\udf3e","Flowering Shrub":"\ud83c\udf38",
   "Flowering Perennial":"\ud83c\udf3c","Foliage Perennial":"\ud83c\udf43",
+  "Biennial":"\ud83c\udf31","Bulb":"\ud83c\udf37",
   "Groundcover":"\ud83c\udf3f","Grass":"\ud83c\udf3e","Fern":"\ud83c\udf3f",
   "Broadleaf Evergreen":"\ud83c\udf40","Vine":"\ud83c\udf3f","Annual":"\ud83c\udf3b",
 };
 var CAT_BG={
   "Tree - Large":"#e8f5e9","Tree - Small":"#e8f5e9","Tall Canopy Tree":"#e8f5e9",
-  "Midstory Tree":"#f1f8e9","Shrub":"#fff8e1","Shrub \u2013 Large":"#fff8e1",
+  "Midstory Tree":"#f1f8e9","Tree":"#e8f5e9",
+  "Shrub":"#fff8e1","Shrub \u2013 Large":"#fff8e1",
   "Shrub \u2013 Small":"#fff8e1","Flowering Shrub":"#fce4ec",
   "Flowering Perennial":"#fffde7","Foliage Perennial":"#e8f5e9",
+  "Biennial":"#f3e5f5","Bulb":"#fce4ec",
   "Groundcover":"#e8f5e9","Grass":"#f9fbe7","Fern":"#e0f2f1",
   "Broadleaf Evergreen":"#e8f5e9","Vine":"#f3e5f5","Annual":"#fff8e1",
 };
 var CAT_FG={
   "Tree - Large":"#2e7d32","Tree - Small":"#388e3c","Tall Canopy Tree":"#1b5e20",
-  "Midstory Tree":"#558b2f","Shrub":"#f57f17","Shrub \u2013 Large":"#e65100",
+  "Midstory Tree":"#558b2f","Tree":"#2e7d32",
+  "Shrub":"#f57f17","Shrub \u2013 Large":"#e65100",
   "Shrub \u2013 Small":"#f57f17","Flowering Shrub":"#c2185b",
   "Flowering Perennial":"#f9a825","Foliage Perennial":"#388e3c",
+  "Biennial":"#7b1fa2","Bulb":"#c2185b",
   "Groundcover":"#2e7d32","Grass":"#827717","Fern":"#00695c",
   "Broadleaf Evergreen":"#1b5e20","Vine":"#6a1b9a","Annual":"#f57f17",
 };
@@ -344,7 +350,7 @@ function applyFilters(plants,f,siteKey){
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.search){var q=f.search.toLowerCase();if(p.common.toLowerCase().indexOf(q)<0&&p.latin.toLowerCase().indexOf(q)<0)return false;}
-    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<1)return false;
+    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<3)return false;
     var cx=f.concerns||[];
     if(cx.indexOf("shadedby_norway")>=0&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
     if(cx.indexOf("shadedby_pine")>=0&&(p.whitePine==="avoid"||!p.whitePine))return false;
