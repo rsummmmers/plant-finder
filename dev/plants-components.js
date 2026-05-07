@@ -1851,11 +1851,17 @@ function SelectActionBar(props){
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
   function closePicker(){setPickerOpen(false);setNewListMode(false);setNewListName("");}
   return h(React.Fragment,null,
-    h("div",{style:{position:"fixed",bottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",left:0,right:0,zIndex:300,background:"#2e5339",color:"white",padding:"12px 20px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",boxShadow:"0 -2px 16px rgba(0,0,0,0.2)"}},
-      h("span",{style:{fontSize:14,fontWeight:600,flex:1}},count===0?"Tap plants to select…":count+" plant"+(count!==1?"s":"")+" selected"),
-      count>0&&h("button",{onClick:function(){setPickerOpen(true);},style:{background:"white",color:"#2e5339",border:"none",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700}},"Add to list…"),
-      count>0&&h("button",{onClick:onClearSelection,style:{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:8,padding:"8px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Clear"),
-      h("button",{onClick:onExit,style:{background:"none",color:"rgba(255,255,255,0.65)",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:"8px 4px"}},"Done")
+    h("div",{style:{position:"fixed",bottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",left:0,right:0,zIndex:300,background:"#2e5339",color:"white",padding:"12px 20px",boxShadow:"0 -2px 16px rgba(0,0,0,0.2)",display:"flex",flexDirection:"column",gap:isMobile?8:0}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+        h("span",{style:{fontSize:14,fontWeight:600,flex:1}},count===0?"Tap plants to select…":count+" plant"+(count!==1?"s":"")+" selected"),
+        !isMobile&&count>0&&h("button",{onClick:function(){setPickerOpen(true);},style:{background:"white",color:"#2e5339",border:"none",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700}},"Add to list…"),
+        !isMobile&&count>0&&h("button",{onClick:onClearSelection,style:{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:8,padding:"8px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Clear"),
+        h("button",{onClick:onExit,style:{background:"none",color:"rgba(255,255,255,0.65)",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:"8px 4px"}},"Done")
+      ),
+      isMobile&&count>0&&h("div",{style:{display:"flex",gap:8}},
+        h("button",{onClick:function(){setPickerOpen(true);},style:{flex:1,background:"white",color:"#2e5339",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700}},"Add to list…"),
+        h("button",{onClick:onClearSelection,style:{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Clear")
+      )
     ),
     pickerOpen&&h("div",{onClick:closePicker,style:{position:"fixed",inset:0,zIndex:601,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
       h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
