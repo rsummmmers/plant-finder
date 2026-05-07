@@ -701,8 +701,6 @@ function HabitatView(props){
     return plants.filter(function(p){
       if(removedLatins.indexOf(p.latin)>=0)return false;
       if(p.isCultivar)return false;
-      var s=p.status.toLowerCase().replace(/[-\s]/g,"");
-      if(s!=="native"&&s!=="nearnative")return false;
       return true;
     });
   },[plants,removedLatins]);
@@ -1400,7 +1398,7 @@ function FilterDrawer(props){
     :null;
 
   return h("div",null,
-    h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
+    isMobile&&h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:panelStyle},
       isMobile&&h("div",{style:handleStyle}),
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
