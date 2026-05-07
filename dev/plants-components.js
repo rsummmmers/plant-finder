@@ -1757,13 +1757,13 @@ function SavedListsView(props){
           )
         :(function(){
             var layers=[
-              {key:"tree",     title:"Trees",               emoji:"🌳"},
-              {key:"shrub",    title:"Shrubs",              emoji:"🌿"},
-              {key:"perennial",title:"Perennials & Annuals", emoji:"🌼"},
-              {key:"grass",    title:"Grasses & Sedges",    emoji:"🌾"},
-              {key:"fern",     title:"Ferns",               emoji:"🌿"},
-              {key:"ground",   title:"Groundcovers",        emoji:"🍀"},
-              {key:"vine",     title:"Vines",               emoji:"🌿"},
+              {key:"tree",     title:"Trees",               emoji:"🌳", color:"#2e7d32", bg:"#e8f5e9"},
+              {key:"shrub",    title:"Shrubs",              emoji:"🌿", color:"#e65100", bg:"#fff3e0"},
+              {key:"perennial",title:"Perennials & Annuals", emoji:"🌼", color:"#b8860b", bg:"#fffde7"},
+              {key:"grass",    title:"Grasses & Sedges",    emoji:"🌾", color:"#827717", bg:"#f9fbe7"},
+              {key:"fern",     title:"Ferns",               emoji:"🌿", color:"#00695c", bg:"#e0f2f1"},
+              {key:"ground",   title:"Groundcovers",        emoji:"🍀", color:"#388e3c", bg:"#e8f5e9"},
+              {key:"vine",     title:"Vines",               emoji:"🌿", color:"#6a1b9a", bg:"#f3e5f5"},
             ];
             var grouped={};
             layers.forEach(function(l){grouped[l.key]=[];});
@@ -1776,11 +1776,11 @@ function SavedListsView(props){
               layers.map(function(ld){
                 var plants=grouped[ld.key];
                 if(!plants||!plants.length)return null;
-                return h("div",{key:ld.key,style:{marginBottom:24}},
-                  h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-                    h("span",{style:{fontSize:20}},ld.emoji),
-                    h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:"#2e5339"}},ld.title),
-                    h("span",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},plants.length)
+                return h("div",{key:ld.key,style:{marginBottom:28,borderLeft:"3px solid "+ld.color,paddingLeft:14}},
+                  h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+                    h("span",{style:{fontSize:18,background:ld.bg,borderRadius:8,padding:"4px 7px",lineHeight:1}},ld.emoji),
+                    h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
+                    h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},plants.length)
                   ),
                   h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
                     plants.map(function(p){
