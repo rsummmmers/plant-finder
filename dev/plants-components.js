@@ -668,6 +668,7 @@ function SuggestPanel(props){
 function HabitatView(props){
   var plants=props.plants,concerns=props.concerns,heightCap=props.heightCap,
       patchSize=props.patchSize,hearts=props.hearts,onHeart=props.onHeart,onLoosen=props.onLoosen;
+  var isMobile=props.isMobile||false;
   var scale=patchSize/20;
   var HT={
     canopy:   Math.max(1, Math.round(2*scale)),
@@ -785,7 +786,7 @@ function HabitatView(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},ld.plants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}},
+        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
@@ -1615,7 +1616,7 @@ function PaletteView(props){
     )),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers})
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
