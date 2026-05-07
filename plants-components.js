@@ -1,4 +1,35 @@
 // Plant Palette Builder — UI components
+
+var TYPE_LAYERS=[
+  {key:"tree",     title:"Trees",                emoji:"🌳", color:"#2e7d32", bg:"#e8f5e9"},
+  {key:"shrub",    title:"Shrubs",               emoji:"🌿", color:"#e65100", bg:"#fff3e0"},
+  {key:"perennial",title:"Perennials & Annuals",  emoji:"🌼", color:"#b8860b", bg:"#fffde7"},
+  {key:"grass",    title:"Grasses & Sedges",      emoji:"🌾", color:"#827717", bg:"#f9fbe7"},
+  {key:"fern",     title:"Ferns",                emoji:"🌿", color:"#00695c", bg:"#e0f2f1"},
+  {key:"ground",   title:"Groundcovers",          emoji:"🍀", color:"#388e3c", bg:"#e8f5e9"},
+  {key:"vine",     title:"Vines",                emoji:"🌿", color:"#6a1b9a", bg:"#f3e5f5"},
+];
+
+function renderTypeSection(ld,plants,isMobile,cardFn){
+  return h("div",{key:ld.key,style:{marginBottom:28,borderLeft:"3px solid "+ld.color,paddingLeft:14}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+      h("span",{style:{fontSize:18,background:ld.bg,borderRadius:8,padding:"4px 7px",lineHeight:1}},ld.emoji),
+      h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
+      h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},plants.length)
+    ),
+    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+      plants.map(cardFn)
+    )
+  );
+}
+
+function groupByTypeLayer(plants){
+  var grouped={};
+  TYPE_LAYERS.forEach(function(l){grouped[l.key]=[];});
+  plants.forEach(function(p){var tk=p.typeKey;if(grouped[tk])grouped[tk].push(p);else grouped["perennial"].push(p);});
+  return grouped;
+}
+
 // ── Lightbox ──────────────────────────────────────────────────────────────
 function Lightbox(props){
   var photos=props.photos,startIdx=props.startIdx,onClose=props.onClose;
@@ -260,6 +291,7 @@ function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var gridMode=props.gridMode||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
+  var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
@@ -274,8 +306,8 @@ function PlantCard(props){
     var img=plant.image;
     var sunIc=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
     var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
-    return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
-      h("div",{onClick:function(){setOpen(true);},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
+    return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
+      h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
@@ -287,11 +319,18 @@ function PlantCard(props){
             h("line",{x1:"40",y1:"46",x2:"58",y2:"62",stroke:"#2e5339",strokeWidth:1.2})
           )
         ),
-        score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
-        h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
-        h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
+        selectMode
+          ? h("div",{onClick:function(ev){ev.stopPropagation();onToggleSelected(plant.latin);},style:{position:"absolute",bottom:8,left:8,width:26,height:26,borderRadius:5,background:isSelected?"#2e5339":"rgba(255,255,255,0.92)",border:"2px solid "+(isSelected?"#2e5339":"rgba(0,0,0,0.25)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}},
+              isSelected&&h("span",{style:{color:"white",fontSize:15,lineHeight:1,fontWeight:700}},"✓"))
+          : score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
+        selectMode
+          ? h("button",{onClick:function(ev){ev.stopPropagation();setOpen(true);},style:{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:13,color:"white",lineHeight:1,padding:"4px 8px",borderRadius:5,fontWeight:600,fontFamily:"inherit"}},"ⓘ")
+          : h(React.Fragment,null,
+              h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
+              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
+            )
       ),
-      h("div",{onClick:function(){setOpen(true);},style:{padding:"11px 13px 13px",cursor:"pointer",flex:1}},
+      h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{padding:"11px 13px 13px",cursor:"pointer",flex:1}},
         h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:15,lineHeight:1.3,marginBottom:2}},plant.common),
         h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
@@ -691,11 +730,11 @@ function HabitatView(props){
   var statusNote=hasNearNative?"natives + near-natives":"natives only";
 
   var layerDefs=[
-    {key:"trees",title:"Canopy trees",emoji:"\ud83c\udf33",plants:layers.trees},
-    {key:"woody",title:"Shrubs & understory",emoji:"\ud83c\udf3f",plants:layers.woody},
-    {key:"perennial",title:"Flowering perennials",emoji:"\ud83c\udf3c",plants:layers.perennial},
-    {key:"grass",title:"Grasses & sedges",emoji:"\ud83c\udf3e",plants:layers.grass},
-    {key:"ground",title:"Groundcovers",emoji:"\ud83c\udf40",plants:layers.ground},
+    {key:"trees",    title:"Canopy trees",         emoji:"\ud83c\udf33", color:"#2e7d32", bg:"#e8f5e9", plants:layers.trees},
+    {key:"woody",    title:"Shrubs & understory",  emoji:"\ud83c\udf3f", color:"#e65100", bg:"#fff3e0", plants:layers.woody},
+    {key:"perennial",title:"Flowering perennials", emoji:"\ud83c\udf3c", color:"#b8860b", bg:"#fffde7", plants:layers.perennial},
+    {key:"grass",    title:"Grasses & sedges",     emoji:"\ud83c\udf3e", color:"#827717", bg:"#f9fbe7", plants:layers.grass},
+    {key:"ground",   title:"Groundcovers",         emoji:"\ud83c\udf40", color:"#388e3c", bg:"#e8f5e9", plants:layers.ground},
   ];
 
   return h("div",null,
@@ -729,11 +768,11 @@ function HabitatView(props){
     })(),
     layerDefs.map(function(ld){
       if(!ld.plants.length)return null;
-      return h("div",{key:ld.key,style:{marginBottom:20}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-          h("span",{style:{fontSize:22}},ld.emoji),
-          h("span",{style:{fontFamily:"'Literata',serif",fontSize:22,color:"#2e5339"}},ld.title),
-          h("span",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},ld.plants.length)
+      return h("div",{key:ld.key,style:{marginBottom:28,borderLeft:"3px solid "+ld.color,paddingLeft:14}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          h("span",{style:{fontSize:18,background:ld.bg,borderRadius:8,padding:"4px 7px",lineHeight:1}},ld.emoji),
+          h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
+          h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},ld.plants.length)
         ),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}},
         ld.plants.map(function(p){
@@ -1594,11 +1633,20 @@ function PaletteView(props){
           h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
         )
     ),
-    // Plant cards
-    h("div",{ref:resultsRef,style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-      results.map(function(p){
-        return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
-      })
+    // Plant cards — grouped by type
+    h("div",{ref:resultsRef,style:{marginTop:4}},
+      (function(){
+        var grouped=groupByTypeLayer(results);
+        return h("div",null,
+          TYPE_LAYERS.map(function(ld){
+            var plants=grouped[ld.key];
+            if(!plants||!plants.length)return null;
+            return renderTypeSection(ld,plants,isMobile,function(p){
+              return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+            });
+          })
+        );
+      })()
     ),
     // Bulk "Save to list" picker modal
     bulkPickerOpen&&h("div",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
@@ -1747,11 +1795,18 @@ function SavedListsView(props){
             h("div",{style:{fontStyle:"italic",marginBottom:16}},"This list is empty."),
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
-        :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-            openPlants.map(function(p){
-              return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
-            })
-          )
+        :(function(){
+            var grouped=groupByTypeLayer(openPlants);
+            return h("div",null,
+              TYPE_LAYERS.map(function(ld){
+                var plants=grouped[ld.key];
+                if(!plants||!plants.length)return null;
+                return renderTypeSection(ld,plants,isMobile,function(p){
+                  return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                });
+              })
+            );
+          })()
     );
   }
 
@@ -1795,6 +1850,72 @@ function SavedListsView(props){
           h("span",{style:{color:"#ccc",fontSize:20}},"›")
         );
       })
+    )
+  );
+}
+
+// ── SelectActionBar ───────────────────────────────────────────────────────────
+function SelectActionBar(props){
+  var count=props.count,selectedLatins=props.selectedLatins||[];
+  var lists=props.lists||[],onCreateList=props.onCreateList||function(){};
+  var onBulkAdd=props.onBulkAdd||function(){};
+  var onClearSelection=props.onClearSelection||function(){};
+  var onExit=props.onExit||function(){};
+  var isMobile=props.isMobile||false;
+  var _po=useState(false),pickerOpen=_po[0],setPickerOpen=_po[1];
+  var _nm=useState(false),newListMode=_nm[0],setNewListMode=_nm[1];
+  var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
+  function closePicker(){setPickerOpen(false);setNewListMode(false);setNewListName("");}
+  return h(React.Fragment,null,
+    h("div",{style:{position:"fixed",bottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",left:0,right:0,zIndex:300,background:"#2e5339",color:"white",padding:"12px 20px",boxShadow:"0 -2px 16px rgba(0,0,0,0.2)",display:"flex",flexDirection:"column",gap:isMobile?8:0}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+        h("span",{style:{fontSize:14,fontWeight:600,flex:1}},count===0?"Tap plants to select…":count+" plant"+(count!==1?"s":"")+" selected"),
+        !isMobile&&count>0&&h("button",{onClick:function(){setPickerOpen(true);},style:{background:"white",color:"#2e5339",border:"none",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700}},"Add to list…"),
+        !isMobile&&count>0&&h("button",{onClick:onClearSelection,style:{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:8,padding:"8px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Clear"),
+        h("button",{onClick:onExit,style:{background:"none",color:"rgba(255,255,255,0.65)",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,padding:"8px 4px"}},"Done")
+      ),
+      isMobile&&count>0&&h("div",{style:{display:"flex",gap:8}},
+        h("button",{onClick:function(){setPickerOpen(true);},style:{flex:1,background:"white",color:"#2e5339",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700}},"Add to list…"),
+        h("button",{onClick:onClearSelection,style:{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Clear")
+      )
+    ),
+    pickerOpen&&h("div",{onClick:closePicker,style:{position:"fixed",inset:0,zIndex:601,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+      h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
+        h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("div",null,
+            h("div",{style:{fontWeight:700,fontSize:15}},"Add "+count+" plant"+(count!==1?"s":"")+" to list"),
+            h("div",{style:{fontSize:12,color:"#999",marginTop:2}},"Merges with any existing plants in the list")
+          ),
+          h("button",{onClick:closePicker,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+        ),
+        lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
+        lists.map(function(list){
+          return h("div",{key:list.id,onClick:function(){onBulkAdd(selectedLatins,list.id);closePicker();onExit();},
+            style:{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",cursor:"pointer",background:"white",borderBottom:"1px solid #f5f5f5"}},
+            h("span",{style:{fontSize:14,flex:1}},list.name),
+            h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length+" plants")
+          );
+        }),
+        newListMode
+          ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
+              h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
+                onKeyDown:function(ev){
+                  if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onBulkAdd(selectedLatins,id);closePicker();onExit();}
+                  if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
+                },
+                placeholder:"List name…",
+                style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
+              }),
+              h("div",{style:{display:"flex",gap:6,marginTop:8}},
+                h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onBulkAdd(selectedLatins,id);closePicker();onExit();}},
+                  style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add all"),
+                h("button",{onClick:function(){setNewListMode(false);setNewListName("");},
+                  style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+              )
+            )
+          :h("button",{onClick:function(){setNewListMode(true);},
+              style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
+      )
     )
   );
 }
