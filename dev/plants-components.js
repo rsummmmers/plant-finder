@@ -1,5 +1,15 @@
 // Plant Palette Builder — UI components
 
+var STATUS_LABEL_TIPS={
+  "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
+  "Near-Native":     "Native to adjacent regions with documented ecological relationships in MA — close ecological value to natives",
+  "Native Cultivar": "A selected variety of a MA native — may have reduced wildlife value compared to straight species",
+  "Safe Non-Native": "Not invasive, but has limited relationships with native wildlife",
+  "Invasive":        "Invasive — do not plant; spreads aggressively and displaces native ecosystems",
+  "Caution":         "Invasive in neighboring states — use with caution in MA",
+  "Hybrid":          "Native/non-native hybrid",
+};
+
 var TYPE_LAYERS=[
   {key:"tree",     title:"Trees",                emoji:"🌳", color:"#2e7d32", bg:"#e8f5e9"},
   {key:"shrub",    title:"Shrubs",               emoji:"🌿", color:"#e65100", bg:"#fff3e0"},
@@ -334,10 +344,10 @@ function PlantCard(props){
         h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:15,lineHeight:1.3,marginBottom:2}},plant.common),
         h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
-          h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold"}},ss.label),
+          h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",cursor:"help"}},ss.label),
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
-          cats>0&&h("span",{style:{fontSize:10,color:icolor,fontWeight:"bold"}},"🦋"+ilabel)
+          cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
         )
       ),
       open&&h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.65)",overflowY:"auto",padding:"16px 16px 80px"}},
@@ -372,7 +382,10 @@ function PlantCard(props){
                   h(SeedSection,{plant:plant,defaultOpen:false}),
                   h(EdibleSection,{plant:plant,edibleOnly:edibleOnly,medicinalOnly:medicinalOnly}),
                   plant.hasScores&&h("div",{style:{marginTop:14}},
-                    h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6}},"Suitability across zones"),
+                    h("span",{className:"tip-wrap"},
+                      h("div",{style:{fontSize:11,letterSpacing:1,textTransform:"uppercase",color:"#aaa",marginBottom:6,cursor:"help"}},"Suitability across zones ⓘ"),
+                      h("span",{className:"tip"},"How well this plant fits each site condition. Best Fit = thrives there. OK = tolerates it. Don't Use = poor match, likely to struggle or fail.")
+                    ),
                     h("div",{style:{display:"flex",flexDirection:"column",gap:3}},
                       MICROZONES.map(function(z){
                         var s=plant.scores[z.key]||0;
