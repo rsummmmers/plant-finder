@@ -1755,11 +1755,42 @@ function SavedListsView(props){
             h("div",{style:{fontStyle:"italic",marginBottom:16}},"This list is empty."),
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
-        :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-            openPlants.map(function(p){
-              return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
-            })
-          )
+        :(function(){
+            var layers=[
+              {key:"tree",     title:"Trees",               emoji:"🌳"},
+              {key:"shrub",    title:"Shrubs",              emoji:"🌿"},
+              {key:"perennial",title:"Perennials & Annuals", emoji:"🌼"},
+              {key:"grass",    title:"Grasses & Sedges",    emoji:"🌾"},
+              {key:"fern",     title:"Ferns",               emoji:"🌿"},
+              {key:"ground",   title:"Groundcovers",        emoji:"🍀"},
+              {key:"vine",     title:"Vines",               emoji:"🌿"},
+            ];
+            var grouped={};
+            layers.forEach(function(l){grouped[l.key]=[];});
+            openPlants.forEach(function(p){
+              var tk=p.typeKey;
+              if(grouped[tk])grouped[tk].push(p);
+              else grouped["perennial"].push(p);
+            });
+            return h("div",null,
+              layers.map(function(ld){
+                var plants=grouped[ld.key];
+                if(!plants||!plants.length)return null;
+                return h("div",{key:ld.key,style:{marginBottom:24}},
+                  h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+                    h("span",{style:{fontSize:20}},ld.emoji),
+                    h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:"#2e5339"}},ld.title),
+                    h("span",{style:{background:"#f0ede4",borderRadius:20,padding:"2px 10px",fontSize:13,color:"#888"}},plants.length)
+                  ),
+                  h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+                    plants.map(function(p){
+                      return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                    })
+                  )
+                );
+              })
+            );
+          })()
     );
   }
 
