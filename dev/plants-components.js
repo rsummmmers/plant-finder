@@ -289,7 +289,7 @@ function PlantCard(props){
           )
         ),
         selectMode
-          ? h("div",{onClick:function(ev){ev.stopPropagation();onToggleSelected(plant.latin);},style:{position:"absolute",top:8,left:8,width:26,height:26,borderRadius:5,background:isSelected?"#2e5339":"rgba(255,255,255,0.92)",border:"2px solid "+(isSelected?"#2e5339":"rgba(0,0,0,0.25)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}},
+          ? h("div",{onClick:function(ev){ev.stopPropagation();onToggleSelected(plant.latin);},style:{position:"absolute",bottom:8,left:8,width:26,height:26,borderRadius:5,background:isSelected?"#2e5339":"rgba(255,255,255,0.92)",border:"2px solid "+(isSelected?"#2e5339":"rgba(0,0,0,0.25)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}},
               isSelected&&h("span",{style:{color:"white",fontSize:15,lineHeight:1,fontWeight:700}},"✓"))
           : score!==null&&score>0&&h("div",{style:{position:"absolute",top:8,left:8,background:SCORE_COLORS[score],color:score>=3?"white":"#333",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:"bold"}},SCORE_LABELS[score]),
         selectMode
