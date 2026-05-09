@@ -1056,19 +1056,19 @@ function BloomCalendar(props){
         })
       )
     ):
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px",overflowX:"auto"}},
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("table",{style:{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}},
         h("thead",null,
           h("tr",null,
-            h("th",{style:{textAlign:"left",fontSize:11,color:"rgba(255,255,255,0.4)",padding:"4px 8px 4px 0",width:150,fontWeight:500}},
+            h("th",{style:{textAlign:"left",fontSize:11,color:"rgba(255,255,255,0.4)",padding:"4px 8px 4px 0",width:150,fontWeight:500,position:"sticky",top:140,background:"#3a6b47",zIndex:5}},
               selMonth!==null?"Blooming in "+MONTHS[selMonth]:"Plant"
             ),
             MONTHS_SHORT.map(function(m,i){
               var active=selMonth===i;
               var hasCount=monthCounts[i]>0;
               return h("th",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},
-                style:{padding:"2px 1px",textAlign:"center",cursor:"pointer",verticalAlign:"bottom"}},
+                style:{padding:"2px 1px",textAlign:"center",cursor:"pointer",verticalAlign:"bottom",position:"sticky",top:140,background:"#3a6b47",zIndex:5}},
                 h("div",{style:{
                   display:"flex",flexDirection:"column",alignItems:"center",gap:2,
                   borderRadius:6,padding:"4px 2px",
