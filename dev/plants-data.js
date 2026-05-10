@@ -167,6 +167,26 @@ function GoBotanyLink({ latinName }) {
     style: { fontSize: "0.75rem", color: "#2e5339", textDecoration: "none", whiteSpace: "nowrap" }
   }, "Native Plant Trust ↗");
 }
+// ── VB nursery data ───────────────────────────────────────────────────────
+function loadVBData(){
+  return fetch("./nursery_availability.csv")
+    .then(function(r){if(!r.ok)throw new Error("no vb csv");return r.text();})
+    .then(function(text){
+      var lines=text.split(/\r?\n/);
+      var map={};
+      for(var i=1;i<lines.length;i++){
+        var line=lines[i].trim();
+        if(!line)continue;
+        var parts=line.split(",");
+        if(parts.length<3)continue;
+        var latin=parts[0].trim();
+        map[latin]={vb:parts[1].trim()==="Yes",inStock:parts[2].trim()==="Yes",qty:parseInt(parts[3])||0};
+      }
+      return map;
+    })
+    .catch(function(){return {};});
+}
+
 // ── localStorage ──────────────────────────────────────────────────────────
 var LS_KEY="ppb_hearts_v2";
 function loadHearts(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(err){return[];}}

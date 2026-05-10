@@ -29,6 +29,9 @@ function App(){
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
   var _selm=useState(false),selectMode=_selm[0],setSelectMode=_selm[1];
   var _sell=useState([]),selectedLatins=_sell[0],setSelectedLatins=_sell[1];
+  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="ecoscape"){sessionStorage.setItem("ppb_pro","1");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
+  var _vbd=useState({}),vbData=_vbd[0],setVbData=_vbd[1];
+  var _vbf=useState(false),vbFilter=_vbf[0],setVbFilter=_vbf[1];
   var searchRef=useRef(null);
 
   function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
@@ -100,6 +103,8 @@ function App(){
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
+  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbData(data);});}},[]);
+
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
   //   The app loads plants.csv first (fast). If missing, falls back to live Sheet fetch.
@@ -124,7 +129,11 @@ function App(){
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
   var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
   var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);
-  var results=useMemo(function(){return sortPlants(filtered,sortBy,zone);},[filtered,sortBy,zone]);
+  var results=useMemo(function(){
+    var sorted=sortPlants(filtered,sortBy,zone);
+    if(!proMode||!vbFilter)return sorted;
+    return sorted.filter(function(p){var v=vbData[p.latin];if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});
+  },[filtered,sortBy,zone,proMode,vbFilter,vbData]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
 
@@ -301,6 +310,13 @@ function App(){
               !selectMode&&[{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
                 return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
               }),
+              proMode&&Object.keys(vbData).length>0&&h("button",{
+                onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":false);},
+                style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
+                  border:"1px solid "+(vbFilter?"#2e7d32":"#e0ddd5"),
+                  background:vbFilter==="instock"?"#2e7d32":vbFilter==="available"?"#e8f5e9":"transparent",
+                  color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
+                vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
               selectMode&&h("button",{onClick:function(){setSelectedLatins(results.map(function(p){return p.latin;}));},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid #e0ddd5",background:"transparent",color:"#666"}},
                 "Select all ("+results.length+")"),
@@ -314,7 +330,7 @@ function App(){
           ),
           selectMode&&h(SelectActionBar,{count:selectedLatins.length,selectedLatins:selectedLatins,lists:lists,onCreateList:createList,onBulkAdd:bulkAddToList,onClearSelection:function(){setSelectedLatins([]);},onExit:exitSelectMode,isMobile:isMobile}),
           h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected});})),
+            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:proMode?(vbData[p.latin]||null):null});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),

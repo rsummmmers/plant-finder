@@ -302,6 +302,7 @@ function PlantCard(props){
   var gridMode=props.gridMode||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
+  var vbInfo=props.vbInfo||null;
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
@@ -345,6 +346,7 @@ function PlantCard(props){
         h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
           h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",cursor:"help"}},ss.label),
+          vbInfo&&vbInfo.vb&&h("span",{title:vbInfo.inStock?"In stock at Van Berkum ("+vbInfo.qty+" available)":"Van Berkum — currently out of stock",style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700,cursor:"help",flexShrink:0,letterSpacing:"0.5px"}},"VB"),
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
