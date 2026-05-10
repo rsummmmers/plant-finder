@@ -318,13 +318,11 @@ function App(){
                   background:vbFilter==="instock"?"#2e7d32":vbFilter==="available"?"#e8f5e9":"transparent",
                   color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
                 vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
-              proMode&&Object.keys(vbData).length>0&&h("button",{
-                onClick:function(){setShowVbBadges(function(v){return !v;});},
+              proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
+                onClick:function(){setShowVbBadges(false);},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
-                  border:"1px solid "+(showVbBadges?"#2e7d32":"#e0ddd5"),
-                  background:showVbBadges?"#e8f5e9":"transparent",
-                  color:showVbBadges?"#2e7d32":"#aaa"}},
-                "VB badges: "+(showVbBadges?"on":"off")),
+                  border:"1px solid #2e7d32",background:"#e8f5e9",color:"#2e7d32"}},
+                "Hide VB badges"),
               selectMode&&h("button",{onClick:function(){setSelectedLatins(results.map(function(p){return p.latin;}));},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid #e0ddd5",background:"transparent",color:"#666"}},
                 "Select all ("+results.length+")"),
