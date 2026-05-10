@@ -169,22 +169,27 @@ function GoBotanyLink({ latinName }) {
 }
 // ── VB nursery data ───────────────────────────────────────────────────────
 function loadVBData(){
-  return fetch("./nursery_availability.csv")
-    .then(function(r){if(!r.ok)throw new Error("no vb csv");return r.text();})
-    .then(function(text){
-      var lines=text.split(/\r?\n/);
-      var map={};
-      for(var i=1;i<lines.length;i++){
-        var line=lines[i].trim();
-        if(!line)continue;
-        var parts=line.split(",");
-        if(parts.length<3)continue;
-        var latin=parts[0].trim();
-        map[latin]={vb:parts[1].trim()==="Yes",inStock:parts[2].trim()==="Yes",qty:parseInt(parts[3])||0};
-      }
-      return map;
-    })
-    .catch(function(){return {};});
+  return Promise.all([
+    fetch("./nursery_availability.csv").then(function(r){if(!r.ok)throw new Error("no vb csv");return r.text();}),
+    fetch("./nursery_crosswalk.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";})
+  ]).then(function(results){
+    var availText=results[0],cwText=results[1];
+    var cwMap={};
+    cwText.split(/\r?\n/).slice(1).forEach(function(line){
+      if(!line.trim())return;
+      var parts=line.split(",");
+      if(parts.length>=2)cwMap[parts[0].trim()]=parts[1].trim();
+    });
+    var map={};
+    availText.split(/\r?\n/).slice(1).forEach(function(line){
+      if(!line.trim())return;
+      var parts=line.split(",");
+      if(parts.length<3)return;
+      var latin=parts[0].trim();
+      map[latin]={vb:parts[1].trim()==="Yes",inStock:parts[2].trim()==="Yes",qty:parseInt(parts[3])||0,vbName:cwMap[latin]||latin};
+    });
+    return map;
+  }).catch(function(){return {};});
 }
 
 // ── localStorage ──────────────────────────────────────────────────────────
