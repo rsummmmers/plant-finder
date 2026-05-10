@@ -1060,7 +1060,7 @@ function BloomCalendar(props){
     ):
     h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
-      h("div",{style:{maxHeight:"calc(100vh - 340px)",overflowY:"auto",overflowX:"hidden"}},
+      h("div",{style:{maxHeight:"calc(100vh - 340px)",overflowY:"auto",overflowX:"clip"}},
       h("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,tableLayout:"fixed"}},
         h("thead",null,
           h("tr",null,
