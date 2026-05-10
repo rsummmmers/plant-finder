@@ -302,6 +302,7 @@ function PlantCard(props){
   var gridMode=props.gridMode||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
+  var vbInfo=props.vbInfo||null;
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
@@ -345,6 +346,7 @@ function PlantCard(props){
         h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
           h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",cursor:"help"}},ss.label),
+          vbInfo&&vbInfo.vb&&h("span",{title:vbInfo.inStock?"In stock at Van Berkum ("+vbInfo.qty+" available)":"Van Berkum — currently out of stock",style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700,cursor:"help",flexShrink:0,letterSpacing:"0.5px"}},"VB"),
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
@@ -1056,19 +1058,20 @@ function BloomCalendar(props){
         })
       )
     ):
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px",overflowX:"auto"}},
+    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
-      h("table",{style:{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}},
+      h("div",{style:{maxHeight:"calc(100vh - 340px)",overflowY:"auto",overflowX:"clip"}},
+      h("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,tableLayout:"fixed"}},
         h("thead",null,
           h("tr",null,
-            h("th",{style:{textAlign:"left",fontSize:11,color:"rgba(255,255,255,0.4)",padding:"4px 8px 4px 0",width:150,fontWeight:500}},
+            h("th",{style:{textAlign:"left",fontSize:11,color:"rgba(255,255,255,0.4)",padding:"4px 8px 4px 0",width:150,fontWeight:500,position:"sticky",top:0,background:"#3a6b47",zIndex:5}},
               selMonth!==null?"Blooming in "+MONTHS[selMonth]:"Plant"
             ),
             MONTHS_SHORT.map(function(m,i){
               var active=selMonth===i;
               var hasCount=monthCounts[i]>0;
               return h("th",{key:i,onClick:function(){setSelMonth(selMonth===i?null:i);},
-                style:{padding:"2px 1px",textAlign:"center",cursor:"pointer",verticalAlign:"bottom"}},
+                style:{padding:"2px 1px",textAlign:"center",cursor:"pointer",verticalAlign:"bottom",position:"sticky",top:0,background:"#3a6b47",zIndex:5}},
                 h("div",{style:{
                   display:"flex",flexDirection:"column",alignItems:"center",gap:2,
                   borderRadius:6,padding:"4px 2px",
@@ -1106,6 +1109,7 @@ function BloomCalendar(props){
           })
         )
       )
+      ) // end scroll wrapper
     ), // end desktop table
     // Detail panel (desktop only)
     h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
@@ -1531,6 +1535,7 @@ function PaletteView(props){
   var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var isMobile=props.isMobile||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){},onBulkAdd=props.onBulkAdd||function(){};
+  var proMode=props.proMode||false,vbData=props.vbData||{};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1571,6 +1576,24 @@ function PaletteView(props){
     return base.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
   },[hearted,search,typeFilter]);
 
+  function exportVBOrder(){
+    var today=new Date();
+    var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+    var rows=[["vb_name","latin_name","in_stock","qty_available"]];
+    hearted.forEach(function(p){
+      var v=vbData[p.latin];
+      if(!v||!v.vb)return;
+      rows.push([v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+    });
+    var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+    var blob=new Blob([csv],{type:"text/csv"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;a.download="vb_order_"+dateStr+".csv";
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
+
   function copyLink(){
     var p=new URLSearchParams();
     p.set("view","palette");
@@ -1600,6 +1623,7 @@ function PaletteView(props){
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
         hearted.length>0&&h("button",{onClick:function(){setBulkPickerOpen(true);},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udccc Save to list\u2026"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
+        proMode&&hearted.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:exportVBOrder,style:btn("#e8f5e9","#2e7d32",{fontSize:13,padding:"6px 12px",border:"1px solid #c8e6c9"})},"\ud83d\udce6 Export VB order"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
