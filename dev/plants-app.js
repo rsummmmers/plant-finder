@@ -311,18 +311,20 @@ function App(){
               !selectMode&&[{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
                 return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
               }),
-              proMode&&Object.keys(vbData).length>0&&h("button",{
+              proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
                 onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":false);},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
                   border:"1px solid "+(vbFilter?"#2e7d32":"#e0ddd5"),
                   background:vbFilter==="instock"?"#2e7d32":vbFilter==="available"?"#e8f5e9":"transparent",
                   color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
                 vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
-              proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
-                onClick:function(){setShowVbBadges(false);},
+              proMode&&Object.keys(vbData).length>0&&h("button",{
+                onClick:function(){setShowVbBadges(function(v){return !v;});},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
-                  border:"1px solid #2e7d32",background:"#e8f5e9",color:"#2e7d32"}},
-                "Hide VB badges"),
+                  border:"1px solid "+(showVbBadges?"#2e7d32":"#e0ddd5"),
+                  background:showVbBadges?"#e8f5e9":"transparent",
+                  color:showVbBadges?"#2e7d32":"#aaa"}},
+                "VB badges: "+(showVbBadges?"on":"off")),
               selectMode&&h("button",{onClick:function(){setSelectedLatins(results.map(function(p){return p.latin;}));},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid #e0ddd5",background:"transparent",color:"#666"}},
                 "Select all ("+results.length+")"),
