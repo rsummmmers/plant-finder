@@ -112,11 +112,11 @@ function App(){
   useEffect(function(){
     fetch("./plants.csv")
       .then(function(r){if(!r.ok)throw new Error("no local csv");return r.text();})
-      .then(function(text){setPlants(dedupePlants(parseCSV(text).map(rowToPlant).filter(Boolean)));setLoading(false);})
+      .then(function(text){setPlants(dedupePlants(applyInheritance(parseCSV(text).map(rowToPlant).filter(Boolean))));setLoading(false);})
       .catch(function(){
         fetch(SHEET_URL)
           .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text();})
-          .then(function(text){setPlants(dedupePlants(parseCSV(text).map(rowToPlant).filter(Boolean)));setLoading(false);})
+          .then(function(text){setPlants(dedupePlants(applyInheritance(parseCSV(text).map(rowToPlant).filter(Boolean))));setLoading(false);})
           .catch(function(err){setError(err.message);setLoading(false);});
       });
   },[]);
