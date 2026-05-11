@@ -163,6 +163,9 @@ function baseSpecies(latin){
   var n=parts[1]==="x"?3:2;
   return parts.slice(0,n).join(" ");
 }
+function vbLookup(vbData,latin){
+  return vbData[latin]||vbData[baseSpecies(latin)]||null;
+}
 
 function applyInheritance(plants){
   var speciesMap={};
