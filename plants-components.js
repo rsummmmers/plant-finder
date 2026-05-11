@@ -1596,7 +1596,7 @@ function PaletteView(props){
 
   var results=useMemo(function(){
     var base=hearted;
-    if(proMode&&vbFilter){base=base.filter(function(p){var v=vbData[p.latin];if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});}
+    if(proMode&&vbFilter){base=base.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});}
     if(typeFilter)base=base.filter(function(p){return p.typeKey===typeFilter;});
     if(!search.trim())return base;
     var q=search.toLowerCase();
@@ -1608,7 +1608,7 @@ function PaletteView(props){
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
     var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_available","vb_price","client_price"]];
     hearted.forEach(function(p){
-      var v=vbData[p.latin];
+      var v=vbLookup(vbData,p.latin);
       if(!v||!v.vb)return;
       var clientPrice=v.price?(Math.round(v.price*1.4*100)/100).toFixed(2):"";
       rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",v.qty,v.price||"",clientPrice]);
@@ -1651,7 +1651,7 @@ function PaletteView(props){
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
         hearted.length>0&&h("button",{onClick:function(){setBulkPickerOpen(true);},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udccc Save to list\u2026"),
         h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
-        proMode&&hearted.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:exportVBOrder,style:btn("#e8f5e9","#2e7d32",{fontSize:13,padding:"6px 12px",border:"1px solid #c8e6c9"})},"\ud83d\udce6 Export VB order"),
+        proMode&&hearted.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:exportVBOrder,style:btn("#e8f5e9","#2e7d32",{fontSize:13,padding:"6px 12px",border:"1px solid #c8e6c9"})},"\ud83d\udce6 Export VB order"),
         h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
@@ -1792,7 +1792,7 @@ function HomeView(props){
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
 function ProcurementView(props){
-  var list=props.list,plants=props.plants,vbData=props.vbData,onExport=props.onExport;
+  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(180),delivery=_del[0],setDelivery=_del[1];
@@ -1812,7 +1812,7 @@ function ProcurementView(props){
   });
 
   var subtotal=plants.reduce(function(sum,p){
-    var v=vbData[p.latin],qty=qtys[p.latin]||0;
+    var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
     if(!v||!v.price||!qty)return sum;
     return sum+qty*(Math.round(v.price*1.4*100)/100);
   },0);
@@ -1824,7 +1824,7 @@ function ProcurementView(props){
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
     var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_ordered","vb_price","client_price","line_total"]];
     sorted.forEach(function(p){
-      var v=vbData[p.latin],qty=qtys[p.latin]||0;
+      var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
       if(!v||!v.vb||!qty)return;
       var cp=Math.round(v.price*1.4*100)/100;
       rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",qty,v.price,cp.toFixed(2),(qty*cp).toFixed(2)]);
@@ -1857,7 +1857,7 @@ function ProcurementView(props){
       )
     ),
     sorted.map(function(p){
-      var v=vbData[p.latin],hasVB=v&&v.vb,inStock=v&&v.inStock;
+      var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
       var clientPrice=v&&v.price?Math.round(v.price*1.4*100)/100:null;
       var qty=qtys[p.latin]||0;
       var lineTotal=qty&&clientPrice?qty*clientPrice:0;
@@ -1874,11 +1874,14 @@ function ProcurementView(props){
               )
             :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
         ),
-        hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}},
-          h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
-            onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
-            style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
-          lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
+          hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+            h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
+              onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
+              style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
+            lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
+          ),
+          h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
         )
       );
     })
@@ -1912,7 +1915,7 @@ function SavedListsView(props){
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
     var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_available","vb_price","client_price"]];
     listPlants.forEach(function(p){
-      var v=vbData[p.latin];
+      var v=vbLookup(vbData,p.latin);
       if(!v||!v.vb)return;
       var clientPrice=v.price?(Math.round(v.price*1.4*100)/100).toFixed(2):"";
       rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",v.qty,v.price||"",clientPrice]);
@@ -1965,7 +1968,7 @@ function SavedListsView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}},
         h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
         h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
-        !proMode&&openPlants.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
+        !proMode&&openPlants.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
         h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
       ),
       h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
@@ -1976,7 +1979,7 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);}})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               return h("div",null,
@@ -1984,7 +1987,7 @@ function SavedListsView(props){
                   var plants=grouped[ld.key];
                   if(!plants||!plants.length)return null;
                   return renderTypeSection(ld,plants,isMobile,function(p){
-                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,onRemove:function(){onToggleInList(p.latin,openList.id);}});
                   });
                 })
               );
