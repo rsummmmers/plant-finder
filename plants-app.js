@@ -124,8 +124,7 @@ function App(){
   var inferredSun=useMemo(function(){var z=MICROZONES.find(function(z){return z.key===zone;});return z?z.impliesSun||null:null;},[zone]);
   var effectiveSun=inferredSun||filters.sun;
   var searchActive=search.trim().length>0;
-  var allStatuses=["native","nearnative","cultivar","nonnative","invasive","caution"];
-  var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,statuses:searchActive?allStatuses:filters.statuses,search:search});
+  var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,search:search});
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
   var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
