@@ -1991,7 +1991,7 @@ function ProcurementView(props){
                 v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size),
                 perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+(trayCount?" /plug":" ea"),
                   h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
-                traysNeeded&&h("span",{style:{fontSize:11,color:"#888"}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?", "+extraPlugs+" extra":""))
+                traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":""))
               )
             :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
         ),
