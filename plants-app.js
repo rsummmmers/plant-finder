@@ -29,10 +29,12 @@ function App(){
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
   var _selm=useState(false),selectMode=_selm[0],setSelectMode=_selm[1];
   var _sell=useState([]),selectedLatins=_sell[0],setSelectedLatins=_sell[1];
-  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="ecoscape"){sessionStorage.setItem("ppb_pro","1");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
+  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="exit"){sessionStorage.removeItem("ppb_pro");sessionStorage.removeItem("ppb_vb_hidden");return false;}if(p.get("key")==="procure"){sessionStorage.setItem("ppb_pro","1");sessionStorage.removeItem("ppb_vb_hidden");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
   var _vbd=useState({}),vbData=_vbd[0],setVbData=_vbd[1];
   var _vbf=useState(false),vbFilter=_vbf[0],setVbFilter=_vbf[1];
-  var _svb=useState(true),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
+  var _svb=useState(function(){return sessionStorage.getItem("ppb_vb_hidden")!=="1";}),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
+  function hideVbBadges(){sessionStorage.setItem("ppb_vb_hidden","1");setShowVbBadges(false);}
+  var _vbw=useState(""),vbWeekOf=_vbw[0],setVbWeekOf=_vbw[1];
   var searchRef=useRef(null);
 
   function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
@@ -104,7 +106,7 @@ function App(){
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
-  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbData(data);});}},[]);
+  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});}},[]);
 
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
@@ -220,17 +222,21 @@ function App(){
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap"}
             },"Seeds"),
-            h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
-            h("button",{key:"search",onClick:function(){
-              setDrawerOpen(false);
-              if(searchActive){setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-            },
-              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:searchActive?700:400,
-                color:searchActive?"white":"rgba(255,255,255,0.55)",
-                background:"none",border:"none",
-                cursor:"pointer",whiteSpace:"nowrap"}
-            },"Search")
+            h("div",{key:"searchbox",style:{marginLeft:"auto",display:"flex",alignItems:"center",padding:"6px 0"}},
+              h("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
+                h("input",{ref:searchRef,value:search,
+                  onChange:function(ev){setSearch(ev.target.value);if(!searchActive&&ev.target.value){setActiveTab("plants");setDrawerOpen(false);}},
+                  onFocus:function(){if(!searchActive){setActiveTab("plants");setDrawerOpen(false);}},
+                  placeholder:"Search plants…",
+                  style:{padding:"7px 32px 7px 14px",border:"1.5px solid "+(searchActive?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)"),borderRadius:8,fontFamily:"inherit",fontSize:13,
+                    background:searchActive?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.07)",
+                    color:"white",outline:"none",width:200,transition:"width 0.2s,border-color 0.2s"},
+                  onFocusCapture:function(ev){ev.target.style.width="260px";},
+                  onBlur:function(ev){if(!search)ev.target.style.width="200px";}}),
+                search&&h("button",{onClick:function(){setSearch("");},
+                  style:{position:"absolute",right:8,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.6)",fontSize:16,lineHeight:1,padding:0}},"×")
+              )
+            )
           ])
         )
       )
@@ -240,7 +246,7 @@ function App(){
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#D9D9BF",borderBottom:"1px solid rgba(0,0,0,0.08)"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
-          h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
+          isMobile&&h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
               h("input",{ref:searchRef,value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{width:"100%",padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
@@ -275,7 +281,7 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
@@ -313,6 +319,7 @@ function App(){
               !selectMode&&[{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
                 return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
               }),
+              proMode&&showVbBadges&&vbWeekOf&&h("span",{style:{fontSize:11,color:"#aaa",marginLeft:4,marginRight:2}},vbWeekOf),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
                 onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":false);},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
@@ -321,7 +328,7 @@ function App(){
                   color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
                 vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
-                onClick:function(){setShowVbBadges(false);},
+                onClick:hideVbBadges,
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
                   border:"1px solid #2e7d32",background:"#e8f5e9",color:"#2e7d32"}},
                 "Hide VB badges"),
@@ -361,8 +368,8 @@ function App(){
         var active=tab.key==="search"?searchActive:(activeTab===tab.key&&!searchActive);
         var handleClick=function(){
           if(tab.key==="search"){
-            if(searchActive){setSearch("");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-            else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+            setActiveTab("plants");setDrawerOpen(false);
+            setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.scrollIntoView({behavior:"smooth",block:"center"});}},50);
           } else {
             setSearch("");setActiveTab(tab.key);
             if(tab.key==="plants"){if(!isMobile)setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
