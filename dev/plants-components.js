@@ -881,6 +881,7 @@ function SeedCard(props){
 // ── BloomCalendar ─────────────────────────────────────────────────────────
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
+  var lists=props.lists||[];
   var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
@@ -897,6 +898,7 @@ function BloomCalendar(props){
       if(p.bloomStart<0||p.bloomEnd<0)return false;
       if(!matchStatus(p,statuses))return false;
       if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
+      if(source!=="all"&&source!=="hearts"){var sl=lists.find(function(l){return l.id===source;});if(!sl||sl.plants.indexOf(p.latin)<0)return false;}
       if(exclude.indexOf("tree")>=0&&p.typeKey==="tree")return false;
       if(exclude.indexOf("shrub")>=0&&p.typeKey==="shrub")return false;
       if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
@@ -985,6 +987,9 @@ function BloomCalendar(props){
           // All plants / My palette pills
           h("button",{onClick:function(){setSource("all");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="all"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="all"?"rgba(255,255,255,0.2)":"transparent",color:source==="all"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="all"?"500":"normal"}},isMobile?"All":"All plants"),
           h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My list"),
+          lists.length>0&&h("select",{value:lists.find(function(l){return l.id===source;})?source:"",onChange:function(ev){if(ev.target.value)setSource(ev.target.value);},style:{padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.2)":"transparent",color:"white",outline:"none",appearance:"none",paddingRight:22}},
+            h("option",{value:"",disabled:true},"Saved list\u2026"),
+            lists.map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
             var on=statuses.indexOf(opt.key)>=0;
