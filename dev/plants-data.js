@@ -154,16 +154,19 @@ function dedupePlants(plants){
   return plants.filter(function(p){if(seen[p.latin])return false;seen[p.latin]=true;return true;});
 }
 
+function normLatin(latin){
+  return latin.replace(/^[×x]\s*/,"").replace(/\s+[×\xd7]\s+/g," x ").trim();
+}
 function baseSpecies(latin){
-  var clean=latin.replace(/^[×x]\s*/,"").replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim();
+  var clean=normLatin(latin).replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim();
   var parts=clean.split(/\s+/);
-  var n=(parts[1]==="x"||parts[1]==="×")?3:2;
+  var n=parts[1]==="x"?3:2;
   return parts.slice(0,n).join(" ");
 }
 
 function applyInheritance(plants){
   var speciesMap={};
-  plants.forEach(function(p){if(!p.isCultivar)speciesMap[p.latin]=p;});
+  plants.forEach(function(p){if(!p.isCultivar)speciesMap[normLatin(p.latin)]=p;});
 
   var STR_FIELDS=["bloom","sun","moisture","role","seasonal","foliageColor","evergreen","notes",
     "aggressive","deerPressure","rabbitDamage","voleRisk","toxicDogs","toxicCats",
