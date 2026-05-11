@@ -118,6 +118,12 @@ function PlantThumb(props){
       h("div",{style:{fontSize:size*0.18,fontWeight:"bold",color:fg}},plant.common.charAt(0))
     );
   }
+  if(plant.inheritedImage){
+    return h("div",{style:{position:"relative",width:size,height:size,flexShrink:0}},
+      h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
+      h("div",{title:"Photo shows parent species",style:{position:"absolute",bottom:3,right:3,background:"rgba(0,0,0,0.55)",color:"white",fontSize:9,fontWeight:700,padding:"1px 4px",borderRadius:3,lineHeight:1.4,letterSpacing:"0.3px"}},"sp.")
+    );
+  }
   return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
 }
 
