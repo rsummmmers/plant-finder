@@ -1373,10 +1373,8 @@ function FilterDrawer(props){
   if(!open)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
-  var displayStatuses=props.suppressStatusHighlight?[]:f.statuses;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){
-    if(props.suppressStatusHighlight){set({statuses:[k]});return;}
     var badPlants=["invasive","caution"];
     var goodPlants=["native","nearnative","cultivar","nonnative"];
     set({statuses:(function(){
@@ -1434,7 +1432,7 @@ function FilterDrawer(props){
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,displayStatuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
