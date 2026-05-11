@@ -1589,11 +1589,11 @@ function PaletteView(props){
   function exportVBOrder(){
     var today=new Date();
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    var rows=[["vb_name","latin_name","in_stock","qty_available"]];
+    var rows=[["common_name","vb_name","latin_name","in_stock","qty_available"]];
     hearted.forEach(function(p){
       var v=vbData[p.latin];
       if(!v||!v.vb)return;
-      rows.push([v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+      rows.push([p.common,v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
     });
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
@@ -1797,11 +1797,11 @@ function SavedListsView(props){
   function exportVBOrder(list,listPlants){
     var today=new Date();
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    var rows=[["vb_name","latin_name","in_stock","qty_available"]];
+    var rows=[["common_name","vb_name","latin_name","in_stock","qty_available"]];
     listPlants.forEach(function(p){
       var v=vbData[p.latin];
       if(!v||!v.vb)return;
-      rows.push([v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+      rows.push([p.common,v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
     });
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
