@@ -222,17 +222,21 @@ function App(){
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap"}
             },"Seeds"),
-            h("div",{key:"divider2",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
-            h("button",{key:"search",onClick:function(){
-              setDrawerOpen(false);
-              if(searchActive){setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-              else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-            },
-              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:searchActive?700:400,
-                color:searchActive?"white":"rgba(255,255,255,0.55)",
-                background:"none",border:"none",
-                cursor:"pointer",whiteSpace:"nowrap"}
-            },"Search")
+            h("div",{key:"searchbox",style:{marginLeft:"auto",display:"flex",alignItems:"center",padding:"6px 0"}},
+              h("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
+                h("input",{ref:searchRef,value:search,
+                  onChange:function(ev){setSearch(ev.target.value);if(!searchActive&&ev.target.value){setActiveTab("plants");setDrawerOpen(false);}},
+                  onFocus:function(){if(!searchActive){setActiveTab("plants");setDrawerOpen(false);}},
+                  placeholder:"Search plants…",
+                  style:{padding:"7px 32px 7px 14px",border:"1.5px solid "+(searchActive?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)"),borderRadius:8,fontFamily:"inherit",fontSize:13,
+                    background:searchActive?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.07)",
+                    color:"white",outline:"none",width:200,transition:"width 0.2s,border-color 0.2s"},
+                  onFocusCapture:function(ev){ev.target.style.width="260px";},
+                  onBlur:function(ev){if(!search)ev.target.style.width="200px";}}),
+                search&&h("button",{onClick:function(){setSearch("");},
+                  style:{position:"absolute",right:8,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.6)",fontSize:16,lineHeight:1,padding:0}},"×")
+              )
+            )
           ])
         )
       )
@@ -242,7 +246,7 @@ function App(){
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#D9D9BF",borderBottom:"1px solid rgba(0,0,0,0.08)"}},
       h("div",{style:{maxWidth:900,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
-          h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
+          isMobile&&h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
               h("input",{ref:searchRef,value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{width:"100%",padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
