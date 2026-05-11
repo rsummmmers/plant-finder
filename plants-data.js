@@ -155,14 +155,17 @@ function dedupePlants(plants){
 }
 
 function baseSpecies(latin){
-  return latin.replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim().split(/\s+/).slice(0,2).join(" ");
+  var clean=latin.replace(/^[×x]\s*/,"").replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim();
+  var parts=clean.split(/\s+/);
+  var n=(parts[1]==="x"||parts[1]==="×")?3:2;
+  return parts.slice(0,n).join(" ");
 }
 
 function applyInheritance(plants){
   var speciesMap={};
   plants.forEach(function(p){if(!p.isCultivar)speciesMap[p.latin]=p;});
 
-  var STR_FIELDS=["bloom","sun","moisture","role","seasonal","foliageColor","evergreen",
+  var STR_FIELDS=["bloom","sun","moisture","role","seasonal","foliageColor","evergreen","notes",
     "aggressive","deerPressure","rabbitDamage","voleRisk","toxicDogs","toxicCats",
     "toxicChildren","juglone","whitePine","norwayMaple","edibleNotes","edibleValue",
     "medicinalNotes","medicinalValue","seedStart","seedEnd","seedNotes","propagNotes",
@@ -341,7 +344,7 @@ function rowToPlant(row){
     evergreen:row["Evergreen"]||"",
     heightFt:parseFloat(row["Max Height (ft)"])||0,
     sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
-    notes:row["Notes"]||"",
+    notes:row["Notes"]||"",cultivarNotes:row["cultivar_notes"]||"",
     image:cur||inat,curatedImage:cur,inatImage:inat,
     role:row["Habitat Patch Role"]||"",aggressive:row["Aggressive"]||"",
     flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",showyBloom:row["showy_bloom"]||"",
