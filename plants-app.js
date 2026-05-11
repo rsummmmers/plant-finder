@@ -286,7 +286,7 @@ function App(){
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
