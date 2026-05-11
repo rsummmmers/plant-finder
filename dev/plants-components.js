@@ -1791,7 +1791,7 @@ function HomeView(props){
 }
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
-var DEFAULT_INSTALL_RATES={markup:1.4,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
+var DEFAULT_INSTALL_RATES={markup:1.4,taxRate:6.25,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
 var INSTALL_RATE_LABELS=[
   {key:"plug",   label:"Plug / tray / 3½\""},
   {key:"bareroot",label:"Bare-root"},
@@ -1876,7 +1876,8 @@ function ProcurementView(props){
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
   var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0);
-  var yourCost=vbCostTotal+(parseFloat(deliveryCost)||0);
+  var salesTax=vbCostTotal*((rates.taxRate||0)/100);
+  var yourCost=vbCostTotal+salesTax+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
 
   function doExport(){
@@ -1901,6 +1902,7 @@ function ProcurementView(props){
     rows.push(["","","","","","","","","Delivery cost (your cost)","","$"+(parseFloat(deliveryCost)||0).toFixed(2)]);
     rows.push(["","","","","","","","","Client total","","$"+grandTotal.toFixed(2)]);
     rows.push(["","","","","","","","","Your VB cost","","$"+vbCostTotal.toFixed(2)]);
+    rows.push(["","","","","","","","","Sales tax ("+((rates.taxRate||0))+"%)" ,"","$"+salesTax.toFixed(2)]);
     rows.push(["","","","","","","","","Your margin","","$"+yourMargin.toFixed(2)]);
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
@@ -1929,6 +1931,7 @@ function ProcurementView(props){
           ),
           h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+grandTotal.toFixed(2)),
           h("span",{style:{fontSize:13,color:"#888"}},"│"),
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
           h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2))
         ),
@@ -1940,12 +1943,25 @@ function ProcurementView(props){
       showRates&&h("div",{style:{marginTop:12,paddingTop:12,borderTop:"1px solid #f0ede4"}},
         h("div",{style:{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}},
           h("div",null,
-            h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant markup"),
-            h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
-              h("input",{type:"number",min:1,max:5,step:0.05,value:rates.markup||1.4,
-                onChange:function(ev){setRate("markup",ev.target.value);},
-                style:{width:65,padding:"5px 8px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:14,textAlign:"center",outline:"none"}}),
-              h("span",{style:{fontSize:12,color:"#888"}},"× VB price (1.4 = 40% markup)")
+            h("div",{style:{display:"flex",gap:24,flexWrap:"wrap",marginBottom:14}},
+              h("div",null,
+                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:6}},"Plant markup"),
+                h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  h("input",{type:"number",min:1,max:5,step:0.05,value:rates.markup||1.4,
+                    onChange:function(ev){setRate("markup",ev.target.value);},
+                    style:{width:65,padding:"5px 8px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:14,textAlign:"center",outline:"none"}}),
+                  h("span",{style:{fontSize:12,color:"#888"}},"× VB price")
+                )
+              ),
+              h("div",null,
+                h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:6}},"Sales tax (%)"),
+                h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  h("input",{type:"number",min:0,max:15,step:0.25,value:rates.taxRate||0,
+                    onChange:function(ev){setRate("taxRate",ev.target.value);},
+                    style:{width:65,padding:"5px 8px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:14,textAlign:"center",outline:"none"}}),
+                  h("span",{style:{fontSize:12,color:"#888"}},"% on VB cost")
+                )
+              )
             ),
             h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Install rates ($/plant)"),
             h("div",{style:{display:"grid",gridTemplateColumns:"auto 60px",gap:"6px 10px",alignItems:"center"}},
