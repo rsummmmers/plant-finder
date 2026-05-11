@@ -127,7 +127,8 @@ function App(){
   var defaultStatuses=["native","nearnative","cultivar"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
   var allStatuses=["native","nearnative","cultivar","nonnative","invasive","caution"];
-  var effectiveStatuses=searchActive&&!statusesChanged?allStatuses:filters.statuses;
+  var suppressStatusHighlight=searchActive&&!statusesChanged;
+  var effectiveStatuses=suppressStatusHighlight?allStatuses:filters.statuses;
   var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,statuses:effectiveStatuses,search:search});
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
@@ -256,7 +257,7 @@ function App(){
     ),
 
     // Filter drawer — mobile bottom sheet, desktop right panel
-    h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,suppressStatusHighlight:searchActive&&!statusesChanged}),
+    h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
 
     // Main content
     h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
