@@ -1601,11 +1601,12 @@ function PaletteView(props){
   function exportVBOrder(){
     var today=new Date();
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    var rows=[["common_name","vb_name","latin_name","in_stock","qty_available"]];
+    var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_available","vb_price","client_price"]];
     hearted.forEach(function(p){
       var v=vbData[p.latin];
       if(!v||!v.vb)return;
-      rows.push([p.common,v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+      var clientPrice=v.price?(Math.round(v.price*1.4*100)/100).toFixed(2):"";
+      rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",v.qty,v.price||"",clientPrice]);
     });
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
@@ -1809,11 +1810,12 @@ function SavedListsView(props){
   function exportVBOrder(list,listPlants){
     var today=new Date();
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    var rows=[["common_name","vb_name","latin_name","in_stock","qty_available"]];
+    var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_available","vb_price","client_price"]];
     listPlants.forEach(function(p){
       var v=vbData[p.latin];
       if(!v||!v.vb)return;
-      rows.push([p.common,v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+      var clientPrice=v.price?(Math.round(v.price*1.4*100)/100).toFixed(2):"";
+      rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",v.qty,v.price||"",clientPrice]);
     });
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
