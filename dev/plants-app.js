@@ -368,8 +368,8 @@ function App(){
         var active=tab.key==="search"?searchActive:(activeTab===tab.key&&!searchActive);
         var handleClick=function(){
           if(tab.key==="search"){
-            if(searchActive){setSearch("");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
-            else{setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
+            setActiveTab("plants");setDrawerOpen(false);
+            setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.scrollIntoView({behavior:"smooth",block:"center"});}},50);
           } else {
             setSearch("");setActiveTab(tab.key);
             if(tab.key==="plants"){if(!isMobile)setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
