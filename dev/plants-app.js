@@ -29,10 +29,11 @@ function App(){
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
   var _selm=useState(false),selectMode=_selm[0],setSelectMode=_selm[1];
   var _sell=useState([]),selectedLatins=_sell[0],setSelectedLatins=_sell[1];
-  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="procure"){sessionStorage.setItem("ppb_pro","1");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
+  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="procure"){sessionStorage.setItem("ppb_pro","1");sessionStorage.removeItem("ppb_vb_hidden");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
   var _vbd=useState({}),vbData=_vbd[0],setVbData=_vbd[1];
   var _vbf=useState(false),vbFilter=_vbf[0],setVbFilter=_vbf[1];
-  var _svb=useState(true),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
+  var _svb=useState(function(){return sessionStorage.getItem("ppb_vb_hidden")!=="1";}),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
+  function hideVbBadges(){sessionStorage.setItem("ppb_vb_hidden","1");setShowVbBadges(false);}
   var _vbw=useState(""),vbWeekOf=_vbw[0],setVbWeekOf=_vbw[1];
   var searchRef=useRef(null);
 
@@ -323,7 +324,7 @@ function App(){
                   color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
                 vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
-                onClick:function(){setShowVbBadges(false);},
+                onClick:hideVbBadges,
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
                   border:"1px solid #2e7d32",background:"#e8f5e9",color:"#2e7d32"}},
                 "Hide VB badges"),
