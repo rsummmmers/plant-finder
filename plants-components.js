@@ -881,6 +881,7 @@ function SeedCard(props){
 // ── BloomCalendar ─────────────────────────────────────────────────────────
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
+  var lists=props.lists||[];
   var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
@@ -897,6 +898,7 @@ function BloomCalendar(props){
       if(p.bloomStart<0||p.bloomEnd<0)return false;
       if(!matchStatus(p,statuses))return false;
       if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
+      if(source!=="all"&&source!=="hearts"){var sl=lists.find(function(l){return l.id===source;});if(!sl||sl.plants.indexOf(p.latin)<0)return false;}
       if(exclude.indexOf("tree")>=0&&p.typeKey==="tree")return false;
       if(exclude.indexOf("shrub")>=0&&p.typeKey==="shrub")return false;
       if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
@@ -985,6 +987,9 @@ function BloomCalendar(props){
           // All plants / My palette pills
           h("button",{onClick:function(){setSource("all");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="all"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="all"?"rgba(255,255,255,0.2)":"transparent",color:source==="all"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="all"?"500":"normal"}},isMobile?"All":"All plants"),
           h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My list"),
+          lists.length>0&&h("select",{value:lists.find(function(l){return l.id===source;})?source:"",onChange:function(ev){if(ev.target.value)setSource(ev.target.value);},style:{padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.2)":"transparent",color:"white",outline:"none",appearance:"none",paddingRight:22}},
+            h("option",{value:"",disabled:true},"Saved list\u2026"),
+            lists.map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
             var on=statuses.indexOf(opt.key)>=0;
@@ -1785,6 +1790,101 @@ function HomeView(props){
   );
 }
 
+// ── ProcurementView ───────────────────────────────────────────────────────────
+function ProcurementView(props){
+  var list=props.list,plants=props.plants,vbData=props.vbData,onExport=props.onExport;
+  var storageKey="ppb_qty_"+list.id;
+  var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
+  var _del=useState(180),delivery=_del[0],setDelivery=_del[1];
+
+  function setQty(latin,val){
+    var next=Object.assign({},qtys);
+    if(!val||val<=0)delete next[latin]; else next[latin]=val;
+    setQtys(next);
+    try{localStorage.setItem(storageKey,JSON.stringify(next));}catch(e){}
+  }
+
+  var sorted=plants.slice().sort(function(a,b){
+    var va=vbData[a.latin],vb_=vbData[b.latin];
+    var as_=(va&&va.vb)?(va.inStock?2:1):0;
+    var bs_=(vb_&&vb_.vb)?(vb_.inStock?2:1):0;
+    return bs_-as_;
+  });
+
+  var subtotal=plants.reduce(function(sum,p){
+    var v=vbData[p.latin],qty=qtys[p.latin]||0;
+    if(!v||!v.price||!qty)return sum;
+    return sum+qty*(Math.round(v.price*1.4*100)/100);
+  },0);
+  var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
+  var clientTotal=subtotal+(parseFloat(delivery)||0);
+
+  function doExport(){
+    var today=new Date();
+    var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+    var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_ordered","vb_price","client_price","line_total"]];
+    sorted.forEach(function(p){
+      var v=vbData[p.latin],qty=qtys[p.latin]||0;
+      if(!v||!v.vb||!qty)return;
+      var cp=Math.round(v.price*1.4*100)/100;
+      rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",qty,v.price,cp.toFixed(2),(qty*cp).toFixed(2)]);
+    });
+    rows.push(["","","","","","","","Subtotal","$"+subtotal.toFixed(2)]);
+    rows.push(["","","","","","","","Delivery","$"+(parseFloat(delivery)||0).toFixed(2)]);
+    rows.push(["","","","","","","","Client total","$"+clientTotal.toFixed(2)]);
+    var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+    var blob=new Blob([csv],{type:"text/csv"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;a.download="order_"+list.name.replace(/\s+/g,"_")+"_"+dateStr+".csv";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
+
+  return h("div",null,
+    h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(subtotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
+      h("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
+        h("div",{style:{flex:1,display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}},
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Plants: "),h("span",{style:{fontWeight:600}},totalQty)),
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Subtotal: "),h("span",{style:{fontWeight:600}},"$"+subtotal.toFixed(2))),
+          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+            h("span",{style:{color:"#888"}},"Delivery: $"),
+            h("input",{type:"number",value:delivery,min:0,onChange:function(ev){setDelivery(parseFloat(ev.target.value)||0);},
+              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+          ),
+          h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+clientTotal.toFixed(2))
+        ),
+        subtotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,flexShrink:0}},"📦 Export order")
+      )
+    ),
+    sorted.map(function(p){
+      var v=vbData[p.latin],hasVB=v&&v.vb,inStock=v&&v.inStock;
+      var clientPrice=v&&v.price?Math.round(v.price*1.4*100)/100:null;
+      var qty=qtys[p.latin]||0;
+      var lineTotal=qty&&clientPrice?qty*clientPrice:0;
+      return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:hasVB?1:0.45}},
+        h(PlantThumb,{plant:p,size:38,radius:6}),
+        h("div",{style:{flex:1,minWidth:0}},
+          h("div",{style:{fontWeight:500,fontSize:14,lineHeight:1.2}},p.common),
+          h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic"}},p.latin),
+          hasVB
+            ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
+                h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":"Available"),
+                v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},v.size),
+                clientPrice&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+clientPrice.toFixed(2)+" ea")
+              )
+            :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
+        ),
+        hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}},
+          h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
+            onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
+            style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
+          lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
+        )
+      );
+    })
+  );
+}
+
 // ── SavedListsView ────────────────────────────────────────────────────────────
 function SavedListsView(props){
   var lists=props.lists||[],plants=props.plants||[];
@@ -1865,7 +1965,7 @@ function SavedListsView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}},
         h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
         h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
-        proMode&&openPlants.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
+        !proMode&&openPlants.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
         h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
       ),
       h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
@@ -1875,18 +1975,20 @@ function SavedListsView(props){
             h("div",{style:{fontStyle:"italic",marginBottom:16}},"This list is empty."),
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
-        :(function(){
-            var grouped=groupByTypeLayer(openPlants);
-            return h("div",null,
-              TYPE_LAYERS.map(function(ld){
-                var plants=grouped[ld.key];
-                if(!plants||!plants.length)return null;
-                return renderTypeSection(ld,plants,isMobile,function(p){
-                  return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
-                });
-              })
-            );
-          })()
+        :proMode
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData})
+          :(function(){
+              var grouped=groupByTypeLayer(openPlants);
+              return h("div",null,
+                TYPE_LAYERS.map(function(ld){
+                  var plants=grouped[ld.key];
+                  if(!plants||!plants.length)return null;
+                  return renderTypeSection(ld,plants,isMobile,function(p){
+                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                  });
+                })
+              );
+            })()
     );
   }
 
