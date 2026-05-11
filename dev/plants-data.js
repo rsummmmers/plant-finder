@@ -155,7 +155,7 @@ function dedupePlants(plants){
 }
 
 function baseSpecies(latin){
-  return latin.replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim().split(/\s+/).slice(0,2).join(" ");
+  return latin.replace(/^[×x]\s*/,"").replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim().split(/\s+/).slice(0,2).join(" ");
 }
 
 function applyInheritance(plants){
