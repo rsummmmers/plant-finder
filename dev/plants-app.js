@@ -139,7 +139,7 @@ function App(){
   var results=useMemo(function(){
     var sorted=sortPlants(filtered,sortBy,zone);
     if(!proMode||!vbFilter)return sorted;
-    return sorted.filter(function(p){var v=vbData[p.latin];if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});
+    return sorted.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});
   },[filtered,sortBy,zone,proMode,vbFilter,vbData]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
@@ -345,7 +345,7 @@ function App(){
           ),
           selectMode&&h(SelectActionBar,{count:selectedLatins.length,selectedLatins:selectedLatins,lists:lists,onCreateList:createList,onBulkAdd:bulkAddToList,onClearSelection:function(){setSelectedLatins([]);},onExit:exitSelectMode,isMobile:isMobile}),
           h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
-            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbData[p.latin]||null):null});})),
+            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),
