@@ -326,6 +326,7 @@ function PlantCard(props){
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
+        img&&plant.inheritedImage&&h("div",{title:"Photo shows parent species",style:{position:"absolute",bottom:8,left:8,background:"rgba(0,0,0,0.55)",color:"white",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:4,lineHeight:1.4,letterSpacing:"0.3px",pointerEvents:"none"}},"sp."),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
             h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),
