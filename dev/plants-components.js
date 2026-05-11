@@ -1791,11 +1791,35 @@ function HomeView(props){
 }
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
+var DEFAULT_INSTALL_RATES={plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
+var INSTALL_RATE_LABELS=[
+  {key:"plug",   label:"Plug / tray / 3½\""},
+  {key:"bareroot",label:"Bare-root"},
+  {key:"qt1",    label:"1 qt"},
+  {key:"qt2",    label:"2 qt"},
+  {key:"gal1",   label:"TRGA / #1"},
+  {key:"gal2",   label:"2 gal"},
+  {key:"gal3",   label:"3 gal"},
+];
+function getInstallRate(size,rates){
+  var s=(size||"").trim().toUpperCase();
+  if(s.indexOf("TRAY")>=0||s==='3 1/2"'||s==="3 1/2\"")return rates.plug||2;
+  if(s==="1QT")return rates.qt1||5;
+  if(s==="2QT")return rates.qt2||8;
+  if(s==="TRGA"||s==="#1")return rates.gal1||10;
+  if(s==="2GA")return rates.gal2||18;
+  if(s==="3GA")return rates.gal3||25;
+  return rates.gal1||10;
+}
+
 function ProcurementView(props){
   var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(180),delivery=_del[0],setDelivery=_del[1];
+  var _rates=useState(function(){try{return Object.assign({},DEFAULT_INSTALL_RATES,JSON.parse(localStorage.getItem("ppb_install_rates")||"{}"));}catch(e){return Object.assign({},DEFAULT_INSTALL_RATES);}}),rates=_rates[0],setRates=_rates[1];
+  var _diff=useState(function(){return parseFloat(localStorage.getItem("ppb_difficulty"))||1.0;}),difficulty=_diff[0],setDifficulty=_diff[1];
+  var _rs=useState(false),showRates=_rs[0],setShowRates=_rs[1];
 
   function setQty(latin,val){
     var next=Object.assign({},qtys);
@@ -1803,35 +1827,52 @@ function ProcurementView(props){
     setQtys(next);
     try{localStorage.setItem(storageKey,JSON.stringify(next));}catch(e){}
   }
+  function setRate(key,val){
+    var next=Object.assign({},rates);
+    next[key]=parseFloat(val)||0;
+    setRates(next);
+    try{localStorage.setItem("ppb_install_rates",JSON.stringify(next));}catch(e){}
+  }
+  function setDiff(val){
+    var v=parseFloat(val)||1;
+    setDifficulty(v);
+    try{localStorage.setItem("ppb_difficulty",String(v));}catch(e){}
+  }
 
   var sorted=plants.slice().sort(function(a,b){
-    var va=vbData[a.latin],vb_=vbData[b.latin];
+    var va=vbLookup(vbData,a.latin),vb_=vbLookup(vbData,b.latin);
     var as_=(va&&va.vb)?(va.inStock?2:1):0;
     var bs_=(vb_&&vb_.vb)?(vb_.inStock?2:1):0;
     return bs_-as_;
   });
 
-  var subtotal=plants.reduce(function(sum,p){
+  var plantSubtotal=0,installSubtotal=0;
+  sorted.forEach(function(p){
     var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
-    if(!v||!v.price||!qty)return sum;
-    return sum+qty*(Math.round(v.price*1.4*100)/100);
-  },0);
+    if(!qty)return;
+    if(v&&v.price)plantSubtotal+=qty*(Math.round(v.price*1.4*100)/100);
+    var irate=v?getInstallRate(v.size,rates):rates.gal1||10;
+    installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
+  });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
-  var clientTotal=subtotal+(parseFloat(delivery)||0);
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(delivery)||0);
 
   function doExport(){
     var today=new Date();
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_ordered","vb_price","client_price","line_total"]];
+    var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_ordered","vb_price","plant_client_price","install_per_plant","line_total"]];
     sorted.forEach(function(p){
       var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
-      if(!v||!v.vb||!qty)return;
-      var cp=Math.round(v.price*1.4*100)/100;
-      rows.push([p.common,v.vbName||p.latin,p.latin,v.size||"",v.inStock?"Yes":"No",qty,v.price,cp.toFixed(2),(qty*cp).toFixed(2)]);
+      if(!qty)return;
+      var cp=v&&v.price?Math.round(v.price*1.4*100)/100:0;
+      var irate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:0;
+      var lineTotal=qty*(cp+irate);
+      rows.push([p.common,v?(v.vbName||p.latin):"",p.latin,v?v.size||"":"",v&&v.inStock?"Yes":"No",qty,v?v.price||"":"",cp.toFixed(2),irate.toFixed(2),lineTotal.toFixed(2)]);
     });
-    rows.push(["","","","","","","","Subtotal","$"+subtotal.toFixed(2)]);
-    rows.push(["","","","","","","","Delivery","$"+(parseFloat(delivery)||0).toFixed(2)]);
-    rows.push(["","","","","","","","Client total","$"+clientTotal.toFixed(2)]);
+    rows.push(["","","","","","","","Plants","","$"+plantSubtotal.toFixed(2)]);
+    rows.push(["","","","","","","","Install","","$"+installSubtotal.toFixed(2)]);
+    rows.push(["","","","","","","","Delivery","","$"+(parseFloat(delivery)||0).toFixed(2)]);
+    rows.push(["","","","","","","","Client total","","$"+grandTotal.toFixed(2)]);
     var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
     var blob=new Blob([csv],{type:"text/csv"});
     var url=URL.createObjectURL(blob);
@@ -1841,26 +1882,56 @@ function ProcurementView(props){
   }
 
   return h("div",null,
-    h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(subtotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
+    h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(grandTotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
       h("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
-        h("div",{style:{flex:1,display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}},
-          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Plants: "),h("span",{style:{fontWeight:600}},totalQty)),
-          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Subtotal: "),h("span",{style:{fontWeight:600}},"$"+subtotal.toFixed(2))),
+        h("div",{style:{flex:1,display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Qty: "),h("span",{style:{fontWeight:600}},totalQty)),
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Plants: "),h("span",{style:{fontWeight:600}},"$"+plantSubtotal.toFixed(2))),
+          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Install: "),h("span",{style:{fontWeight:600}},"$"+installSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Delivery: $"),
             h("input",{type:"number",value:delivery,min:0,onChange:function(ev){setDelivery(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
-          h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+clientTotal.toFixed(2))
+          h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Total: "),"$"+grandTotal.toFixed(2))
         ),
-        subtotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,flexShrink:0}},"📦 Export order")
+        h("div",{style:{display:"flex",gap:8,flexShrink:0}},
+          h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
+          grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
+        )
+      ),
+      showRates&&h("div",{style:{marginTop:12,paddingTop:12,borderTop:"1px solid #f0ede4"}},
+        h("div",{style:{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}},
+          h("div",null,
+            h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Install rates ($/plant)"),
+            h("div",{style:{display:"grid",gridTemplateColumns:"auto 60px",gap:"6px 10px",alignItems:"center"}},
+              INSTALL_RATE_LABELS.map(function(r){return[
+                h("span",{key:r.key+"l",style:{fontSize:13,color:"#555"}},r.label),
+                h("input",{key:r.key+"i",type:"number",min:0,step:0.5,value:rates[r.key]||0,
+                  onChange:function(ev){setRate(r.key,ev.target.value);},
+                  style:{padding:"3px 6px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:13,textAlign:"right",outline:"none"}})
+              ];}).reduce(function(a,b){return a.concat(b);})
+            )
+          ),
+          h("div",null,
+            h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Site difficulty"),
+            h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              h("input",{type:"number",min:0.5,max:3,step:0.1,value:difficulty,
+                onChange:function(ev){setDiff(ev.target.value);},
+                style:{width:65,padding:"5px 8px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:14,textAlign:"center",outline:"none"}}),
+              h("span",{style:{fontSize:12,color:"#888"}},"× (1.0 = standard, 1.3 = rocky/steep)")
+            )
+          )
+        )
       )
     ),
     sorted.map(function(p){
       var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
-      var clientPrice=v&&v.price?Math.round(v.price*1.4*100)/100:null;
+      var plantPrice=v&&v.price?Math.round(v.price*1.4*100)/100:null;
+      var installRate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:null;
+      var perPlant=plantPrice&&installRate!==null?plantPrice+installRate:plantPrice;
       var qty=qtys[p.latin]||0;
-      var lineTotal=qty&&clientPrice?qty*clientPrice:0;
+      var lineTotal=qty&&perPlant?qty*perPlant:0;
       return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:hasVB?1:0.45}},
         h(PlantThumb,{plant:p,size:38,radius:6}),
         h("div",{style:{flex:1,minWidth:0}},
@@ -1870,7 +1941,8 @@ function ProcurementView(props){
             ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
                 h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":"Available"),
                 v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},v.size),
-                clientPrice&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+clientPrice.toFixed(2)+" ea")
+                perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+" ea",
+                  h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":""))
               )
             :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
         ),
