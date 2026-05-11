@@ -213,25 +213,84 @@ function GoBotanyLink({ latinName }) {
 }
 // ── VB nursery data ───────────────────────────────────────────────────────
 function loadVBData(){
+  function parseRow(line){
+    var out=[],f="",q=false;
+    for(var i=0;i<line.length;i++){
+      var c=line[i];
+      if(c==='"'){if(q&&line[i+1]==='"'){f+='"';i++;}else q=!q;}
+      else if(c===','&&!q){out.push(f);f="";}
+      else f+=c;
+    }
+    out.push(f);return out;
+  }
   return Promise.all([
-    fetch("./nursery_availability.csv").then(function(r){if(!r.ok)throw new Error("no vb csv");return r.text();}),
+    fetch("./vb_availability.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";}),
     fetch("./nursery_crosswalk.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";})
   ]).then(function(results){
     var availText=results[0],cwText=results[1];
-    var cwMap={};
+    // Build crosswalk lookup: vb_normalized and example names → db_latin
+    var cwByNorm={},cwByExample={},cwVbName={};
     cwText.split(/\r?\n/).slice(1).forEach(function(line){
       if(!line.trim())return;
       var parts=line.split(",");
-      if(parts.length>=2)cwMap[parts[0].trim()]=parts[1].trim();
+      if(parts.length<2)return;
+      var dbLatin=parts[0].trim(),vbNorm=parts[1].trim();
+      var examples=parts.slice(2).join(",");
+      cwByNorm[vbNorm.toLowerCase()]=dbLatin;
+      cwVbName[dbLatin]=vbNorm;
+      examples.split("|").forEach(function(ex){
+        var e=ex.trim().toLowerCase();
+        if(e){cwByExample[e]=dbLatin;}
+      });
     });
+    function matchVBName(vbName){
+      var low=vbName.toLowerCase().trim();
+      if(cwByExample[low])return cwByExample[low];
+      var base=low.replace(/\s*['''\x27‘’].*/,"").trim();
+      if(cwByNorm[base])return cwByNorm[base];
+      var parts=base.split(/\s+/);
+      if(parts.length>=2&&/^[a-z]\.$/.test(parts[1])){
+        var genus=parts[0],abbr=parts[1][0];
+        for(var key in cwByNorm){
+          var kp=key.split(/\s+/);
+          if(kp[0]===genus&&kp[1]&&kp[1][0]===abbr)return cwByNorm[key];
+        }
+      }
+      return null;
+    }
+    // Parse availability CSV
+    var lines=availText.split(/\r?\n/);
+    var weekOf="",headerIdx=-1;
+    for(var i=0;i<lines.length;i++){
+      if(lines[i].indexOf("WEEK OF")>=0){
+        var m=lines[i].match(/WEEK OF\s+([^,"\r\n]+)/i);
+        if(m)weekOf=m[1].trim().replace(/"/g,"");
+      }
+      var row0=parseRow(lines[i])[0]||"";
+      if(row0.trim().toUpperCase()==="QTY"){headerIdx=i;break;}
+    }
     var map={};
-    availText.split(/\r?\n/).slice(1).forEach(function(line){
-      if(!line.trim())return;
-      var parts=line.split(",");
-      if(parts.length<3)return;
-      var latin=parts[0].trim();
-      map[latin]={vb:parts[1].trim()==="Yes",inStock:parts[2].trim()==="Yes",qty:parseInt(parts[3])||0,vbName:cwMap[latin]||latin};
-    });
+    if(headerIdx>=0){
+      for(var i=headerIdx+1;i<lines.length;i++){
+        var row=parseRow(lines[i]);
+        var vbName=(row[1]||"").trim();
+        if(!vbName)continue;
+        var outOfStock=(row[0]||"").trim().toUpperCase()==="X";
+        var size=(row[2]||"").trim();
+        var price=parseFloat(row[4])||0;
+        var qty=parseInt(row[5])||0;
+        var nextDate=(row[6]||"").trim();
+        var rating=(row[7]||"").trim();
+        var inStock=!outOfStock&&qty>0;
+        var dbLatin=matchVBName(vbName);
+        if(!dbLatin)continue;
+        var existing=map[dbLatin];
+        if(!existing||(!existing.inStock&&inStock)||(existing.inStock===inStock&&qty>existing.qty)){
+          map[dbLatin]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
+        }
+      }
+    }
+    map._weekOf=weekOf;
     return map;
   }).catch(function(){return {};});
 }
