@@ -1792,7 +1792,7 @@ function HomeView(props){
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
 function ProcurementView(props){
-  var list=props.list,plants=props.plants,vbData=props.vbData,onExport=props.onExport;
+  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(180),delivery=_del[0],setDelivery=_del[1];
@@ -1874,11 +1874,14 @@ function ProcurementView(props){
               )
             :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
         ),
-        hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}},
-          h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
-            onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
-            style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
-          lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
+          hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+            h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
+              onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
+              style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
+            lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
+          ),
+          h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
         )
       );
     })
@@ -1976,7 +1979,7 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);}})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               return h("div",null,
@@ -1984,7 +1987,7 @@ function SavedListsView(props){
                   var plants=grouped[ld.key];
                   if(!plants||!plants.length)return null;
                   return renderTypeSection(ld,plants,isMobile,function(p){
-                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,onRemove:function(){onToggleInList(p.latin,openList.id);}});
                   });
                 })
               );
