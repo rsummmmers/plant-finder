@@ -1376,6 +1376,7 @@ function FilterDrawer(props){
   var displayStatuses=props.suppressStatusHighlight?[]:f.statuses;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){
+    if(props.suppressStatusHighlight){set({statuses:[k]});return;}
     var badPlants=["invasive","caution"];
     var goodPlants=["native","nearnative","cultivar","nonnative"];
     set({statuses:(function(){
