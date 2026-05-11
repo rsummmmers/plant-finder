@@ -1525,7 +1525,7 @@ function FilterDrawer(props){
         proMode&&Object.keys(vbData).length>0&&h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Van Berkum availability"),
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
-            [{v:false,l:"Any"},{v:"available",l:"VB carries it"},{v:"instock",l:"In stock now"}].map(function(o){
+            [{v:false,l:"Any"},{v:"available",l:"VB carries it"},{v:"instock",l:"In stock now"},{v:"trays",l:"Tray only"}].map(function(o){
               return h("button",{key:String(o.v),onClick:function(){onVbFilter(o.v);},style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(vbFilter===o.v?"#2e7d32":"#e0ddd5"),background:vbFilter===o.v?"#e8f5e9":"transparent",color:vbFilter===o.v?"#2e7d32":"#666",fontWeight:vbFilter===o.v?"500":"normal"}},o.l);
             })
           )
@@ -1596,7 +1596,7 @@ function PaletteView(props){
 
   var results=useMemo(function(){
     var base=hearted;
-    if(proMode&&vbFilter){base=base.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});}
+    if(proMode&&vbFilter){base=base.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;if(vbFilter==="instock")return v.inStock;if(vbFilter==="trays")return v.size&&v.size.toUpperCase().indexOf("TRAY")>=0;return true;});}
     if(typeFilter)base=base.filter(function(p){return p.typeKey===typeFilter;});
     if(!search.trim())return base;
     var q=search.toLowerCase();
