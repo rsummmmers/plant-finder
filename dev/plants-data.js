@@ -154,6 +154,42 @@ function dedupePlants(plants){
   return plants.filter(function(p){if(seen[p.latin])return false;seen[p.latin]=true;return true;});
 }
 
+function baseSpecies(latin){
+  return latin.replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim().split(/\s+/).slice(0,2).join(" ");
+}
+
+function applyInheritance(plants){
+  var speciesMap={};
+  plants.forEach(function(p){if(!p.isCultivar)speciesMap[p.latin]=p;});
+
+  var STR_FIELDS=["bloom","sun","moisture","role","seasonal","foliageColor","evergreen",
+    "aggressive","deerPressure","rabbitDamage","voleRisk","toxicDogs","toxicCats",
+    "toxicChildren","juglone","whitePine","norwayMaple","edibleNotes","edibleValue",
+    "medicinalNotes","medicinalValue","seedStart","seedEnd","seedNotes","propagNotes",
+    "category","showyBloom"];
+
+  return plants.map(function(p){
+    if(!p.isCultivar)return p;
+    var parent=speciesMap[baseSpecies(p.latin)];
+    if(!parent)return p;
+    var patch={};
+    STR_FIELDS.forEach(function(k){if(!p[k])patch[k]=parent[k];});
+    if(p.bloomStart===-1)patch.bloomStart=parent.bloomStart;
+    if(p.bloomEnd===-1)patch.bloomEnd=parent.bloomEnd;
+    if(p.seedStartIdx===-1)patch.seedStartIdx=parent.seedStartIdx;
+    if(p.seedEndIdx===-1)patch.seedEndIdx=parent.seedEndIdx;
+    if(!p.heightFt)patch.heightFt=parent.heightFt;
+    if(!p.caterpillars)patch.caterpillars=parent.caterpillars;
+    if(!p.edible)patch.edible=parent.edible;
+    if(!p.medicinal)patch.medicinal=parent.medicinal;
+    if(!p.hasScores){patch.scores=parent.scores;patch.hasScores=parent.hasScores;}
+    if(!p.typeKey||p.typeKey==="perennial")patch.typeKey=parent.typeKey;
+    if(!p.isWoody)patch.isWoody=parent.isWoody;
+    if(!p.isCanopy)patch.isCanopy=parent.isCanopy;
+    return Object.assign({},p,patch);
+  });
+}
+
 function GoBotanyLink({ latinName }) {
   if (!latinName) return null;
   var parts = latinName.trim().toLowerCase().split(/\s+/);
