@@ -1826,7 +1826,10 @@ function ProcurementView(props){
   var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
-  var _del=useState(180),delivery=_del[0],setDelivery=_del[1];
+  var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
+  var _fee=useState(function(){return parseFloat(localStorage.getItem("ppb_procurement_fee"))||180;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
+  function saveDelivery(v){setDeliveryCost(v);try{localStorage.setItem("ppb_delivery_cost",v);}catch(e){}}
+  function saveFee(v){setProcurementFee(v);try{localStorage.setItem("ppb_procurement_fee",v);}catch(e){}}
   var _rates=useState(function(){try{return Object.assign({},DEFAULT_INSTALL_RATES,JSON.parse(localStorage.getItem("ppb_install_rates")||"{}"));}catch(e){return Object.assign({},DEFAULT_INSTALL_RATES);}}),rates=_rates[0],setRates=_rates[1];
   var _diff=useState(function(){return parseFloat(localStorage.getItem("ppb_difficulty"))||1.0;}),difficulty=_diff[0],setDifficulty=_diff[1];
   var _rs=useState(false),showRates=_rs[0],setShowRates=_rs[1];
@@ -1872,8 +1875,8 @@ function ProcurementView(props){
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
-  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(delivery)||0);
-  var yourCost=vbCostTotal+(parseFloat(delivery)||0);
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0);
+  var yourCost=vbCostTotal+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
 
   function doExport(){
@@ -1894,7 +1897,8 @@ function ProcurementView(props){
     });
     rows.push(["","","","","","","","","Plants","","$"+plantSubtotal.toFixed(2)]);
     rows.push(["","","","","","","","","Install","","$"+installSubtotal.toFixed(2)]);
-    rows.push(["","","","","","","","","Delivery","","$"+(parseFloat(delivery)||0).toFixed(2)]);
+    rows.push(["","","","","","","","","Procurement fee (charged)","","$"+(parseFloat(procurementFee)||0).toFixed(2)]);
+    rows.push(["","","","","","","","","Delivery cost (your cost)","","$"+(parseFloat(deliveryCost)||0).toFixed(2)]);
     rows.push(["","","","","","","","","Client total","","$"+grandTotal.toFixed(2)]);
     rows.push(["","","","","","","","","Your VB cost","","$"+vbCostTotal.toFixed(2)]);
     rows.push(["","","","","","","","","Your margin","","$"+yourMargin.toFixed(2)]);
@@ -1914,8 +1918,13 @@ function ProcurementView(props){
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Plants: "),h("span",{style:{fontWeight:600}},"$"+plantSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Install: "),h("span",{style:{fontWeight:600}},"$"+installSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
-            h("span",{style:{color:"#888"}},"Delivery: $"),
-            h("input",{type:"number",value:delivery,min:0,onChange:function(ev){setDelivery(parseFloat(ev.target.value)||0);},
+            h("span",{style:{color:"#888"}},"Delivery cost: $"),
+            h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},
+              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+          ),
+          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+            h("span",{style:{color:"#888"}},"Procurement fee: $"),
+            h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+grandTotal.toFixed(2)),
