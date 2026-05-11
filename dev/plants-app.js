@@ -33,6 +33,7 @@ function App(){
   var _vbd=useState({}),vbData=_vbd[0],setVbData=_vbd[1];
   var _vbf=useState(false),vbFilter=_vbf[0],setVbFilter=_vbf[1];
   var _svb=useState(true),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
+  var _vbw=useState(""),vbWeekOf=_vbw[0],setVbWeekOf=_vbw[1];
   var searchRef=useRef(null);
 
   function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
@@ -104,7 +105,7 @@ function App(){
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
-  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbData(data);});}},[]);
+  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});}},[]);
 
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
@@ -313,6 +314,7 @@ function App(){
               !selectMode&&[{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
                 return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
               }),
+              proMode&&showVbBadges&&vbWeekOf&&h("span",{style:{fontSize:11,color:"#aaa",marginLeft:4,marginRight:2}},vbWeekOf),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
                 onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":false);},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
