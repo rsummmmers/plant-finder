@@ -1556,7 +1556,7 @@ function PaletteView(props){
   var activeFilterCount=props.activeFilterCount||0,onOpenFilters=props.onOpenFilters||function(){};
   var isMobile=props.isMobile||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){},onBulkAdd=props.onBulkAdd||function(){};
-  var proMode=props.proMode||false,vbData=props.vbData||{};
+  var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false;
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1591,11 +1591,12 @@ function PaletteView(props){
 
   var results=useMemo(function(){
     var base=hearted;
+    if(proMode&&vbFilter){base=base.filter(function(p){var v=vbData[p.latin];if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});}
     if(typeFilter)base=base.filter(function(p){return p.typeKey===typeFilter;});
     if(!search.trim())return base;
     var q=search.toLowerCase();
     return base.filter(function(p){return p.common.toLowerCase().indexOf(q)>=0||p.latin.toLowerCase().indexOf(q)>=0;});
-  },[hearted,search,typeFilter]);
+  },[hearted,search,typeFilter,proMode,vbFilter,vbData]);
 
   function exportVBOrder(){
     var today=new Date();
