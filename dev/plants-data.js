@@ -253,7 +253,7 @@ var p=new URLSearchParams(window.location.search);
     search:     p.get("q")||"",
     zone:       p.get("zone")||null,
     ptypes:     p.get("pt")?p.get("pt").split(","):[],
-    statuses:   p.get("st")?p.get("st").split(","):["native"],
+    statuses:   p.get("st")?p.get("st").split(","):["native","nearnative"],
     concerns:   p.get("cx")?p.get("cx").split(","):[],
     heightCap:  p.get("hc")?parseFloat(p.get("hc")):null,
     moisture:   p.get("mo")||null,
@@ -272,7 +272,7 @@ function pushURL(s){
   if(s.search)p.set("q",s.search);
   if(s.zone)p.set("zone",s.zone);
   if(s.ptypes&&s.ptypes.length)p.set("pt",s.ptypes.join(","));
-  var def=["native"];
+  var def=["native","nearnative"];
   if(JSON.stringify(s.statuses.slice().sort())!==JSON.stringify(def.slice().sort()))p.set("st",s.statuses.join(","));
   if(s.concerns&&s.concerns.length)p.set("cx",s.concerns.join(","));
   if(s.heightCap)p.set("hc",String(s.heightCap));
