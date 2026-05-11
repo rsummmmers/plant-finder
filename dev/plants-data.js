@@ -178,8 +178,7 @@ function applyInheritance(plants){
     if(!p.isCultivar)return p;
     var base=baseSpecies(p.latin);
     var parent=speciesMap[base];
-    if(!parent){console.log("[inherit] no match for",JSON.stringify(p.latin),"base=",JSON.stringify(base),"keys=",Object.keys(speciesMap).filter(function(k){return k.indexOf("Amelanchier")>=0;}));return p;}
-    if(!p.image&&parent.image)console.log("[inherit] image match",p.latin,"→",parent.latin);
+    if(!parent)return p;
     var patch={};
     STR_FIELDS.forEach(function(k){if(!p[k])patch[k]=parent[k];});
     if(p.bloomStart===-1)patch.bloomStart=parent.bloomStart;
