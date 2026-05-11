@@ -341,7 +341,7 @@ function rowToPlant(row){
     evergreen:row["Evergreen"]||"",
     heightFt:parseFloat(row["Max Height (ft)"])||0,
     sun:row["Sun Exposure"]||"",moisture:row["Moisture Preference"]||"",
-    notes:row["Notes"]||"",
+    notes:row["Notes"]||"",cultivarNotes:row["cultivar_notes"]||"",
     image:cur||inat,curatedImage:cur,inatImage:inat,
     role:row["Habitat Patch Role"]||"",aggressive:row["Aggressive"]||"",
     flowerColor:row["Flower Color"]||"",foliageColor:row["Foliage Color"]||"",showyBloom:row["showy_bloom"]||"",
