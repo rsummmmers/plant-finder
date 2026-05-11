@@ -1358,6 +1358,7 @@ function FilterDrawer(props){
       onChange=props.onChange,flowerColors=props.flowerColors,
       inferredSun=props.inferredSun,isMobile=props.isMobile,
       zone=props.zone,onSetZone=props.onSetZone,source=props.source;
+  var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false,onVbFilter=props.onVbFilter||function(){};
   if(!open)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
@@ -1387,6 +1388,7 @@ function FilterDrawer(props){
   function resetAll(){
     onChange({statuses:["native"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
     onSetZone(null);
+    onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
   }
 
@@ -1502,6 +1504,14 @@ function FilterDrawer(props){
               h("input",{type:"checkbox",checked:!!f.childrenLevel,onChange:function(ev){set({childrenLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
               "\ud83d\udc76 Children"
             )
+          )
+        ),
+        proMode&&Object.keys(vbData).length>0&&h("div",null,
+          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Van Berkum availability"),
+          h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
+            [{v:false,l:"Any"},{v:"available",l:"VB carries it"},{v:"instock",l:"In stock now"}].map(function(o){
+              return h("button",{key:String(o.v),onClick:function(){onVbFilter(o.v);},style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(vbFilter===o.v?"#2e7d32":"#e0ddd5"),background:vbFilter===o.v?"#e8f5e9":"transparent",color:vbFilter===o.v?"#2e7d32":"#666",fontWeight:vbFilter===o.v?"500":"normal"}},o.l);
+            })
           )
         ),
         h("div",null,
