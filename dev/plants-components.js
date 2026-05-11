@@ -1372,8 +1372,8 @@ function FilterDrawer(props){
   var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false,onVbFilter=props.onVbFilter||function(){};
   if(!open)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
-  var displayStatuses=props.suppressStatusHighlight?[]:f.statuses;
   var f=filters;
+  var displayStatuses=props.suppressStatusHighlight?[]:f.statuses;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){
     var badPlants=["invasive","caution"];
