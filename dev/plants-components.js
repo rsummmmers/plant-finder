@@ -1772,6 +1772,7 @@ function SavedListsView(props){
   var onToggleInList=props.onToggleInList||function(){};
   var onGoToExplore=props.onGoToExplore||function(){};
   var isMobile=props.isMobile||false;
+  var proMode=props.proMode||false,vbData=props.vbData||{};
 
   var _oi=useState(null),openId=_oi[0],setOpenId=_oi[1];
   var _nm=useState(false),newMode=_nm[0],setNewMode=_nm[1];
@@ -1782,6 +1783,24 @@ function SavedListsView(props){
 
   var openList=openId?lists.find(function(l){return l.id===openId;})||null:null;
   var openPlants=openList?plants.filter(function(p){return openList.plants.indexOf(p.latin)>=0;}):[];
+
+  function exportVBOrder(list,listPlants){
+    var today=new Date();
+    var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+    var rows=[["vb_name","latin_name","in_stock","qty_available"]];
+    listPlants.forEach(function(p){
+      var v=vbData[p.latin];
+      if(!v||!v.vb)return;
+      rows.push([v.vbName||p.latin,p.latin,v.inStock?"Yes":"No",v.qty]);
+    });
+    var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+    var blob=new Blob([csv],{type:"text/csv"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;a.download="vb_order_"+list.name.replace(/\s+/g,"_")+"_"+dateStr+".csv";
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
 
   function copyLink(list){
     var p=new URLSearchParams();
@@ -1822,6 +1841,7 @@ function SavedListsView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}},
         h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
         h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
+        proMode&&openPlants.some(function(p){var v=vbData[p.latin];return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
         h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
       ),
       h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
