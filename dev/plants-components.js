@@ -1791,7 +1791,7 @@ function HomeView(props){
 }
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
-var DEFAULT_INSTALL_RATES={plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
+var DEFAULT_INSTALL_RATES={markup:1.4,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
 var INSTALL_RATE_LABELS=[
   {key:"plug",   label:"Plug / tray / 3½\""},
   {key:"bareroot",label:"Bare-root"},
@@ -1850,7 +1850,7 @@ function ProcurementView(props){
   sorted.forEach(function(p){
     var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
     if(!qty)return;
-    if(v&&v.price)plantSubtotal+=qty*(Math.round(v.price*1.4*100)/100);
+    if(v&&v.price)plantSubtotal+=qty*(Math.round(v.price*(rates.markup||1.4)*100)/100);
     var irate=v?getInstallRate(v.size,rates):rates.gal1||10;
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
@@ -1864,7 +1864,7 @@ function ProcurementView(props){
     sorted.forEach(function(p){
       var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
       if(!qty)return;
-      var cp=v&&v.price?Math.round(v.price*1.4*100)/100:0;
+      var cp=v&&v.price?Math.round(v.price*(rates.markup||1.4)*100)/100:0;
       var irate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:0;
       var lineTotal=qty*(cp+irate);
       rows.push([p.common,v?(v.vbName||p.latin):"",p.latin,v?v.size||"":"",v&&v.inStock?"Yes":"No",qty,v?v.price||"":"",cp.toFixed(2),irate.toFixed(2),lineTotal.toFixed(2)]);
@@ -1903,6 +1903,13 @@ function ProcurementView(props){
       showRates&&h("div",{style:{marginTop:12,paddingTop:12,borderTop:"1px solid #f0ede4"}},
         h("div",{style:{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}},
           h("div",null,
+            h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant markup"),
+            h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+              h("input",{type:"number",min:1,max:5,step:0.05,value:rates.markup||1.4,
+                onChange:function(ev){setRate("markup",ev.target.value);},
+                style:{width:65,padding:"5px 8px",border:"1px solid #e0ddd5",borderRadius:5,fontFamily:"inherit",fontSize:14,textAlign:"center",outline:"none"}}),
+              h("span",{style:{fontSize:12,color:"#888"}},"× VB price (1.4 = 40% markup)")
+            ),
             h("div",{style:{fontSize:11,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Install rates ($/plant)"),
             h("div",{style:{display:"grid",gridTemplateColumns:"auto 60px",gap:"6px 10px",alignItems:"center"}},
               INSTALL_RATE_LABELS.map(function(r){return[
@@ -1927,7 +1934,7 @@ function ProcurementView(props){
     ),
     sorted.map(function(p){
       var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
-      var plantPrice=v&&v.price?Math.round(v.price*1.4*100)/100:null;
+      var plantPrice=v&&v.price?Math.round(v.price*(rates.markup||1.4)*100)/100:null;
       var installRate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:null;
       var perPlant=plantPrice&&installRate!==null?plantPrice+installRate:plantPrice;
       var qty=qtys[p.latin]||0;
