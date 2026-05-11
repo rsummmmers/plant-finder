@@ -29,7 +29,7 @@ function App(){
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
   var _selm=useState(false),selectMode=_selm[0],setSelectMode=_selm[1];
   var _sell=useState([]),selectedLatins=_sell[0],setSelectedLatins=_sell[1];
-  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="procure"){sessionStorage.setItem("ppb_pro","1");sessionStorage.removeItem("ppb_vb_hidden");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
+  var _pro=useState(function(){var p=new URLSearchParams(window.location.search);if(p.get("key")==="exit"){sessionStorage.removeItem("ppb_pro");sessionStorage.removeItem("ppb_vb_hidden");return false;}if(p.get("key")==="procure"){sessionStorage.setItem("ppb_pro","1");sessionStorage.removeItem("ppb_vb_hidden");return true;}return sessionStorage.getItem("ppb_pro")==="1";}),proMode=_pro[0];
   var _vbd=useState({}),vbData=_vbd[0],setVbData=_vbd[1];
   var _vbf=useState(false),vbFilter=_vbf[0],setVbFilter=_vbf[1];
   var _svb=useState(function(){return sessionStorage.getItem("ppb_vb_hidden")!=="1";}),showVbBadges=_svb[0],setShowVbBadges=_svb[1];
