@@ -121,7 +121,7 @@ function PlantThumb(props){
   if(plant.inheritedImage){
     return h("div",{style:{position:"relative",width:size,height:size,flexShrink:0}},
       h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
-      h("div",{title:"Photo shows parent species",style:{position:"absolute",bottom:3,right:3,background:"rgba(0,0,0,0.55)",color:"white",fontSize:9,fontWeight:700,padding:"1px 4px",borderRadius:3,lineHeight:1.4,letterSpacing:"0.3px"}},"sp.")
+      h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:4,left:4,color:"rgba(255,255,255,0.85)",fontSize:9,fontStyle:"italic",textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species")
     );
   }
   return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
@@ -326,7 +326,7 @@ function PlantCard(props){
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
-        img&&plant.inheritedImage&&h("div",{title:"Photo shows parent species",style:{position:"absolute",bottom:8,left:8,background:"rgba(0,0,0,0.55)",color:"white",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:4,lineHeight:1.4,letterSpacing:"0.3px",pointerEvents:"none"}},"sp."),
+        img&&plant.inheritedImage&&h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:6,left:8,color:"rgba(255,255,255,0.85)",fontSize:10,fontStyle:"italic",fontWeight:400,textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species"),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
             h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),
