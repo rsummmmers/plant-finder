@@ -154,16 +154,19 @@ function dedupePlants(plants){
   return plants.filter(function(p){if(seen[p.latin])return false;seen[p.latin]=true;return true;});
 }
 
+function normLatin(latin){
+  return latin.replace(/^[×x]\s*/,"").replace(/\s+[×\xd7]\s+/g," x ").trim();
+}
 function baseSpecies(latin){
-  var clean=latin.replace(/^[×x]\s*/,"").replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim();
+  var clean=normLatin(latin).replace(/\s*['''\x27].*$/,"").replace(/\s+(var|subsp|f)\b.*/i,"").trim();
   var parts=clean.split(/\s+/);
-  var n=(parts[1]==="x"||parts[1]==="×")?3:2;
+  var n=parts[1]==="x"?3:2;
   return parts.slice(0,n).join(" ");
 }
 
 function applyInheritance(plants){
   var speciesMap={};
-  plants.forEach(function(p){if(!p.isCultivar)speciesMap[p.latin]=p;});
+  plants.forEach(function(p){if(!p.isCultivar)speciesMap[normLatin(p.latin)]=p;});
 
   var STR_FIELDS=["bloom","sun","moisture","role","seasonal","foliageColor","evergreen","notes",
     "aggressive","deerPressure","rabbitDamage","voleRisk","toxicDogs","toxicCats",
@@ -173,7 +176,8 @@ function applyInheritance(plants){
 
   return plants.map(function(p){
     if(!p.isCultivar)return p;
-    var parent=speciesMap[baseSpecies(p.latin)];
+    var base=baseSpecies(p.latin);
+    var parent=speciesMap[base];
     if(!parent)return p;
     var patch={};
     STR_FIELDS.forEach(function(k){if(!p[k])patch[k]=parent[k];});
@@ -186,6 +190,7 @@ function applyInheritance(plants){
     if(!p.edible)patch.edible=parent.edible;
     if(!p.medicinal)patch.medicinal=parent.medicinal;
     if(!p.hasScores){patch.scores=parent.scores;patch.hasScores=parent.hasScores;}
+    if(!p.image&&parent.image){patch.image=parent.image;patch.curatedImage=parent.curatedImage;patch.inatImage=parent.inatImage;patch.inheritedImage=true;}
     if(!p.typeKey||p.typeKey==="perennial")patch.typeKey=parent.typeKey;
     if(!p.isWoody)patch.isWoody=parent.isWoody;
     if(!p.isCanopy)patch.isCanopy=parent.isCanopy;
