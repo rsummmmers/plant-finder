@@ -186,6 +186,7 @@ function applyInheritance(plants){
     if(!p.edible)patch.edible=parent.edible;
     if(!p.medicinal)patch.medicinal=parent.medicinal;
     if(!p.hasScores){patch.scores=parent.scores;patch.hasScores=parent.hasScores;}
+    if(!p.image&&parent.image){patch.image=parent.image;patch.curatedImage=parent.curatedImage;patch.inatImage=parent.inatImage;patch.inheritedImage=true;}
     if(!p.typeKey||p.typeKey==="perennial")patch.typeKey=parent.typeKey;
     if(!p.isWoody)patch.isWoody=parent.isWoody;
     if(!p.isCanopy)patch.isCanopy=parent.isCanopy;
