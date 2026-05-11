@@ -1370,6 +1370,7 @@ function FilterDrawer(props){
       inferredSun=props.inferredSun,isMobile=props.isMobile,
       zone=props.zone,onSetZone=props.onSetZone,source=props.source;
   var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false,onVbFilter=props.onVbFilter||function(){};
+  var displayStatuses=props.suppressStatusHighlight?[]:f.statuses;
   if(!open)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
@@ -1432,7 +1433,7 @@ function FilterDrawer(props){
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,displayStatuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
           h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
