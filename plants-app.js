@@ -139,7 +139,7 @@ function App(){
   var results=useMemo(function(){
     var sorted=sortPlants(filtered,sortBy,zone);
     if(!proMode||!vbFilter)return sorted;
-    return sorted.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;return vbFilter==="instock"?v.inStock:true;});
+    return sorted.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;if(vbFilter==="instock")return v.inStock;if(vbFilter==="trays")return v.size&&v.size.toUpperCase().indexOf("TRAY")>=0;return true;});
   },[filtered,sortBy,zone,proMode,vbFilter,vbData]);
 
   var zoneInfo=MICROZONES.find(function(z){return z.key===zone;});
@@ -321,12 +321,12 @@ function App(){
               }),
               proMode&&showVbBadges&&vbWeekOf&&h("span",{style:{fontSize:11,color:"#aaa",marginLeft:4,marginRight:2}},vbWeekOf),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
-                onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":false);},
+                onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":vbFilter==="instock"?"trays":false);},
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
                   border:"1px solid "+(vbFilter?"#2e7d32":"#e0ddd5"),
-                  background:vbFilter==="instock"?"#2e7d32":vbFilter==="available"?"#e8f5e9":"transparent",
+                  background:vbFilter==="instock"?"#2e7d32":vbFilter?"#e8f5e9":"transparent",
                   color:vbFilter?"#2e7d32":"#888",fontWeight:vbFilter?"600":"normal"}},
-                vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":"VB"),
+                vbFilter==="instock"?"VB in stock \u2713":vbFilter==="available"?"VB available \u2713":vbFilter==="trays"?"VB trays \u2713":"VB"),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
                 onClick:hideVbBadges,
                 style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
