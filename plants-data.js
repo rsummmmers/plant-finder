@@ -495,7 +495,7 @@ function applyFilters(plants,f,siteKey){
     if(f.voleLevel==="high"&&p.voleRisk==="high")return false;
     if(f.voleLevel==="mod"&&(p.voleRisk==="high"||p.voleRisk==="medium"))return false;
     if(f.dogsLevel==="strict"&&p.toxicDogs==="yes")return false;
-    if(f.dogsLevel==="mild"&&(p.toxicDogs==="yes"||p.toxicDogs==="medium"||p.toxicDogs==="mild"))return false;
+    if(f.dogsLevel==="mild"&&(p.toxicDogs==="yes"||p.toxicDogs==="medium"))return false;
     if(f.catsLevel==="strict"&&p.toxicCats==="yes")return false;
     if(f.catsLevel==="mild"&&(p.toxicCats==="yes"||p.toxicCats==="mild"))return false;
     if(f.childrenLevel==="strict"&&p.toxicChildren==="yes")return false;
