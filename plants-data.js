@@ -288,7 +288,9 @@ function loadVBData(){
         var dbLatin=matchVBName(vbName);
         if(!dbLatin)continue;
         var existing=map[dbLatin];
-        if(!existing||(!existing.inStock&&inStock)||(existing.inStock===inStock&&qty>existing.qty)){
+        var isTray=size.toUpperCase().indexOf("TRAY")>=0;
+        var existingIsTray=existing&&existing.size&&existing.size.toUpperCase().indexOf("TRAY")>=0;
+        if(!existing||(!existing.inStock&&inStock)||(existing.inStock===inStock&&((isTray&&!existingIsTray)||(isTray===existingIsTray&&qty>existing.qty)))){
           map[dbLatin]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
         }
       }
