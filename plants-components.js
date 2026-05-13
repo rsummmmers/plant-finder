@@ -1836,6 +1836,9 @@ function ProcurementView(props){
   var _diff=useState(function(){return parseFloat(localStorage.getItem("ppb_difficulty"))||1.0;}),difficulty=_diff[0],setDifficulty=_diff[1];
   var _rs=useState(false),showRates=_rs[0],setShowRates=_rs[1];
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
+  var _sw=useState(function(){return parseFloat(localStorage.getItem("ppb_site_work_"+list.id))||0;}),siteWork=_sw[0],setSiteWork=_sw[1];
+  var _sm=useState(true),showMargin=_sm[0],setShowMargin=_sm[1];
+  function saveSiteWork(v){setSiteWork(v);try{localStorage.setItem("ppb_site_work_"+list.id,v);}catch(e){}}
 
   function setQty(latin,val){
     var next=Object.assign({},qtys);
@@ -1878,7 +1881,7 @@ function ProcurementView(props){
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
-  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0);
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0);
   var salesTax=vbCostTotal*((rates.taxRate||0)/100);
   var yourCost=vbCostTotal+salesTax+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
@@ -1940,11 +1943,17 @@ function ProcurementView(props){
             h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
+          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+            h("span",{style:{color:"#888"}},"Site work: $"),
+            h("input",{type:"number",value:siteWork,min:0,onChange:function(ev){saveSiteWork(parseFloat(ev.target.value)||0);},
+              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+          ),
           h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+grandTotal.toFixed(2)),
           h("span",{style:{fontSize:13,color:"#888"}},"│"),
-          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
-          h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
-          h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2))
+          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
+          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
+          showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
+          h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Hide margin":"Show margin",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁‍🗨")
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
           h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
