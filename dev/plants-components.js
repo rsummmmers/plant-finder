@@ -344,7 +344,9 @@ function PlantCard(props){
         selectMode
           ? h("button",{onClick:function(ev){ev.stopPropagation();setOpen(true);},style:{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:13,color:"white",lineHeight:1,padding:"4px 8px",borderRadius:5,fontWeight:600,fontFamily:"inherit"}},"ⓘ")
           : h(React.Fragment,null,
-              h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
+              onRemove
+                ?h("button",{onClick:function(ev){ev.stopPropagation();onRemove(plant);},title:"Remove from list",style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",fontSize:15,color:"white",lineHeight:1,padding:"3px 8px",borderRadius:5,fontWeight:700,fontFamily:"inherit"}},"×")
+                :h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
               h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
             )
       ),
@@ -357,9 +359,6 @@ function PlantCard(props){
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
-        ),
-        onRemove&&h("div",{style:{textAlign:"right",marginTop:6}},
-          h("button",{onClick:function(ev){ev.stopPropagation();onRemove(plant);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#bbb",padding:"2px 0",fontFamily:"inherit",lineHeight:1}},"× remove")
         )
       ),
       open&&h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.65)",overflowY:"auto",padding:"16px 16px 80px"}},
