@@ -344,7 +344,9 @@ function PlantCard(props){
         selectMode
           ? h("button",{onClick:function(ev){ev.stopPropagation();setOpen(true);},style:{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:13,color:"white",lineHeight:1,padding:"4px 8px",borderRadius:5,fontWeight:600,fontFamily:"inherit"}},"ⓘ")
           : h(React.Fragment,null,
-              h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
+              onRemove
+                ?h("button",{onClick:function(ev){ev.stopPropagation();onRemove(plant);},title:"Remove from list",style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.45)",border:"none",cursor:"pointer",fontSize:15,color:"white",lineHeight:1,padding:"3px 8px",borderRadius:5,fontWeight:700,fontFamily:"inherit"}},"×")
+                :h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},style:{position:"absolute",top:8,right:42,background:"rgba(0,0,0,0.32)",border:"none",cursor:"pointer",fontSize:11,color:"white",lineHeight:1,padding:"4px 7px",borderRadius:5,fontWeight:600,fontFamily:"inherit",textShadow:"none"}},"+List"),
               h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},style:{position:"absolute",top:8,right:8,background:"none",border:"none",cursor:"pointer",fontSize:22,color:hearted?"#e57373":"rgba(255,255,255,0.85)",lineHeight:1,padding:2,textShadow:"0 1px 3px rgba(0,0,0,0.5)"}},hearted?"♥":"♡")
             )
       ),
@@ -1833,6 +1835,7 @@ function ProcurementView(props){
   var _rates=useState(function(){try{return Object.assign({},DEFAULT_INSTALL_RATES,JSON.parse(localStorage.getItem("ppb_install_rates")||"{}"));}catch(e){return Object.assign({},DEFAULT_INSTALL_RATES);}}),rates=_rates[0],setRates=_rates[1];
   var _diff=useState(function(){return parseFloat(localStorage.getItem("ppb_difficulty"))||1.0;}),difficulty=_diff[0],setDifficulty=_diff[1];
   var _rs=useState(false),showRates=_rs[0],setShowRates=_rs[1];
+  var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
 
   function setQty(latin,val){
     var next=Object.assign({},qtys);
@@ -1913,6 +1916,14 @@ function ProcurementView(props){
   }
 
   return h("div",null,
+    modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
+        h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
+        h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true})
+        )
+      )
+    ),
     h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(grandTotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
       h("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
         h("div",{style:{flex:1,display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
@@ -1997,7 +2008,7 @@ function ProcurementView(props){
       var qty=qtys[p.latin]||0;
       var lineTotal=qty&&perPlant?qty*perPlant:0;
       return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:hasVB?1:0.45}},
-        h(PlantThumb,{plant:p,size:38,radius:6}),
+        h("div",{onClick:function(){setModalPlant(p);},style:{cursor:"pointer",flexShrink:0}},h(PlantThumb,{plant:p,size:38,radius:6})),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:500,fontSize:14,lineHeight:1.2}},p.common),
           h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic"}},p.latin),
