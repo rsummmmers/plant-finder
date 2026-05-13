@@ -357,6 +357,9 @@ function PlantCard(props){
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
+        ),
+        onRemove&&h("div",{style:{textAlign:"right",marginTop:6}},
+          h("button",{onClick:function(ev){ev.stopPropagation();onRemove(plant);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#bbb",padding:"2px 0",fontFamily:"inherit",lineHeight:1}},"× remove")
         )
       ),
       open&&h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.65)",overflowY:"auto",padding:"16px 16px 80px"}},
