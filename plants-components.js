@@ -27,7 +27,7 @@ function renderTypeSection(ld,plants,isMobile,cardFn){
       h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
       h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},plants.length)
     ),
-    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(215px,1fr))",gap:isMobile?10:14}},
       plants.map(cardFn)
     )
   );
@@ -580,7 +580,7 @@ var p=new URLSearchParams();
         h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this list (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Mix"),
+        h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Mix"),
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
           [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennial"},{k:"grass",e:"\ud83c\udf3e",l:"Grass"}].map(function(x){
             return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"8px 10px"}},
@@ -605,7 +605,6 @@ var p=new URLSearchParams();
       ),
       h("div",{style:{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
-        h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c")},"\ud83d\udda8\ufe0f Print / save PDF"),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
       )
     )
@@ -615,13 +614,15 @@ var p=new URLSearchParams();
 // ── SuggestPanel ──────────────────────────────────────────────────────────
 function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
+  var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
+  var _ex=useState([]),excluded=_ex[0],setExcluded=_ex[1];
   var scale=count/20;
-  var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:0,vine:0};
+  var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:Math.max(1,Math.round(1*scale)),vine:Math.max(1,Math.round(1*scale))};
 
   var suggested=useMemo(function(){
     var byType={};
     PLANT_TYPES.forEach(function(g){byType[g.key]=[];});
-    var scored=plants.slice().sort(function(a,b){
+    var scored=plants.filter(function(p){return p.status!=="Invasive"&&p.status!=="Caution"&&excluded.indexOf(p.latin)<0;}).slice().sort(function(a,b){
       return ((getSiteScore(b,siteKey)||0)*10+(b.caterpillars||0)/10)-((getSiteScore(a,siteKey)||0)*10+(a.caterpillars||0)/10);
     });
     // Pass 1: prefer one plant per genus
@@ -641,11 +642,19 @@ function SuggestPanel(props){
       if(t>0&&byType[p.typeKey].length<t&&!already)byType[p.typeKey].push(p);
     });
     return byType;
-  },[plants,siteKey,count]);
+  },[plants,siteKey,count,excluded]);
 
   var total=Object.values(suggested).reduce(function(s,a){return s+a.length;},0);
 
   return h("div",{style:{background:"white",border:"2px solid #2e5339",borderRadius:12,padding:20,marginBottom:16}},
+    modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
+        h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
+        h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+        )
+      )
+    ),
     h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
       h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,color:"#2e5339"}},"Suggested list \u2014 "+total+" plants"),
       h("button",{onClick:onClose,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:0,lineHeight:1}},"\u2715")
@@ -660,13 +669,14 @@ function SuggestPanel(props){
           ),
           suggested[g.key].map(function(p){
             var isH=hearts.indexOf(p.latin)>=0;
-            return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,border:"1px solid #e0ddd5",marginBottom:5,background:"#fafaf7"}},
+            return h("div",{key:p.latin,onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,border:"1px solid #e0ddd5",marginBottom:5,background:"#fafaf7",cursor:"pointer"}},
               h(PlantThumb,{plant:p,size:32,radius:6}),
               h("div",{style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:13,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
                 h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.latin)
               ),
-              h("button",{onClick:function(){onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:isH?"#e57373":"#ddd",flexShrink:0,lineHeight:1}},isH?"\u2665":"\u2661")
+              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:isH?"#e57373":"#ddd",flexShrink:0,lineHeight:1}},isH?"\u2665":"\u2661"),
+              h("button",{onClick:function(ev){ev.stopPropagation();setExcluded(function(e){return[...e,p.latin];});},title:"Skip \u2014 show next best match",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",flexShrink:0,lineHeight:1,padding:"2px 0 2px 4px"}},"\u00d7")
             );
           })
         );
@@ -801,7 +811,7 @@ function HabitatView(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},ld.plants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(215px,1fr))",gap:isMobile?10:14}},
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
@@ -974,7 +984,7 @@ function BloomCalendar(props){
     ),
     // Header (standalone only)
     !embedded&&h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf38 Bloom Calendar"),
@@ -984,7 +994,7 @@ function BloomCalendar(props){
     ),
     // Filters
     h("div",{style:{position:embedded?"static":"sticky",top:embedded?undefined:140,zIndex:50,background:"rgba(0,0,0,0.15)",borderBottom:"1px solid rgba(255,255,255,0.12)",padding:isMobile?"8px 12px":"12px 20px 10px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         h("div",{style:{display:"flex",flexWrap:"wrap",gap:isMobile?5:8,alignItems:"center",marginBottom:isMobile?6:10}},
           // All plants / My palette pills
           h("button",{onClick:function(){setSource("all");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="all"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="all"?"rgba(255,255,255,0.2)":"transparent",color:source==="all"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="all"?"500":"normal"}},isMobile?"All":"All plants"),
@@ -1050,7 +1060,7 @@ function BloomCalendar(props){
       )
     ),
     // Matrix (desktop) or list (mobile)
-    isMobile?h("div",{style:{maxWidth:900,margin:"8px auto 0",padding:"0 16px"}},
+    isMobile?h("div",{style:{maxWidth:1400,margin:"8px auto 0",padding:"0 16px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("div",null,
         eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
@@ -1076,7 +1086,7 @@ function BloomCalendar(props){
         })
       )
     ):
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+    h("div",{style:{maxWidth:1400,margin:"12px auto 0",padding:"0 20px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("div",{style:{maxHeight:"calc(100vh - 340px)",overflowY:"auto",overflowX:"clip"}},
       h("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,tableLayout:"fixed"}},
@@ -1130,7 +1140,7 @@ function BloomCalendar(props){
       ) // end scroll wrapper
     ), // end desktop table
     // Detail panel (desktop only)
-    h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
+    h("div",{style:{maxWidth:1400,margin:"16px auto 0",padding:"0 20px 40px"}},
       h("div",{style:{borderTop:"1px solid rgba(255,255,255,0.15)",paddingTop:14}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,marginBottom:12,color:"white"}},
           selMonth!==null?MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming":selPlants.length+" plant"+(selPlants.length!==1?"s":"")
@@ -1282,7 +1292,7 @@ function SeedCalendar(props){
 
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",color:"#2c2c2c"}},
     !embedded&&h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf31 Seed & Propagation Calendar"),
@@ -1291,7 +1301,7 @@ function SeedCalendar(props){
       )
     ),
     h("div",{style:{position:embedded?"static":"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"10px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+11)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14,flexShrink:0}},"\u25c0"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:18,flex:1,textAlign:"center"}},MONTHS[monthIdx]),
@@ -1317,13 +1327,13 @@ function SeedCalendar(props){
         )
       )
     ),
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+    h("div",{style:{maxWidth:1400,margin:"12px auto 0",padding:"0 20px"}},
       h("div",{style:{position:"relative"}},
         h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
         search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
       )
     ),
-    h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
+    h("div",{style:{maxWidth:1400,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
       STATUS_OPTS.filter(function(opt){return opt.key!=="invasive"&&opt.key!=="caution";}).map(function(opt){
         var on=statuses.indexOf(opt.key)>=0;
         return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666"}},opt.label);
@@ -1335,7 +1345,7 @@ function SeedCalendar(props){
       }),
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:"16px 20px 80px"}},
+    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:"16px 20px 80px"}},
       ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx});})),
       comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx});}))),
       justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx});}))),
@@ -1365,7 +1375,6 @@ function ShareBar(props){
     ):h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
       h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this list"),
       h("button",{onClick:copy,style:btn(copied?"#e8f5e9":"#f0ede4",copied?"#2e7d32":"#555",{fontSize:13,padding:"5px 12px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Copy link"),
-      h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},"\ud83d\udda8\ufe0f Print")
     )
   );
 }
@@ -1377,20 +1386,15 @@ function FilterDrawer(props){
       inferredSun=props.inferredSun,isMobile=props.isMobile,
       zone=props.zone,onSetZone=props.onSetZone,source=props.source;
   var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false,onVbFilter=props.onVbFilter||function(){};
-  if(!open)return null;
+  if(!open&&isMobile)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){
-    var badPlants=["invasive","caution"];
-    var goodPlants=["native","nearnative","cultivar","nonnative"];
     set({statuses:(function(){
       var cur=f.statuses;
       if(cur.indexOf(k)>=0) return cur.filter(function(v){return v!==k;});
-      var next=[...cur,k];
-      if(badPlants.indexOf(k)>=0) next=next.filter(function(v){return badPlants.indexOf(v)>=0;});
-      if(goodPlants.indexOf(k)>=0) next=next.filter(function(v){return goodPlants.indexOf(v)>=0;});
-      return next;
+      return [...cur,k];
     })()});
   }
   function togCx(k){set({concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});}
@@ -1398,25 +1402,26 @@ function FilterDrawer(props){
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
   useEffect(function(){
+    if(!isMobile)return;
     var prev=document.body.style.overflow;
     document.body.style.overflow="hidden";
     return function(){document.body.style.overflow=prev;};
-  },[]);
+  },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:["native","nearnative","cultivar"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
   }
 
   function P(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"5px 11px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1px solid "+(active?fg||"#2e5339":"#ddd"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#555",fontWeight:active?"600":"normal",lineHeight:1.5}},label);
   }
 
   var panelStyle=isMobile
     ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
-    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+    :{position:"fixed",top:140,left:0,bottom:0,width:340,background:"white",borderRight:"1px solid #e0ddd5",zIndex:100,display:"flex",flexDirection:"column",overflowY:"auto",overscrollBehavior:"contain"};
 
   var handleStyle=isMobile
     ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
@@ -1426,27 +1431,33 @@ function FilterDrawer(props){
     isMobile&&h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:panelStyle},
       isMobile&&h("div",{style:handleStyle}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
+      isMobile&&h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
-      h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
+      h("div",{style:{padding:"12px 16px",display:"flex",flexDirection:"column",gap:12,overflowY:"auto",flex:1}},
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Site type"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Site type"),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
-            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"7px 10px",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?"#2e5339":"#e0ddd5"),background:on?"#2e5339":"transparent",color:on?"white":"#666",textAlign:"left",display:"flex",alignItems:"center",gap:6}},z.emoji," ",z.label);})
-          )
+            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"5px 8px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#2e5339":"transparent",color:on?"white":"#555",textAlign:"left",display:"flex",alignItems:"center",gap:5}},z.emoji," ",z.label);})
+          ),
+          (function(){
+            var canSuggest=zone&&f.statuses.some(function(s){return s!=="invasive"&&s!=="caution";});
+            return h("button",{onClick:canSuggest&&props.onSuggest?function(){props.onSuggest();if(isMobile)onClose();}:function(){},style:{marginTop:10,width:"100%",padding:"9px 12px",background:canSuggest?"#2e5339":"#f5f5f5",color:canSuggest?"white":"#aaa",border:"none",borderRadius:6,cursor:canSuggest?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
+              "✨ "+(canSuggest?"Suggest plants for this site":zone?"Not available with invasive/caution filters":"Select a site type to get suggestions")
+            );
+          })()
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Include"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},PLANT_TYPES.map(function(g){return P(g.emoji+" "+g.label,f.ptypes.indexOf(g.key)>=0,function(){togPt(g.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Plant type"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},PLANT_TYPES.map(function(g){return P(g.emoji+" "+g.label,f.ptypes.indexOf(g.key)>=0,function(){togPt(g.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Max height"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Max height"),
           h("div",{style:{display:"flex",alignItems:"center",gap:8}},
             h("input",{type:"number",min:1,max:120,value:f.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);set({heightCap:v>0?v:null});},placeholder:"e.g. 8 for shrubs, 25 for small trees",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",flex:1}}),
             f.heightCap&&h("span",{style:{fontSize:14,color:"#888"}},"ft"),
@@ -1454,8 +1465,8 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Moisture"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Moisture"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
             [{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return P(o.l,f.moisture===o.v,function(){set({moisture:f.moisture===o.v?null:o.v});});}),
             h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,padding:"6px 0"}},
               h("input",{type:"checkbox",checked:f.irrigated,onChange:function(ev){set({irrigated:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
@@ -1464,34 +1475,34 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},inferredSun?"Sun \u2014 inferred from site \u2713":"Sun"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},inferredSun?"Sun \u2014 inferred from site \u2713":"Sun"),
           inferredSun?h("div",{style:{fontSize:15,color:"#2e5339",fontWeight:500,padding:"6px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
             [{v:"full",l:"\u2600\ufe0f Full sun"},{v:"part",l:"\u26c5 Part shade"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return P(o.l,f.sun===o.v,function(){set({sun:f.sun===o.v?null:o.v});});})
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Shaded by"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Shaded by"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Near / Site"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="near"||c.group==="site";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Near / Site"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="near"||c.group==="site";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Concerns"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="concern";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Concerns"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="concern";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         flowerColors.length>0&&h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},flowerColors.map(function(c){
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Flower color"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},flowerColors.map(function(c){
             return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:"1.5px solid "+(f.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:f.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:f.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Browse pressure"),
           h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
             [{title:"\ud83e\udd8c Deer",key:"deerLevel",val:f.deerLevel,setFn:function(v){set({deerLevel:v});}},
              {title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",val:f.rabbitLevel,setFn:function(v){set({rabbitLevel:v});}},
@@ -1508,7 +1519,7 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety \u2014 exclude toxic plants for:"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Safety \u2014 exclude toxic plants for:"),
           h("div",{style:{display:"flex",gap:16,flexWrap:"wrap"}},
             h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
               h("input",{type:"checkbox",checked:!!f.dogsLevel,onChange:function(ev){set({dogsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
@@ -1525,7 +1536,7 @@ function FilterDrawer(props){
           )
         ),
         proMode&&Object.keys(vbData).length>0&&h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Van Berkum availability"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Van Berkum availability"),
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
             [{v:false,l:"Any"},{v:"available",l:"VB carries it"},{v:"instock",l:"In stock now"},{v:"trays",l:"Tray only"}].map(function(o){
               return h("button",{key:String(o.v),onClick:function(){onVbFilter(o.v);},style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(vbFilter===o.v?"#2e7d32":"#e0ddd5"),background:vbFilter===o.v?"#e8f5e9":"transparent",color:vbFilter===o.v?"#2e7d32":"#666",fontWeight:vbFilter===o.v?"500":"normal"}},o.l);
@@ -1533,7 +1544,7 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Other"),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
             h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
             "\u2744\ufe0f Winter interest"
@@ -1549,10 +1560,60 @@ function FilterDrawer(props){
         ),
         ),
       h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
-        h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:10,padding:"13px",fontSize:14,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
-        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
+        h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:6,padding:"9px 14px",fontSize:13,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:6,padding:"9px 14px",fontSize:13,flex:2})},"Show results")
       )
     )
+  );
+}
+
+// ── CompactPlantList ──────────────────────────────────────────────────────
+function CompactPlantList(props){
+  var plants=props.plants||[],siteKey=props.siteKey,hearts=props.hearts||[];
+  var onHeart=props.onHeart||function(){},lists=props.lists||[];
+  var onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
+  var vbData=props.vbData||{},proMode=props.proMode||false,showVbBadges=props.showVbBadges||false;
+  var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
+  var grouped=groupByTypeLayer(plants);
+  return h("div",null,
+    modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
+        h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
+        h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+        )
+      )
+    ),
+    TYPE_LAYERS.map(function(ld){
+      var lplants=grouped[ld.key];
+      if(!lplants||!lplants.length)return null;
+      return h("div",{key:ld.key,style:{marginBottom:20}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},
+          h("span",{style:{fontSize:15,background:ld.bg,borderRadius:6,padding:"2px 6px"}},""+ld.emoji),
+          h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
+          h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
+        ),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(380px,100%),1fr))",gap:6}},
+        lplants.map(function(p){
+          var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+          var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
+          var cats=p.caterpillars||0;
+          return h("div",{key:p.latin,onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",cursor:"pointer",minWidth:0}},
+            h(PlantThumb,{plant:p,size:32,radius:5}),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontWeight:600,fontSize:13,fontFamily:"'Literata',serif",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.common),
+              h("div",{style:{fontSize:10,color:"#aaa",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.latin)
+            ),
+            h("div",{style:{display:"flex",gap:4,alignItems:"center",flexShrink:0}},
+              h("span",{style:{background:ss.bg,color:ss.text,fontSize:9,padding:"1px 5px",borderRadius:4,fontWeight:"bold",whiteSpace:"nowrap"}},ss.label),
+              cats>0&&h("span",{style:{fontSize:9,color:"#4caf50",fontWeight:"bold"}},"🦋"+cats),
+              vbInfo&&vbInfo.vb&&h("span",{style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"1px 4px",borderRadius:3,fontWeight:700}},"VB"),
+              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:hearts.indexOf(p.latin)>=0?"#e57373":"#ddd",padding:"1px",lineHeight:1}},hearts.indexOf(p.latin)>=0?"♥":"♡")
+            )
+          );
+        }))
+      );
+    })
   );
 }
 
@@ -1564,6 +1625,7 @@ function PaletteView(props){
   var isMobile=props.isMobile||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){},onBulkAdd=props.onBulkAdd||function(){};
   var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false;
+  var listView=props.listView||false,onToggleListView=props.onToggleListView||function(){};
   var _s=useState(""),search=_s[0],setSearch=_s[1];
   var _c=useState(false),copied=_c[0],setCopied=_c[1];
   var _sm=useState(false),showMix=_sm[0],setShowMix=_sm[1];
@@ -1652,10 +1714,7 @@ function PaletteView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
         hearted.length>0&&h("button",{onClick:function(){setBulkPickerOpen(true);},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udccc Save to list\u2026"),
-        h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         proMode&&hearted.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:exportVBOrder,style:btn("#e8f5e9","#2e7d32",{fontSize:13,padding:"6px 12px",border:"1px solid #c8e6c9"})},"\ud83d\udce6 Export VB order"),
-        h("button",{onClick:function(){setShowMix(function(v){return !v;});},style:btn(showMix?"#2e5339":"#f0ede4",showMix?"white":"#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83c\udf3f "+(showMix?"Hide mix":"Suggest a mix")),
-        h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}},
@@ -1701,18 +1760,26 @@ function PaletteView(props){
     ),
     // Plant cards — grouped by type
     h("div",{ref:resultsRef,style:{marginTop:4}},
-      (function(){
-        var grouped=groupByTypeLayer(results);
-        return h("div",null,
-          TYPE_LAYERS.map(function(ld){
-            var plants=grouped[ld.key];
-            if(!plants||!plants.length)return null;
-            return renderTypeSection(ld,plants,isMobile,function(p){
-              return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
-            });
-          })
-        );
-      })()
+      !isMobile&&h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:8}},
+        h("button",{onClick:onToggleListView,title:listView?"Switch to card view":"Switch to list view",
+          style:{padding:"4px 10px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",
+            border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
+          listView?"⊞ Cards":"☰ List")
+      ),
+      listView
+        ?h(CompactPlantList,{plants:results,siteKey:null,hearts:hearts,onHeart:onHeart,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,vbData:vbData,proMode:proMode,showVbBadges:false})
+        :(function(){
+          var grouped=groupByTypeLayer(results);
+          return h("div",null,
+            TYPE_LAYERS.map(function(ld){
+              var plants=grouped[ld.key];
+              if(!plants||!plants.length)return null;
+              return renderTypeSection(ld,plants,isMobile,function(p){
+                return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+              });
+            })
+          );
+        })()
     ),
     // Bulk "Save to list" picker modal
     bulkPickerOpen&&h("div",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
@@ -1825,7 +1892,7 @@ function getUnitPrice(vbPrice,size){
 }
 
 function ProcurementView(props){
-  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
+  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){},onUpdateNotes=props.onUpdateNotes||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
@@ -1838,7 +1905,13 @@ function ProcurementView(props){
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _sw=useState(function(){return parseFloat(localStorage.getItem("ppb_site_work_"+list.id))||0;}),siteWork=_sw[0],setSiteWork=_sw[1];
   var _sm=useState(true),showMargin=_sm[0],setShowMargin=_sm[1];
+  var clientView=!showMargin;
+  var _cp2=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_custom_"+list.id)||"[]");}catch(e){return[];}}),customPlants=_cp2[0],setCustomPlants=_cp2[1];
   function saveSiteWork(v){setSiteWork(v);try{localStorage.setItem("ppb_site_work_"+list.id,v);}catch(e){}}
+  function saveCustomPlants(arr){setCustomPlants(arr);try{localStorage.setItem("ppb_custom_"+list.id,JSON.stringify(arr));}catch(e){}}
+  function addCustomPlant(){saveCustomPlants([...customPlants,{id:"cp_"+Date.now(),name:"",qty:1,price:0}]);}
+  function updateCustomPlant(id,field,val){saveCustomPlants(customPlants.map(function(p){return p.id===id?Object.assign({},p,{[field]:val}):p;}));}
+  function removeCustomPlant(id){saveCustomPlants(customPlants.filter(function(p){return p.id!==id;}));}
 
   function setQty(latin,val){
     var next=Object.assign({},qtys);
@@ -1881,7 +1954,8 @@ function ProcurementView(props){
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
-  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0);
+  var customTotal=customPlants.reduce(function(s,p){return s+(p.qty||0)*(p.price||0);},0);
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0)+customTotal;
   var salesTax=vbCostTotal*((rates.taxRate||0)/100);
   var yourCost=vbCostTotal+salesTax+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
@@ -1927,6 +2001,7 @@ function ProcurementView(props){
         )
       )
     ),
+    clientView&&(list.notes||"").trim()&&h("div",{style:{padding:"12px 16px",marginBottom:12,background:"#f9f8f4",borderRadius:8,fontSize:14,lineHeight:1.65,color:"#444",whiteSpace:"pre-line"}},list.notes),
     h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(grandTotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
       h("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
         h("div",{style:{flex:1,display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
@@ -1935,28 +2010,26 @@ function ProcurementView(props){
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Install: "),h("span",{style:{fontWeight:600}},"$"+installSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Delivery cost: $"),
-            h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},
-              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+            clientView?h("span",{style:{fontWeight:600}},"$"+deliveryCost.toFixed(2)):h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
-          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+          !clientView&&h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Procurement fee: $"),
             h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Site work: $"),
-            h("input",{type:"number",value:siteWork,min:0,onChange:function(ev){saveSiteWork(parseFloat(ev.target.value)||0);},
-              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+            clientView?h("span",{style:{fontWeight:600}},"$"+(siteWork||0).toFixed(2)):h("input",{type:"number",value:siteWork,min:0,onChange:function(ev){saveSiteWork(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+grandTotal.toFixed(2)),
-          h("span",{style:{fontSize:13,color:"#888"}},"│"),
-          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
-          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
-          showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
-          h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Hide margin":"Show margin",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁‍🗨")
+          !clientView&&h("span",{style:{fontSize:13,color:"#888"}},"│"),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
+          h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Present mode — hide internals":"Exit present mode",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:showMargin?"#ccc":"#2e5339",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁")
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
-          h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
+          !clientView&&h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
           grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
         )
       ),
@@ -2038,10 +2111,23 @@ function ProcurementView(props){
               style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
             lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
           ),
-          h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
+          !clientView&&h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
         )
       );
-    })
+    }),
+    customPlants.length>0&&h("div",{style:{marginTop:8}},
+      customPlants.map(function(cp){
+        return h("div",{key:cp.id,style:{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#fffbf0",borderRadius:8,border:"1px solid #e8e0c8",marginBottom:6}},
+          h("input",{value:cp.name,onChange:function(ev){updateCustomPlant(cp.id,"name",ev.target.value);},placeholder:"Plant name",style:{flex:1,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,background:"transparent",outline:"none",padding:"2px 4px"}}),
+          h("input",{type:"number",min:1,step:1,value:cp.qty||"",placeholder:"qty",onChange:function(ev){updateCustomPlant(cp.id,"qty",parseInt(ev.target.value)||0);},style:{width:50,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,textAlign:"center",background:"transparent",outline:"none",padding:"2px"}}),
+          h("span",{style:{fontSize:12,color:"#aaa"}},"@ $"),
+          h("input",{type:"number",min:0,step:0.01,value:cp.price||"",placeholder:"0.00",onChange:function(ev){updateCustomPlant(cp.id,"price",parseFloat(ev.target.value)||0);},style:{width:60,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,textAlign:"center",background:"transparent",outline:"none",padding:"2px"}}),
+          h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600,minWidth:50,textAlign:"right"}},(cp.qty&&cp.price)?"$"+((cp.qty*cp.price).toFixed(2)):""),
+          !clientView&&h("button",{onClick:function(){removeCustomPlant(cp.id);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1}},"×")
+        );
+      })
+    ),
+    !clientView&&h("button",{onClick:addCustomPlant,style:{marginTop:8,background:"none",border:"1px dashed #ccc",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,color:"#888",width:"100%",textAlign:"center"}},"+ Add custom plant / write-in")
   );
 }
 
@@ -2052,6 +2138,7 @@ function SavedListsView(props){
   var onCreateList=props.onCreateList||function(){};
   var onDeleteList=props.onDeleteList||function(){};
   var onRenameList=props.onRenameList||function(){};
+  var onUpdateListNotes=props.onUpdateListNotes||function(){};
   var onToggleInList=props.onToggleInList||function(){};
   var onGoToExplore=props.onGoToExplore||function(){};
   var isMobile=props.isMobile||false;
@@ -2059,6 +2146,7 @@ function SavedListsView(props){
 
   var _oi=useState(null),openId=_oi[0],setOpenId=_oi[1];
   var _nm=useState(false),newMode=_nm[0],setNewMode=_nm[1];
+  var _cmp=useState(false),compactView=_cmp[0],setCompactView=_cmp[1];
   var _nn=useState(""),newName=_nn[0],setNewName=_nn[1];
   var _ri=useState(null),renamingId=_ri[0],setRenamingId=_ri[1];
   var _rn=useState(""),renameName=_rn[0],setRenameName=_rn[1];
@@ -2126,8 +2214,10 @@ function SavedListsView(props){
         h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
         h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
         !proMode&&openPlants.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
-        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
+        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list"),
+        !proMode&&h("button",{onClick:function(){setCompactView(!compactView);},style:{background:compactView?"#f0faf0":"white",color:compactView?"#2e5339":"#555",border:"1.5px solid "+(compactView?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:compactView?"500":"normal"}},compactView?"⊞ Cards":"☰ Compact")
       ),
+      h("textarea",{value:openList.notes||"",onChange:function(ev){onUpdateListNotes(openList.id,ev.target.value);},placeholder:"Add a description for this zone or list…",style:{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid #e0ddd5",borderRadius:8,fontFamily:"inherit",fontSize:13,lineHeight:1.6,color:"#444",background:"#fafaf8",resize:"vertical",minHeight:60,marginBottom:12,outline:"none"}}),
       h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
       openPlants.length===0
         ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
@@ -2136,9 +2226,37 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);}})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);}})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
+              if(compactView){
+                return h("div",null,
+                  TYPE_LAYERS.map(function(ld){
+                    var lplants=grouped[ld.key];
+                    if(!lplants||!lplants.length)return null;
+                    return h("div",{key:ld.key,style:{marginBottom:20}},
+                      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
+                        h("span",{style:{fontSize:15,background:ld.bg,borderRadius:6,padding:"2px 6px"}},""+ld.emoji),
+                        h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
+                        h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
+                      ),
+                      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:5}},
+                      lplants.map(function(p){
+                        var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+                        return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",minWidth:0}},
+                          h(PlantThumb,{plant:p,size:30,radius:5}),
+                          h("div",{style:{flex:1,minWidth:0}},
+                            h("div",{style:{fontWeight:600,fontSize:13,fontFamily:"'Literata',serif",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.common),
+                            h("div",{style:{fontSize:10,color:"#aaa",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.latin)
+                          ),
+                          h("span",{style:{background:ss.bg,color:ss.text,fontSize:9,padding:"1px 5px",borderRadius:4,fontWeight:"bold",flexShrink:0,whiteSpace:"nowrap"}},ss.label),
+                          h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ddd",padding:"2px",lineHeight:1,flexShrink:0}},"×")
+                        );
+                      }))
+                    );
+                  })
+                );
+              }
               return h("div",null,
                 TYPE_LAYERS.map(function(ld){
                   var plants=grouped[ld.key];
@@ -2153,7 +2271,7 @@ function SavedListsView(props){
   }
 
   // ── Lists index view ──
-  return h("div",null,
+  return h("div",{style:{maxWidth:860}},
     h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}},
       h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600}},"Saved Lists"),
       h("button",{onClick:function(){setNewMode(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"+ New list")
