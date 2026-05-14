@@ -27,7 +27,7 @@ function renderTypeSection(ld,plants,isMobile,cardFn){
       h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
       h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},plants.length)
     ),
-    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(170px,1fr))",gap:isMobile?10:14}},
+    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(195px,1fr))",gap:isMobile?10:14}},
       plants.map(cardFn)
     )
   );
@@ -801,7 +801,7 @@ function HabitatView(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},ld.plants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(170px,1fr))",gap:isMobile?10:14}},
+        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(195px,1fr))",gap:isMobile?10:14}},
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
