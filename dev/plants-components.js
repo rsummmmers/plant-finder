@@ -616,7 +616,7 @@ function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var scale=count/20;
-  var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:0,vine:0};
+  var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:Math.max(1,Math.round(1*scale)),vine:Math.max(1,Math.round(1*scale))};
 
   var suggested=useMemo(function(){
     var byType={};
