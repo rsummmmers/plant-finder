@@ -621,7 +621,7 @@ function SuggestPanel(props){
   var suggested=useMemo(function(){
     var byType={};
     PLANT_TYPES.forEach(function(g){byType[g.key]=[];});
-    var scored=plants.slice().sort(function(a,b){
+    var scored=plants.filter(function(p){return p.status!=="Invasive"&&p.status!=="Caution";}).slice().sort(function(a,b){
       return ((getSiteScore(b,siteKey)||0)*10+(b.caterpillars||0)/10)-((getSiteScore(a,siteKey)||0)*10+(a.caterpillars||0)/10);
     });
     // Pass 1: prefer one plant per genus
@@ -1382,15 +1382,10 @@ function FilterDrawer(props){
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
   function togSt(k){
-    var badPlants=["invasive","caution"];
-    var goodPlants=["native","nearnative","cultivar","nonnative"];
     set({statuses:(function(){
       var cur=f.statuses;
       if(cur.indexOf(k)>=0) return cur.filter(function(v){return v!==k;});
-      var next=[...cur,k];
-      if(badPlants.indexOf(k)>=0) next=next.filter(function(v){return badPlants.indexOf(v)>=0;});
-      if(goodPlants.indexOf(k)>=0) next=next.filter(function(v){return goodPlants.indexOf(v)>=0;});
-      return next;
+      return [...cur,k];
     })()});
   }
   function togCx(k){set({concerns:f.concerns.indexOf(k)>=0?f.concerns.filter(function(v){return v!==k;}):[...f.concerns,k]});}
@@ -1437,9 +1432,12 @@ function FilterDrawer(props){
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
             MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"5px 8px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#2e5339":"transparent",color:on?"white":"#555",textAlign:"left",display:"flex",alignItems:"center",gap:5}},z.emoji," ",z.label);})
           ),
-          props.onSuggest&&h("button",{onClick:props.onSuggest,style:{marginTop:10,width:"100%",padding:"9px 12px",background:zone?"#2e5339":"#f5f5f5",color:zone?"white":"#aaa",border:"none",borderRadius:6,cursor:zone?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
-            "✨ "+(zone?"Suggest plants for this site":"Select a site type to get suggestions")
-          )
+          (function(){
+            var canSuggest=zone&&f.statuses.indexOf("invasive")<0&&f.statuses.indexOf("caution")<0;
+            return h("button",{onClick:canSuggest&&props.onSuggest?props.onSuggest:function(){},style:{marginTop:10,width:"100%",padding:"9px 12px",background:canSuggest?"#2e5339":"#f5f5f5",color:canSuggest?"white":"#aaa",border:"none",borderRadius:6,cursor:canSuggest?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
+              "✨ "+(canSuggest?"Suggest plants for this site":zone?"Not available with invasive/caution filters":"Select a site type to get suggestions")
+            );
+          })()
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Include"),
