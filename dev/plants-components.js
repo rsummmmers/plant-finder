@@ -1593,7 +1593,7 @@ function CompactPlantList(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(380px,1fr))",gap:6}},
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(380px,100%),1fr))",gap:6}},
         lplants.map(function(p){
           var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
