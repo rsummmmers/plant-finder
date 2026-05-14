@@ -974,7 +974,7 @@ function BloomCalendar(props){
     ),
     // Header (standalone only)
     !embedded&&h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf38 Bloom Calendar"),
@@ -984,7 +984,7 @@ function BloomCalendar(props){
     ),
     // Filters
     h("div",{style:{position:embedded?"static":"sticky",top:embedded?undefined:140,zIndex:50,background:"rgba(0,0,0,0.15)",borderBottom:"1px solid rgba(255,255,255,0.12)",padding:isMobile?"8px 12px":"12px 20px 10px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         h("div",{style:{display:"flex",flexWrap:"wrap",gap:isMobile?5:8,alignItems:"center",marginBottom:isMobile?6:10}},
           // All plants / My palette pills
           h("button",{onClick:function(){setSource("all");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="all"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="all"?"rgba(255,255,255,0.2)":"transparent",color:source==="all"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="all"?"500":"normal"}},isMobile?"All":"All plants"),
@@ -1050,7 +1050,7 @@ function BloomCalendar(props){
       )
     ),
     // Matrix (desktop) or list (mobile)
-    isMobile?h("div",{style:{maxWidth:900,margin:"8px auto 0",padding:"0 16px"}},
+    isMobile?h("div",{style:{maxWidth:1400,margin:"8px auto 0",padding:"0 16px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("div",null,
         eligible.filter(function(p){return selMonth===null||blooms(p,selMonth);}).map(function(p){
@@ -1076,7 +1076,7 @@ function BloomCalendar(props){
         })
       )
     ):
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+    h("div",{style:{maxWidth:1400,margin:"12px auto 0",padding:"0 20px"}},
       eligible.length===0?h("div",{style:{textAlign:"center",padding:"40px",color:"rgba(255,255,255,0.6)",fontStyle:"italic"}},"No plants match your filters."):
       h("div",{style:{maxHeight:"calc(100vh - 340px)",overflowY:"auto",overflowX:"clip"}},
       h("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,tableLayout:"fixed"}},
@@ -1130,7 +1130,7 @@ function BloomCalendar(props){
       ) // end scroll wrapper
     ), // end desktop table
     // Detail panel (desktop only)
-    h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px 40px"}},
+    h("div",{style:{maxWidth:1400,margin:"16px auto 0",padding:"0 20px 40px"}},
       h("div",{style:{borderTop:"1px solid rgba(255,255,255,0.15)",paddingTop:14}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,marginBottom:12,color:"white"}},
           selMonth!==null?MONTHS[selMonth]+" \u2014 "+selPlants.length+" plant"+(selPlants.length!==1?"s":"")+" blooming":selPlants.length+" plant"+(selPlants.length!==1?"s":"")
@@ -1282,7 +1282,7 @@ function SeedCalendar(props){
 
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#fafaf7",color:"#2c2c2c"}},
     !embedded&&h("div",{style:{background:"#2e5339",color:"#f0ede4",padding:"18px 20px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
         h("button",{onClick:onBack,style:{background:"rgba(255,255,255,0.12)",border:"none",color:"#f0ede4",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"\u2190 Plant Palette Builder"),
         h("div",null,
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:400}},"\ud83c\udf31 Seed & Propagation Calendar"),
@@ -1291,7 +1291,7 @@ function SeedCalendar(props){
       )
     ),
     h("div",{style:{position:embedded?"static":"sticky",top:0,zIndex:50,background:"white",borderBottom:"1px solid #e0ddd5",padding:"10px 16px"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
           h("button",{onClick:function(){setMonthIdx(function(i){return(i+11)%12;});},style:{background:"#f0ede4",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14,flexShrink:0}},"\u25c0"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:18,flex:1,textAlign:"center"}},MONTHS[monthIdx]),
@@ -1317,13 +1317,13 @@ function SeedCalendar(props){
         )
       )
     ),
-    h("div",{style:{maxWidth:900,margin:"12px auto 0",padding:"0 20px"}},
+    h("div",{style:{maxWidth:1400,margin:"12px auto 0",padding:"0 20px"}},
       h("div",{style:{position:"relative"}},
         h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
         search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
       )
     ),
-    h("div",{style:{maxWidth:900,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
+    h("div",{style:{maxWidth:1400,margin:"16px auto 0",padding:"0 20px",display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}},
       STATUS_OPTS.filter(function(opt){return opt.key!=="invasive"&&opt.key!=="caution";}).map(function(opt){
         var on=statuses.indexOf(opt.key)>=0;
         return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?opt.fg+"44":"#e0ddd5"),background:on?opt.bg:"transparent",color:on?opt.fg:"#666"}},opt.label);
@@ -1335,7 +1335,7 @@ function SeedCalendar(props){
       }),
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:"16px 20px 80px"}},
+    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:"16px 20px 80px"}},
       ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx});})),
       comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx});}))),
       justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx});}))),
