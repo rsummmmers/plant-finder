@@ -605,7 +605,6 @@ var p=new URLSearchParams();
       ),
       h("div",{style:{padding:"14px 16px",borderTop:"1px solid #e0ddd5",flexShrink:0,display:"flex",flexDirection:"column",gap:8}},
         h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white")},copied?"\u2713 Link copied!":"\ud83d\udd17 Copy shareable link"),
-        h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c")},"\ud83d\udda8\ufe0f Print / save PDF"),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))props.onClear();},style:btn("#fff5f5","#c62828",{border:"1px solid #ffcdd2"})},"\u2715 Clear palette")
       )
     )
@@ -1374,7 +1373,6 @@ function ShareBar(props){
     ):h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
       h("button",{onClick:function(){setEditing(true);},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},label?"\u270f\ufe0f "+label:"\ud83d\udccb Name this list"),
       h("button",{onClick:copy,style:btn(copied?"#e8f5e9":"#f0ede4",copied?"#2e7d32":"#555",{fontSize:13,padding:"5px 12px"})},copied?"\u2713 Copied!":"\ud83d\udd17 Copy link"),
-      h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#555",{fontSize:13,padding:"5px 12px"})},"\ud83d\udda8\ufe0f Print")
     )
   );
 }
@@ -1714,7 +1712,6 @@ function PaletteView(props){
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}},
         hearted.length>0&&h("button",{onClick:copyLink,style:btn(copied?"#e8f5e9":"#2e5339",copied?"#2e7d32":"white",{fontSize:13,padding:"8px 18px",fontWeight:600})},isMobile?"\ud83d\udce4 Share":copied?"\u2713 Link copied!":"\ud83d\udd17 Copy link"),
         hearted.length>0&&h("button",{onClick:function(){setBulkPickerOpen(true);},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udccc Save to list\u2026"),
-        h("button",{onClick:function(){window.print();},style:btn("#f0ede4","#2c2c2c",{fontSize:13,padding:"6px 12px"})},"\ud83d\udda8\ufe0f Print"),
         proMode&&hearted.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:exportVBOrder,style:btn("#e8f5e9","#2e7d32",{fontSize:13,padding:"6px 12px",border:"1px solid #c8e6c9"})},"\ud83d\udce6 Export VB order"),
         h("button",{onClick:onOpenFilters,style:btn(activeFilterCount>0?"#f0faf0":"#f0ede4",activeFilterCount>0?"#2e5339":"#2c2c2c",{fontSize:13,padding:"6px 12px",border:activeFilterCount>0?"1.5px solid #2e5339":undefined})},"\u25a4 Filters"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
         hearted.length>0&&h("button",{onClick:function(){if(window.confirm("Clear all "+hearted.length+" plants from your list?"))onClear();},style:btn("#fff5f5","#c62828",{fontSize:13,padding:"6px 12px",border:"1px solid #ffcdd2"})},"\u2715 Clear")
