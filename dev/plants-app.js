@@ -353,7 +353,7 @@ function App(){
               !selectMode&&h("span",{style:{fontSize:13,color:"#aaa"}},"Sort:"),
               !selectMode&&(function(){
                 var effectiveSort=(!zone&&sortBy==="fit")?"wildlife":sortBy;
-                return [{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
+                return [{v:"fit",l:"Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
                   var active=effectiveSort===x.v;
                   var disabled=x.v==="fit"&&!zone;
                   return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:disabled?"default":"pointer",border:"1px solid "+(active?"#2e5339":"#e0ddd5"),background:active?"#2e5339":"transparent",color:active?"white":disabled?"#ccc":"#666",opacity:disabled?0.5:1}},x.l);
