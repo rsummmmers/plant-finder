@@ -381,14 +381,14 @@ function App(){
                        background:selectMode?"#2e5339":"transparent",
                        color:selectMode?"white":"#666",marginLeft:4}},
                 selectMode?"\u2715 Cancel":"Select"),
-              !isMobile&&h("button",{onClick:toggleListView,title:listView?"Switch to card view":"Switch to list view",
+              h("button",{onClick:toggleListView,title:listView?"Switch to card view":"Switch to list view",
                 style:{padding:"4px 10px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
                   border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
                 listView?"\u229e":"\u2630")
             )
           ),
           selectMode&&h(SelectActionBar,{count:selectedLatins.length,selectedLatins:selectedLatins,lists:lists,onCreateList:createList,onBulkAdd:bulkAddToList,onClearSelection:function(){setSelectedLatins([]);},onExit:exitSelectMode,isMobile:isMobile}),
-          listView&&!isMobile
+          listView
             ?h(CompactPlantList,{plants:results,siteKey:zone,hearts:hearts,onHeart:toggleHeart,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,vbData:vbData,proMode:proMode,showVbBadges:showVbBadges})
             :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(185px,1fr))",gap:isMobile?10:14,marginTop:4,marginTop:4}},
             results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null});})),
