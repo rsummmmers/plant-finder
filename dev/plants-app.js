@@ -214,7 +214,7 @@ function App(){
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
         h("img",{src:"/header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
         h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
-        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
+        h("div",{style:{position:"relative",maxWidth:1400,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
           h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
           !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native-Forward Plant Planning Tool")
@@ -223,7 +223,7 @@ function App(){
 
       // Tab row — desktop only
       !isMobile&&h("div",{className:"no-print",style:{background:"#150f09",borderBottom:"1px solid rgba(255,255,255,0.08)"}},
-        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
+        h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
           [
             {key:"plants", label:"Explore"},
             {key:"palette",label:"My Plants",count:hearts.length},
@@ -277,7 +277,7 @@ function App(){
 
     // Sticky filter bar
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#D9D9BF",borderBottom:"1px solid rgba(0,0,0,0.08)"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           isMobile&&h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
@@ -299,7 +299,7 @@ function App(){
     h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
+    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
