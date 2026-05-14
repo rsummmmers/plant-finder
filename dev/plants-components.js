@@ -1377,7 +1377,7 @@ function FilterDrawer(props){
       inferredSun=props.inferredSun,isMobile=props.isMobile,
       zone=props.zone,onSetZone=props.onSetZone,source=props.source;
   var proMode=props.proMode||false,vbData=props.vbData||{},vbFilter=props.vbFilter||false,onVbFilter=props.onVbFilter||function(){};
-  if(!open)return null;
+  if(!open&&isMobile)return null;
   var visibleStatuses=source==="palette"?STATUS_OPTS.filter(function(o){return o.key!=="invasive"&&o.key!=="caution";}):STATUS_OPTS;
   var f=filters;
   function set(patch){onChange(Object.assign({},f,patch));}
@@ -1398,10 +1398,11 @@ function FilterDrawer(props){
   function togFl(c){set({rflower:f.rflower.indexOf(c)>=0?f.rflower.filter(function(v){return v!==c;}):[...f.rflower,c]});}
 
   useEffect(function(){
+    if(!isMobile)return;
     var prev=document.body.style.overflow;
     document.body.style.overflow="hidden";
     return function(){document.body.style.overflow=prev;};
-  },[]);
+  },[isMobile]);
 
   function resetAll(){
     onChange({statuses:["native","nearnative","cultivar"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
@@ -1416,7 +1417,7 @@ function FilterDrawer(props){
 
   var panelStyle=isMobile
     ?{position:"fixed",left:0,right:0,bottom:0,background:"white",borderRadius:"16px 16px 0 0",zIndex:200,maxHeight:"92vh",display:"flex",flexDirection:"column",overscrollBehavior:"contain"}
-    :{position:"fixed",top:0,right:0,bottom:0,width:380,background:"white",borderLeft:"1px solid #e0ddd5",zIndex:200,display:"flex",flexDirection:"column",overscrollBehavior:"contain"};
+    :{position:"fixed",top:140,left:0,bottom:0,width:280,background:"white",borderRight:"1px solid #e0ddd5",zIndex:100,display:"flex",flexDirection:"column",overflowY:"auto",overscrollBehavior:"contain"};
 
   var handleStyle=isMobile
     ?{width:40,height:4,background:"#ccc",borderRadius:2,margin:"12px auto 0"}
@@ -1426,7 +1427,7 @@ function FilterDrawer(props){
     isMobile&&h("div",{onClick:function(ev){ev.preventDefault();ev.stopPropagation();onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:199},onTouchMove:function(ev){ev.stopPropagation();},onTouchEnd:function(ev){ev.stopPropagation();}}),
     h("div",{style:panelStyle},
       isMobile&&h("div",{style:handleStyle}),
-      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
+      isMobile&&h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
