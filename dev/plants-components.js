@@ -2148,13 +2148,11 @@ function SavedListsView(props){
         h("button",{onClick:function(){copyLink(openList);},style:{background:copied?"#e8f5e9":"#2e5339",color:copied?"#2e7d32":"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},copied?"✓ Copied!":"🔗 Copy link"),
         h("button",{onClick:onGoToExplore,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"🌿 Browse to add"),
         !proMode&&openPlants.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
-        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
+        h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list"),
+        !proMode&&h("button",{onClick:function(){setCompactView(!compactView);},style:{background:compactView?"#f0faf0":"white",color:compactView?"#2e5339":"#555",border:"1.5px solid "+(compactView?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:compactView?"500":"normal"}},compactView?"⊞ Cards":"☰ Compact")
       ),
       h("textarea",{value:openList.notes||"",onChange:function(ev){onUpdateListNotes(openList.id,ev.target.value);},placeholder:"Add a description for this zone or list…",style:{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid #e0ddd5",borderRadius:8,fontFamily:"inherit",fontSize:13,lineHeight:1.6,color:"#444",background:"#fafaf8",resize:"vertical",minHeight:60,marginBottom:12,outline:"none"}}),
-      h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
-        h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic"}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
-        !proMode&&h("button",{onClick:function(){setCompactView(!compactView);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,padding:"3px 10px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},compactView?"⊞ Cards":"☰ Compact")
-      ),
+      h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
       openPlants.length===0
         ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
             h("div",{style:{fontSize:36,marginBottom:12}},"🌿"),
