@@ -1553,8 +1553,8 @@ function FilterDrawer(props){
         ),
         ),
       h("div",{style:{padding:"12px 20px",paddingBottom:isMobile?"calc(58px + env(safe-area-inset-bottom, 20px))":"20px",borderTop:"1px solid #e0ddd5",flexShrink:0,background:"white",display:"flex",gap:8}},
-        h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:10,padding:"13px",fontSize:14,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
-        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:10,padding:"13px",fontSize:15,flex:2})},"Show results")
+        h("button",{onClick:resetAll,style:btn("#fff5f5","#c62828",{borderRadius:6,padding:"9px 14px",fontSize:13,flex:1,border:"1px solid #ffcdd2"})},"✕ Clear all"),
+        h("button",{onClick:onClose,style:btn("#2e5339","white",{borderRadius:6,padding:"9px 14px",fontSize:13,flex:2})},"Show results")
       )
     )
   );
