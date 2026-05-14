@@ -48,7 +48,7 @@ function App(){
   },[]);
   var createList=useCallback(function(name){
     var id="list_"+Date.now();
-    var newList={id:id,name:name.trim(),plants:[],created:Date.now(),updated:Date.now()};
+    var newList={id:id,name:name.trim(),notes:"",plants:[],created:Date.now(),updated:Date.now()};
     setLists(function(prev){var next=[...prev,newList];saveLists(next);return next;});
     return id;
   },[]);
@@ -57,6 +57,9 @@ function App(){
   },[]);
   var renameList=useCallback(function(id,name){
     setLists(function(prev){var next=prev.map(function(l){return l.id===id?Object.assign({},l,{name:name,updated:Date.now()}):l;});saveLists(next);return next;});
+  },[]);
+  var updateListNotes=useCallback(function(id,notes){
+    setLists(function(prev){var next=prev.map(function(l){return l.id===id?Object.assign({},l,{notes:notes,updated:Date.now()}):l;});saveLists(next);return next;});
   },[]);
   var togglePlantInList=useCallback(function(latin,listId){
     setLists(function(prev){
@@ -316,7 +319,7 @@ function App(){
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
