@@ -1409,7 +1409,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:["native","nearnative","cultivar"],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
