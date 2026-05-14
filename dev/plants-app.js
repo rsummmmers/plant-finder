@@ -394,12 +394,15 @@ function App(){
         {key:"bloom",   label:"Bloom",    icon:"\ud83c\udf38"},
         {key:"seeds",   label:"Seeds",    icon:"\ud83c\udf30"},
         {key:"search",  label:"Search",   icon:"\u2315"},
+        {key:"info",    label:"About",    icon:"?"},
       ].map(function(tab){
         var active=tab.key==="search"?searchActive:(activeTab===tab.key&&!searchActive);
         var handleClick=function(){
           if(tab.key==="search"){
             setActiveTab("plants");setDrawerOpen(false);
             setTimeout(function(){if(searchRef.current){searchRef.current.focus();searchRef.current.scrollIntoView({behavior:"smooth",block:"center"});}},50);
+          } else if(tab.key==="info"){
+            setShowGlossary(true);
           } else {
             setSearch("");setActiveTab(tab.key);
             if(tab.key==="plants"){if(!isMobile)setDrawerOpen(true);}else{setDrawerOpen(false);setShowSuggest(false);}
