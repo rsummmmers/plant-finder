@@ -348,7 +348,13 @@ function App(){
             )
           ),
           h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
-            h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},results.length+" plant"+(results.length!==1?"s":"")+(zone?" for "+(zoneInfo?zoneInfo.label:zone):"")+"\u00b7 Massachusetts"),
+            h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},results.length+" plant"+(results.length!==1?"s":"")+(zone?" for "+(zoneInfo?zoneInfo.label:zone):"")+"\u00b7 Massachusetts"),
+              h("button",{onClick:toggleListView,title:listView?"Switch to card view":"Switch to list view",
+                style:{padding:"4px 10px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",
+                  border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
+                listView?"\u229e":"\u2630")
+            ),
             h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
               !selectMode&&h("span",{style:{fontSize:13,color:"#aaa"}},"Sort:"),
               !selectMode&&(function(){
@@ -381,10 +387,6 @@ function App(){
                        background:selectMode?"#2e5339":"transparent",
                        color:selectMode?"white":"#666",marginLeft:4}},
                 selectMode?"\u2715 Cancel":"Select"),
-              h("button",{onClick:toggleListView,title:listView?"Switch to card view":"Switch to list view",
-                style:{padding:"4px 10px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
-                  border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
-                listView?"\u229e":"\u2630")
             )
           ),
           selectMode&&h(SelectActionBar,{count:selectedLatins.length,selectedLatins:selectedLatins,lists:lists,onCreateList:createList,onBulkAdd:bulkAddToList,onClearSelection:function(){setSelectedLatins([]);},onExit:exitSelectMode,isMobile:isMobile}),
