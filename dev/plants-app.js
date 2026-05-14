@@ -298,10 +298,10 @@ function App(){
     ),
 
     // Filter drawer — mobile bottom sheet, desktop persistent left sidebar
-    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
+    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:zone?function(){setShowSuggest(true);}:null}),
 
     // Main content
-    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px",paddingLeft:(!isMobile&&(activeTab==="plants"||activeTab==="home"))?"296px":"20px"}},
+    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px",paddingLeft:(!isMobile&&(activeTab==="plants"||activeTab==="home"))?"356px":"20px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
