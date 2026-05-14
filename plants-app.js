@@ -24,6 +24,8 @@ function App(){
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
   var _gl=useState(false),showGlossary=_gl[0],setShowGlossary=_gl[1];
+  var _lv=useState(function(){return localStorage.getItem("ppb_list_view")==="1";}),listView=_lv[0],setListView=_lv[1];
+  function toggleListView(){setListView(function(v){var n=!v;localStorage.setItem("ppb_list_view",n?"1":"0");return n;});}
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
@@ -48,7 +50,7 @@ function App(){
   },[]);
   var createList=useCallback(function(name){
     var id="list_"+Date.now();
-    var newList={id:id,name:name.trim(),plants:[],created:Date.now(),updated:Date.now()};
+    var newList={id:id,name:name.trim(),notes:"",plants:[],created:Date.now(),updated:Date.now()};
     setLists(function(prev){var next=[...prev,newList];saveLists(next);return next;});
     return id;
   },[]);
@@ -57,6 +59,9 @@ function App(){
   },[]);
   var renameList=useCallback(function(id,name){
     setLists(function(prev){var next=prev.map(function(l){return l.id===id?Object.assign({},l,{name:name,updated:Date.now()}):l;});saveLists(next);return next;});
+  },[]);
+  var updateListNotes=useCallback(function(id,notes){
+    setLists(function(prev){var next=prev.map(function(l){return l.id===id?Object.assign({},l,{notes:notes,updated:Date.now()}):l;});saveLists(next);return next;});
   },[]);
   var togglePlantInList=useCallback(function(latin,listId){
     setLists(function(prev){
@@ -211,7 +216,7 @@ function App(){
       h("div",{style:{position:"relative",overflow:"hidden",minHeight:isMobile?100:80}},
         h("img",{src:"/header.jpg",alt:"",style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center"}}),
         h("div",{style:{position:"absolute",inset:0,background:"rgba(18,38,18,0.80)"}}),
-        h("div",{style:{position:"relative",maxWidth:900,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
+        h("div",{style:{position:"relative",maxWidth:1400,margin:"0 auto",padding:isMobile?"20px 20px 18px":"12px 20px 10px",cursor:"pointer"},onClick:function(){setActiveTab("home");},},
           h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:isMobile?5:2,cursor:"pointer"}},"Summers EcoScaping"),
           h("div",{style:{fontFamily:"'Literata',serif",fontSize:isMobile?"clamp(20px,4vw,30px)":"22px",fontWeight:600,color:"white",letterSpacing:"-0.3px",lineHeight:1.1,cursor:"pointer"}},"Ecoscaping Planner"),
           !isMobile&&h("div",{style:{fontFamily:"'Poppins',sans-serif",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.05em",marginTop:2}},"Native-Forward Plant Planning Tool")
@@ -220,7 +225,7 @@ function App(){
 
       // Tab row — desktop only
       !isMobile&&h("div",{className:"no-print",style:{background:"#150f09",borderBottom:"1px solid rgba(255,255,255,0.08)"}},
-        h("div",{style:{maxWidth:900,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
+        h("div",{style:{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",padding:"0 8px",gap:0}},
           [
             {key:"plants", label:"Explore"},
             {key:"palette",label:"My Plants",count:hearts.length},
@@ -274,7 +279,7 @@ function App(){
 
     // Sticky filter bar
     activeTab!=="home"&&h("div",{className:"no-print",style:{position:"sticky",top:isMobile?0:140,zIndex:100,background:"#D9D9BF",borderBottom:"1px solid rgba(0,0,0,0.08)"}},
-      h("div",{style:{maxWidth:900,margin:"0 auto"}},
+      h("div",{style:{maxWidth:1400,margin:"0 auto"}},
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           isMobile&&h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
@@ -282,7 +287,7 @@ function App(){
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
             )
           ),
-          h("div",{style:{paddingBottom:10}},
+          isMobile&&h("div",{style:{paddingBottom:10}},
             h("button",{onClick:function(){setDrawerOpen(true);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"1.5px solid "+(badgeCount>0?"#2e5339":"#e0ddd5"),background:badgeCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:badgeCount>0?"#2e5339":"#555",fontWeight:badgeCount>0?"500":"normal"}},
               "\u25a4 Filters",
               badgeCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},badgeCount)
@@ -292,11 +297,11 @@ function App(){
 
     ),
 
-    // Filter drawer — mobile bottom sheet, desktop right panel
-    h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
+    // Filter drawer — mobile bottom sheet, desktop persistent left sidebar
+    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:function(){setShowSuggest(true);}}),
 
     // Main content
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
+    h("div",{style:(!isMobile&&(activeTab==="plants"||activeTab==="home"))?{marginLeft:344,marginRight:0,padding:"12px 20px 80px"}:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
@@ -311,12 +316,12 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,listView:listView,onToggleListView:toggleListView,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
@@ -343,12 +348,20 @@ function App(){
             )
           ),
           h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
-            h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},results.length+" plant"+(results.length!==1?"s":"")+(zone?" for "+(zoneInfo?zoneInfo.label:zone):"")+"\u00b7 Massachusetts"),
+            h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              h("div",{style:{fontSize:14,color:"#888",fontStyle:"italic"}},results.length+" plant"+(results.length!==1?"s":"")+(zone?" for "+(zoneInfo?zoneInfo.label:zone):"")+"\u00b7 Massachusetts"),
+              isMobile&&h("button",{onClick:toggleListView,style:{padding:"4px 8px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},listView?"\u229e":"\u2630")
+            ),
             h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
               !selectMode&&h("span",{style:{fontSize:13,color:"#aaa"}},"Sort:"),
-              !selectMode&&[{v:"fit",l:"\ud83d\udccd Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
-                return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",border:"1px solid "+(sortBy===x.v?"#2e5339":"#e0ddd5"),background:sortBy===x.v?"#2e5339":"transparent",color:sortBy===x.v?"white":"#666"}},x.l);
-              }),
+              !selectMode&&(function(){
+                var effectiveSort=(!zone&&sortBy==="fit")?"wildlife":sortBy;
+                return [{v:"fit",l:"Best fit"},{v:"wildlife",l:"\ud83e\udd8b Insects"},{v:"alpha",l:"A\u2013Z"}].map(function(x){
+                  var active=effectiveSort===x.v;
+                  var disabled=x.v==="fit"&&!zone;
+                  return h("button",{key:x.v,onClick:function(){setSortBy(x.v);},style:{padding:"4px 11px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:disabled?"default":"pointer",border:"1px solid "+(active?"#2e5339":"#e0ddd5"),background:active?"#2e5339":"transparent",color:active?"white":disabled?"#ccc":"#666",opacity:disabled?0.5:1}},x.l);
+                });
+              })(),
               proMode&&showVbBadges&&vbWeekOf&&h("span",{style:{fontSize:11,color:"#aaa",marginLeft:4,marginRight:2}},vbWeekOf),
               proMode&&showVbBadges&&Object.keys(vbData).length>0&&h("button",{
                 onClick:function(){setVbFilter(vbFilter===false?"available":vbFilter==="available"?"instock":vbFilter==="instock"?"trays":false);},
@@ -370,11 +383,17 @@ function App(){
                        border:"1px solid "+(selectMode?"#2e5339":"#e0ddd5"),
                        background:selectMode?"#2e5339":"transparent",
                        color:selectMode?"white":"#666",marginLeft:4}},
-                selectMode?"\u2715 Cancel":"Select")
+                selectMode?"\u2715 Cancel":"Select"),
+              !isMobile&&h("button",{onClick:toggleListView,title:listView?"Switch to card view":"Switch to list view",
+                style:{padding:"4px 10px",borderRadius:5,fontSize:13,fontFamily:"inherit",cursor:"pointer",marginLeft:4,
+                  border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
+                listView?"\u229e":"\u2630"),
             )
           ),
           selectMode&&h(SelectActionBar,{count:selectedLatins.length,selectedLatins:selectedLatins,lists:lists,onCreateList:createList,onBulkAdd:bulkAddToList,onClearSelection:function(){setSelectedLatins([]);},onExit:exitSelectMode,isMobile:isMobile}),
-          h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16,marginTop:4}},
+          listView
+            ?h(CompactPlantList,{plants:results,siteKey:zone,hearts:hearts,onHeart:toggleHeart,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,vbData:vbData,proMode:proMode,showVbBadges:showVbBadges})
+            :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(185px,1fr))",gap:isMobile?10:14,marginTop:4,marginTop:4}},
             results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
