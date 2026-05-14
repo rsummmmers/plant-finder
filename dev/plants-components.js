@@ -2263,7 +2263,7 @@ function SavedListsView(props){
   }
 
   // ── Lists index view ──
-  return h("div",null,
+  return h("div",{style:{maxWidth:860}},
     h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}},
       h("div",{style:{fontFamily:"'Literata',serif",fontSize:20,fontWeight:600}},"Saved Lists"),
       h("button",{onClick:function(){setNewMode(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"+ New list")
