@@ -1443,7 +1443,7 @@ function FilterDrawer(props){
           ),
           (function(){
             var canSuggest=zone&&f.statuses.indexOf("invasive")<0&&f.statuses.indexOf("caution")<0;
-            return h("button",{onClick:canSuggest&&props.onSuggest?props.onSuggest:function(){},style:{marginTop:10,width:"100%",padding:"9px 12px",background:canSuggest?"#2e5339":"#f5f5f5",color:canSuggest?"white":"#aaa",border:"none",borderRadius:6,cursor:canSuggest?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
+            return h("button",{onClick:canSuggest&&props.onSuggest?function(){props.onSuggest();if(isMobile)onClose();}:function(){},style:{marginTop:10,width:"100%",padding:"9px 12px",background:canSuggest?"#2e5339":"#f5f5f5",color:canSuggest?"white":"#aaa",border:"none",borderRadius:6,cursor:canSuggest?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
               "✨ "+(canSuggest?"Suggest plants for this site":zone?"Not available with invasive/caution filters":"Select a site type to get suggestions")
             );
           })()
