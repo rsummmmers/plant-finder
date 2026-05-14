@@ -285,7 +285,7 @@ function App(){
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
             )
           ),
-          h("div",{style:{paddingBottom:10}},
+          isMobile&&h("div",{style:{paddingBottom:10}},
             h("button",{onClick:function(){setDrawerOpen(true);},style:{display:"inline-flex",alignItems:"center",gap:7,padding:"8px 16px",borderRadius:10,border:"1.5px solid "+(badgeCount>0?"#2e5339":"#e0ddd5"),background:badgeCount>0?"#f0faf0":"white",cursor:"pointer",fontFamily:"inherit",fontSize:14,color:badgeCount>0?"#2e5339":"#555",fontWeight:badgeCount>0?"500":"normal"}},
               "\u25a4 Filters",
               badgeCount>0&&h("span",{style:{background:"#2e5339",color:"white",borderRadius:10,padding:"0 8px",fontSize:12}},badgeCount)
@@ -295,11 +295,11 @@ function App(){
 
     ),
 
-    // Filter drawer — mobile bottom sheet, desktop right panel
-    h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:activeTab==="palette"?"palette":"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
+    // Filter drawer — mobile bottom sheet, desktop persistent left sidebar
+    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter}),
 
     // Main content
-    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
+    h("div",{style:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px",paddingLeft:(!isMobile&&(activeTab==="plants"||activeTab==="home"))?"296px":"20px"}},
 
       loading&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),h("div",{style:{fontStyle:"italic",fontSize:16}},"Loading plant data\u2026")),
       error&&h("div",{style:{textAlign:"center",padding:"60px 20px"}},h("div",{style:{fontSize:40,marginBottom:12}},"\u26a0\ufe0f"),h("div",{style:{fontWeight:"bold",color:"#b71c1c",marginBottom:8,fontSize:16}},"Could not load plant data"),h("div",{style:{fontSize:13,color:"#888"}},error)),
