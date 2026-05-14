@@ -1442,7 +1442,7 @@ function FilterDrawer(props){
             MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"5px 8px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#2e5339":"transparent",color:on?"white":"#555",textAlign:"left",display:"flex",alignItems:"center",gap:5}},z.emoji," ",z.label);})
           ),
           (function(){
-            var canSuggest=zone&&f.statuses.indexOf("invasive")<0&&f.statuses.indexOf("caution")<0;
+            var canSuggest=zone&&f.statuses.some(function(s){return s!=="invasive"&&s!=="caution";});
             return h("button",{onClick:canSuggest&&props.onSuggest?function(){props.onSuggest();if(isMobile)onClose();}:function(){},style:{marginTop:10,width:"100%",padding:"9px 12px",background:canSuggest?"#2e5339":"#f5f5f5",color:canSuggest?"white":"#aaa",border:"none",borderRadius:6,cursor:canSuggest?"pointer":"default",fontFamily:"inherit",fontSize:13,fontWeight:600,textAlign:"left"}},
               "✨ "+(canSuggest?"Suggest plants for this site":zone?"Not available with invasive/caution filters":"Select a site type to get suggestions")
             );
