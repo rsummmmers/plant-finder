@@ -1586,25 +1586,25 @@ function CompactPlantList(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
         ),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}},
         lplants.map(function(p){
           var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
           var cats=p.caterpillars||0;
-          return h("div",{key:p.latin,onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:10,padding:"6px 10px",background:"white",borderRadius:7,marginBottom:4,border:"1px solid #f0ede4",cursor:"pointer"}},
-            h(PlantThumb,{plant:p,size:34,radius:5}),
+          return h("div",{key:p.latin,onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",cursor:"pointer",minWidth:0}},
+            h(PlantThumb,{plant:p,size:32,radius:5}),
             h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontWeight:600,fontSize:14,fontFamily:"'Literata',serif",lineHeight:1.2}},p.common),
-              h("div",{style:{fontSize:11,color:"#aaa",fontStyle:"italic"}},p.latin)
+              h("div",{style:{fontWeight:600,fontSize:13,fontFamily:"'Literata',serif",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.common),
+              h("div",{style:{fontSize:10,color:"#aaa",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.latin)
             ),
-            h("div",{style:{display:"flex",gap:5,alignItems:"center",flexShrink:0}},
-              h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold"}},ss.label),
-              p.bloom&&p.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},p.bloom),
-              cats>0&&h("span",{style:{fontSize:10,color:"#4caf50",fontWeight:"bold"}},"🦋"+cats),
-              vbInfo&&vbInfo.vb&&h("span",{style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700}},"VB"),
-              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:hearts.indexOf(p.latin)>=0?"#e57373":"#ddd",padding:"2px",lineHeight:1}},hearts.indexOf(p.latin)>=0?"♥":"♡")
+            h("div",{style:{display:"flex",gap:4,alignItems:"center",flexShrink:0}},
+              h("span",{style:{background:ss.bg,color:ss.text,fontSize:9,padding:"1px 5px",borderRadius:4,fontWeight:"bold",whiteSpace:"nowrap"}},ss.label),
+              cats>0&&h("span",{style:{fontSize:9,color:"#4caf50",fontWeight:"bold"}},"🦋"+cats),
+              vbInfo&&vbInfo.vb&&h("span",{style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"1px 4px",borderRadius:3,fontWeight:700}},"VB"),
+              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:hearts.indexOf(p.latin)>=0?"#e57373":"#ddd",padding:"1px",lineHeight:1}},hearts.indexOf(p.latin)>=0?"♥":"♡")
             )
           );
-        })
+        }))
       );
     })
   );
@@ -2235,18 +2235,19 @@ function SavedListsView(props){
                         h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
                         h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
                       ),
+                      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:5}},
                       lplants.map(function(p){
                         var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
-                        return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"6px 10px",background:"white",borderRadius:7,marginBottom:4,border:"1px solid #f0ede4"}},
-                          h(PlantThumb,{plant:p,size:32,radius:5}),
+                        return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",minWidth:0}},
+                          h(PlantThumb,{plant:p,size:30,radius:5}),
                           h("div",{style:{flex:1,minWidth:0}},
-                            h("div",{style:{fontWeight:600,fontSize:14,fontFamily:"'Literata',serif",lineHeight:1.2}},p.common),
-                            h("div",{style:{fontSize:11,color:"#aaa",fontStyle:"italic"}},p.latin)
+                            h("div",{style:{fontWeight:600,fontSize:13,fontFamily:"'Literata',serif",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.common),
+                            h("div",{style:{fontSize:10,color:"#aaa",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},p.latin)
                           ),
-                          h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",flexShrink:0}},ss.label),
-                          h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#ddd",padding:"2px 4px",lineHeight:1,flexShrink:0}},"×")
+                          h("span",{style:{background:ss.bg,color:ss.text,fontSize:9,padding:"1px 5px",borderRadius:4,fontWeight:"bold",flexShrink:0,whiteSpace:"nowrap"}},ss.label),
+                          h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ddd",padding:"2px",lineHeight:1,flexShrink:0}},"×")
                         );
-                      })
+                      }))
                     );
                   })
                 );
