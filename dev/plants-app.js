@@ -298,7 +298,7 @@ function App(){
     ),
 
     // Filter drawer — mobile bottom sheet, desktop persistent left sidebar
-    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:zone?function(){setShowSuggest(true);}:null}),
+    (activeTab==="plants"||activeTab==="home")&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:(zone&&filters.statuses.indexOf("invasive")<0&&filters.statuses.indexOf("caution")<0)?function(){setShowSuggest(true);}:null}),
 
     // Main content
     h("div",{style:(!isMobile&&(activeTab==="plants"||activeTab==="home"))?{marginLeft:344,marginRight:0,padding:"12px 20px 80px"}:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
