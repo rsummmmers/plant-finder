@@ -580,7 +580,7 @@ var p=new URLSearchParams();
         h("input",{value:label,onChange:function(ev){setLabel(ev.target.value);},placeholder:"Name this list (e.g. Johnson Residence)",style:{width:"100%",border:"1.5px solid #e0ddd5",borderRadius:8,padding:"7px 12px",fontFamily:"inherit",fontSize:14,outline:"none",color:"#2c2c2c"}})
       ),
       h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #e0ddd5",flexShrink:0}},
-        h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Mix"),
+        h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Mix"),
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
           [{k:"tree",e:"\ud83c\udf33",l:"Trees"},{k:"shrub",e:"\ud83c\udf3f",l:"Shrubs"},{k:"perennial",e:"\ud83c\udf3c",l:"Perennial"},{k:"grass",e:"\ud83c\udf3e",l:"Grass"}].map(function(x){
             return h("div",{key:x.k,style:{background:"#f0ede4",borderRadius:8,padding:"8px 10px"}},
@@ -1412,7 +1412,7 @@ function FilterDrawer(props){
   }
 
   function P(label,active,onClick,bg,fg){
-    return h("button",{onClick:onClick,style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(active?fg||"#2e5339":"#e0ddd5"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#666",fontWeight:active?"500":"normal"}},label);
+    return h("button",{onClick:onClick,style:{padding:"4px 10px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1px solid "+(active?fg||"#2e5339":"#ddd"),background:active?bg||"#f0faf0":"transparent",color:active?fg||"#2e5339":"#555",fontWeight:active?"600":"normal",lineHeight:1.5}},label);
   }
 
   var panelStyle=isMobile
@@ -1431,23 +1431,23 @@ function FilterDrawer(props){
         h("div",{style:{fontFamily:"'Literata',serif",fontSize:18}},"Filters"),
         h("button",{onClick:onClose,style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#888"}},"\u2715")
       ),
-      h("div",{style:{padding:"16px 20px",display:"flex",flexDirection:"column",gap:18,overflowY:"auto",flex:1}},
+      h("div",{style:{padding:"12px 16px",display:"flex",flexDirection:"column",gap:12,overflowY:"auto",flex:1}},
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Site type"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Site type"),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
-            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"7px 10px",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(on?"#2e5339":"#e0ddd5"),background:on?"#2e5339":"transparent",color:on?"white":"#666",textAlign:"left",display:"flex",alignItems:"center",gap:6}},z.emoji," ",z.label);})
+            MICROZONES.map(function(z){var on=zone===z.key;return h("button",{key:z.key,onClick:function(){onSetZone(on?null:z.key);},style:{padding:"5px 8px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#2e5339":"transparent",color:on?"white":"#555",textAlign:"left",display:"flex",alignItems:"center",gap:5}},z.emoji," ",z.label);})
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Include"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Plant type"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},PLANT_TYPES.map(function(g){return P(g.emoji+" "+g.label,f.ptypes.indexOf(g.key)>=0,function(){togPt(g.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Plant type"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},PLANT_TYPES.map(function(g){return P(g.emoji+" "+g.label,f.ptypes.indexOf(g.key)>=0,function(){togPt(g.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Max height"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Max height"),
           h("div",{style:{display:"flex",alignItems:"center",gap:8}},
             h("input",{type:"number",min:1,max:120,value:f.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);set({heightCap:v>0?v:null});},placeholder:"e.g. 8 for shrubs, 25 for small trees",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",flex:1}}),
             f.heightCap&&h("span",{style:{fontSize:14,color:"#888"}},"ft"),
@@ -1455,8 +1455,8 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Moisture"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Moisture"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
             [{v:"dry",l:"\ud83c\udfdc\ufe0f Dry"},{v:"average",l:"\ud83c\udf31 Average"},{v:"moist",l:"\ud83d\udca7 Moist"}].map(function(o){return P(o.l,f.moisture===o.v,function(){set({moisture:f.moisture===o.v?null:o.v});});}),
             h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14,padding:"6px 0"}},
               h("input",{type:"checkbox",checked:f.irrigated,onChange:function(ev){set({irrigated:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
@@ -1465,34 +1465,34 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},inferredSun?"Sun \u2014 inferred from site \u2713":"Sun"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},inferredSun?"Sun \u2014 inferred from site \u2713":"Sun"),
           inferredSun?h("div",{style:{fontSize:15,color:"#2e5339",fontWeight:500,padding:"6px 0"}},inferredSun==="full"?"\u2600\ufe0f Full sun":inferredSun==="shade"?"\ud83c\udf25\ufe0f Shade":"\u26c5 Part shade"):
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
             [{v:"full",l:"\u2600\ufe0f Full sun"},{v:"part",l:"\u26c5 Part shade"},{v:"shade",l:"\ud83c\udf25\ufe0f Shade"}].map(function(o){return P(o.l,f.sun===o.v,function(){set({sun:f.sun===o.v?null:o.v});});})
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Shaded by"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Shaded by"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="shaded";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Near / Site"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="near"||c.group==="site";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Near / Site"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="near"||c.group==="site";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Concerns"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},CONCERN_OPTS.filter(function(c){return c.group==="concern";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Concerns"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},CONCERN_OPTS.filter(function(c){return c.group==="concern";}).map(function(c){return P(c.emoji+" "+c.label,f.concerns.indexOf(c.key)>=0,function(){togCx(c.key);});}))
         ),
         flowerColors.length>0&&h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Flower color"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:7}},flowerColors.map(function(c){
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Flower color"),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},flowerColors.map(function(c){
             return h("button",{key:c,onClick:function(){togFl(c);},style:{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:"1.5px solid "+(f.rflower.indexOf(c)>=0?"#2e5339":"#e0ddd5"),background:f.rflower.indexOf(c)>=0?"#f0faf0":"transparent",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:f.rflower.indexOf(c)>=0?"#2e5339":"#666"}},
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Browse pressure"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Browse pressure"),
           h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
             [{title:"\ud83e\udd8c Deer",key:"deerLevel",val:f.deerLevel,setFn:function(v){set({deerLevel:v});}},
              {title:"\ud83d\udc07 Rabbit",key:"rabbitLevel",val:f.rabbitLevel,setFn:function(v){set({rabbitLevel:v});}},
@@ -1509,7 +1509,7 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Safety \u2014 exclude toxic plants for:"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Safety \u2014 exclude toxic plants for:"),
           h("div",{style:{display:"flex",gap:16,flexWrap:"wrap"}},
             h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
               h("input",{type:"checkbox",checked:!!f.dogsLevel,onChange:function(ev){set({dogsLevel:ev.target.checked?"mild":null});},style:{accentColor:"#2e5339",width:16,height:16}}),
@@ -1526,7 +1526,7 @@ function FilterDrawer(props){
           )
         ),
         proMode&&Object.keys(vbData).length>0&&h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Van Berkum availability"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Van Berkum availability"),
           h("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
             [{v:false,l:"Any"},{v:"available",l:"VB carries it"},{v:"instock",l:"In stock now"},{v:"trays",l:"Tray only"}].map(function(o){
               return h("button",{key:String(o.v),onClick:function(){onVbFilter(o.v);},style:{padding:"7px 14px",borderRadius:5,cursor:"pointer",fontFamily:"inherit",fontSize:14,border:"1.5px solid "+(vbFilter===o.v?"#2e7d32":"#e0ddd5"),background:vbFilter===o.v?"#e8f5e9":"transparent",color:vbFilter===o.v?"#2e7d32":"#666",fontWeight:vbFilter===o.v?"500":"normal"}},o.l);
@@ -1534,7 +1534,7 @@ function FilterDrawer(props){
           )
         ),
         h("div",null,
-          h("div",{style:{fontSize:12,color:"#aaa",letterSpacing:1,textTransform:"uppercase",marginBottom:8}},"Other"),
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Other"),
           h("label",{style:{display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontSize:14}},
             h("input",{type:"checkbox",checked:f.rwinter,onChange:function(ev){set({rwinter:ev.target.checked});},style:{accentColor:"#2e5339",width:16,height:16}}),
             "\u2744\ufe0f Winter interest"
