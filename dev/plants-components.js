@@ -1825,7 +1825,7 @@ function getUnitPrice(vbPrice,size){
 }
 
 function ProcurementView(props){
-  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){};
+  var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){},onUpdateNotes=props.onUpdateNotes||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
@@ -1838,7 +1838,13 @@ function ProcurementView(props){
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _sw=useState(function(){return parseFloat(localStorage.getItem("ppb_site_work_"+list.id))||0;}),siteWork=_sw[0],setSiteWork=_sw[1];
   var _sm=useState(true),showMargin=_sm[0],setShowMargin=_sm[1];
+  var _cv=useState(false),clientView=_cv[0],setClientView=_cv[1];
+  var _cp2=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_custom_"+list.id)||"[]");}catch(e){return[];}}),customPlants=_cp2[0],setCustomPlants=_cp2[1];
   function saveSiteWork(v){setSiteWork(v);try{localStorage.setItem("ppb_site_work_"+list.id,v);}catch(e){}}
+  function saveCustomPlants(arr){setCustomPlants(arr);try{localStorage.setItem("ppb_custom_"+list.id,JSON.stringify(arr));}catch(e){}}
+  function addCustomPlant(){saveCustomPlants([...customPlants,{id:"cp_"+Date.now(),name:"",qty:1,price:0}]);}
+  function updateCustomPlant(id,field,val){saveCustomPlants(customPlants.map(function(p){return p.id===id?Object.assign({},p,{[field]:val}):p;}));}
+  function removeCustomPlant(id){saveCustomPlants(customPlants.filter(function(p){return p.id!==id;}));}
 
   function setQty(latin,val){
     var next=Object.assign({},qtys);
@@ -1881,7 +1887,8 @@ function ProcurementView(props){
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
-  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0);
+  var customTotal=customPlants.reduce(function(s,p){return s+(p.qty||0)*(p.price||0);},0);
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0)+customTotal;
   var salesTax=vbCostTotal*((rates.taxRate||0)/100);
   var yourCost=vbCostTotal+salesTax+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
@@ -1927,6 +1934,7 @@ function ProcurementView(props){
         )
       )
     ),
+    clientView&&(list.notes||"").trim()&&h("div",{style:{padding:"12px 16px",marginBottom:12,background:"#f9f8f4",borderRadius:8,fontSize:14,lineHeight:1.65,color:"#444",whiteSpace:"pre-line"}},list.notes),
     h("div",{style:{position:"sticky",top:90,zIndex:20,background:"white",border:"1px solid "+(grandTotal>0?"#2e5339":"#e0ddd5"),borderRadius:10,padding:"12px 16px",marginBottom:16}},
       h("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
         h("div",{style:{flex:1,display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
@@ -1935,28 +1943,27 @@ function ProcurementView(props){
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Install: "),h("span",{style:{fontWeight:600}},"$"+installSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Delivery cost: $"),
-            h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},
-              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+            clientView?h("span",{style:{fontWeight:600}},"$"+deliveryCost.toFixed(2)):h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
-          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+          !clientView&&h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Procurement fee: $"),
             h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Site work: $"),
-            h("input",{type:"number",value:siteWork,min:0,onChange:function(ev){saveSiteWork(parseFloat(ev.target.value)||0);},
-              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+            clientView?h("span",{style:{fontWeight:600}},"$"+(siteWork||0).toFixed(2)):h("input",{type:"number",value:siteWork,min:0,onChange:function(ev){saveSiteWork(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:14,fontWeight:700,color:"#2e5339"}},h("span",{style:{fontWeight:400,color:"#888"}},"Client total: "),"$"+grandTotal.toFixed(2)),
-          h("span",{style:{fontSize:13,color:"#888"}},"│"),
-          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
-          showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
-          showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
-          h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Hide margin":"Show margin",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁‍🗨")
+          !clientView&&h("span",{style:{fontSize:13,color:"#888"}},"│"),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
+          !clientView&&showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
+          !clientView&&h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Hide margin":"Show margin",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁‍🗨")
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
-          h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
+          !clientView&&h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
+          h("button",{onClick:function(){setClientView(!clientView);if(!clientView)setShowMargin(false);else setShowMargin(true);},style:{background:clientView?"#2e5339":"none",color:clientView?"white":"#888",border:"1px solid "+(clientView?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12}},clientView?"✓ Client view":"Client view"),
           grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
         )
       ),
@@ -2038,10 +2045,23 @@ function ProcurementView(props){
               style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
             lineTotal>0&&h("div",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"$"+lineTotal.toFixed(2))
           ),
-          h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
+          !clientView&&h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
         )
       );
-    })
+    }),
+    customPlants.length>0&&h("div",{style:{marginTop:8}},
+      customPlants.map(function(cp){
+        return h("div",{key:cp.id,style:{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"#fffbf0",borderRadius:8,border:"1px solid #e8e0c8",marginBottom:6}},
+          h("input",{value:cp.name,onChange:function(ev){updateCustomPlant(cp.id,"name",ev.target.value);},placeholder:"Plant name",style:{flex:1,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,background:"transparent",outline:"none",padding:"2px 4px"}}),
+          h("input",{type:"number",min:1,step:1,value:cp.qty||"",placeholder:"qty",onChange:function(ev){updateCustomPlant(cp.id,"qty",parseInt(ev.target.value)||0);},style:{width:50,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,textAlign:"center",background:"transparent",outline:"none",padding:"2px"}}),
+          h("span",{style:{fontSize:12,color:"#aaa"}},"@ $"),
+          h("input",{type:"number",min:0,step:0.01,value:cp.price||"",placeholder:"0.00",onChange:function(ev){updateCustomPlant(cp.id,"price",parseFloat(ev.target.value)||0);},style:{width:60,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:14,textAlign:"center",background:"transparent",outline:"none",padding:"2px"}}),
+          h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600,minWidth:50,textAlign:"right"}},(cp.qty&&cp.price)?"$"+((cp.qty*cp.price).toFixed(2)):""),
+          !clientView&&h("button",{onClick:function(){removeCustomPlant(cp.id);},style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1}},"×")
+        );
+      })
+    ),
+    !clientView&&h("button",{onClick:addCustomPlant,style:{marginTop:8,background:"none",border:"1px dashed #ccc",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,color:"#888",width:"100%",textAlign:"center"}},"+ Add custom plant / write-in")
   );
 }
 
@@ -2052,6 +2072,7 @@ function SavedListsView(props){
   var onCreateList=props.onCreateList||function(){};
   var onDeleteList=props.onDeleteList||function(){};
   var onRenameList=props.onRenameList||function(){};
+  var onUpdateListNotes=props.onUpdateListNotes||function(){};
   var onToggleInList=props.onToggleInList||function(){};
   var onGoToExplore=props.onGoToExplore||function(){};
   var isMobile=props.isMobile||false;
@@ -2128,6 +2149,7 @@ function SavedListsView(props){
         !proMode&&openPlants.some(function(p){var v=vbLookup(vbData,p.latin);return v&&v.vb;})&&h("button",{onClick:function(){exportVBOrder(openList,openPlants);},style:{background:"#e8f5e9",color:"#2e7d32",border:"1px solid #c8e6c9",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"📦 Export VB order"),
         h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
       ),
+      h("textarea",{value:openList.notes||"",onChange:function(ev){onUpdateListNotes(openList.id,ev.target.value);},placeholder:"Add a description for this zone or list… (visible in client view)",style:{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid #e0ddd5",borderRadius:8,fontFamily:"inherit",fontSize:13,lineHeight:1.6,color:"#444",background:"#fafaf8",resize:"vertical",minHeight:60,marginBottom:12,outline:"none"}}),
       h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
       openPlants.length===0
         ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
@@ -2136,7 +2158,7 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);}})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);}})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               return h("div",null,
