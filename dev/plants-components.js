@@ -615,13 +615,14 @@ var p=new URLSearchParams();
 function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
+  var _ex=useState([]),excluded=_ex[0],setExcluded=_ex[1];
   var scale=count/20;
   var TARGETS={tree:Math.max(1,Math.round(3*scale)),shrub:Math.max(1,Math.round(2*scale)),perennial:Math.max(1,Math.round(5*scale)),grass:Math.max(1,Math.round(3*scale)),ground:Math.max(1,Math.round(2*scale)),fern:Math.max(1,Math.round(1*scale)),vine:Math.max(1,Math.round(1*scale))};
 
   var suggested=useMemo(function(){
     var byType={};
     PLANT_TYPES.forEach(function(g){byType[g.key]=[];});
-    var scored=plants.filter(function(p){return p.status!=="Invasive"&&p.status!=="Caution";}).slice().sort(function(a,b){
+    var scored=plants.filter(function(p){return p.status!=="Invasive"&&p.status!=="Caution"&&excluded.indexOf(p.latin)<0;}).slice().sort(function(a,b){
       return ((getSiteScore(b,siteKey)||0)*10+(b.caterpillars||0)/10)-((getSiteScore(a,siteKey)||0)*10+(a.caterpillars||0)/10);
     });
     // Pass 1: prefer one plant per genus
@@ -641,7 +642,7 @@ function SuggestPanel(props){
       if(t>0&&byType[p.typeKey].length<t&&!already)byType[p.typeKey].push(p);
     });
     return byType;
-  },[plants,siteKey,count]);
+  },[plants,siteKey,count,excluded]);
 
   var total=Object.values(suggested).reduce(function(s,a){return s+a.length;},0);
 
@@ -674,7 +675,8 @@ function SuggestPanel(props){
                 h("div",{style:{fontSize:13,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.common),
                 h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.latin)
               ),
-              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:isH?"#e57373":"#ddd",flexShrink:0,lineHeight:1}},isH?"\u2665":"\u2661")
+              h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:isH?"#e57373":"#ddd",flexShrink:0,lineHeight:1}},isH?"\u2665":"\u2661"),
+              h("button",{onClick:function(ev){ev.stopPropagation();setExcluded(function(e){return[...e,p.latin];});},title:"Skip \u2014 show next best match",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",flexShrink:0,lineHeight:1,padding:"2px 0 2px 4px"}},"\u00d7")
             );
           })
         );
