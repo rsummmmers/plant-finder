@@ -27,7 +27,7 @@ function renderTypeSection(ld,plants,isMobile,cardFn){
       h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
       h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},plants.length)
     ),
-    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+    h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(195px,1fr))",gap:isMobile?10:14}},
       plants.map(cardFn)
     )
   );
@@ -801,7 +801,7 @@ function HabitatView(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:18,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}},ld.plants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(220px,1fr))",gap:isMobile?10:16}},
+        h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(195px,1fr))",gap:isMobile?10:14}},
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
@@ -1838,7 +1838,7 @@ function ProcurementView(props){
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _sw=useState(function(){return parseFloat(localStorage.getItem("ppb_site_work_"+list.id))||0;}),siteWork=_sw[0],setSiteWork=_sw[1];
   var _sm=useState(true),showMargin=_sm[0],setShowMargin=_sm[1];
-  var _cv=useState(false),clientView=_cv[0],setClientView=_cv[1];
+  var clientView=!showMargin;
   var _cp2=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_custom_"+list.id)||"[]");}catch(e){return[];}}),customPlants=_cp2[0],setCustomPlants=_cp2[1];
   function saveSiteWork(v){setSiteWork(v);try{localStorage.setItem("ppb_site_work_"+list.id,v);}catch(e){}}
   function saveCustomPlants(arr){setCustomPlants(arr);try{localStorage.setItem("ppb_custom_"+list.id,JSON.stringify(arr));}catch(e){}}
@@ -1959,11 +1959,10 @@ function ProcurementView(props){
           !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
           !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
           !clientView&&showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
-          !clientView&&h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Hide margin":"Show margin",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#ccc",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁‍🗨")
+          h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Present mode — hide internals":"Exit present mode",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:showMargin?"#ccc":"#2e5339",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁")
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
           !clientView&&h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
-          h("button",{onClick:function(){setClientView(!clientView);if(!clientView)setShowMargin(false);else setShowMargin(true);},style:{background:clientView?"#2e5339":"none",color:clientView?"white":"#888",border:"1px solid "+(clientView?"#2e5339":"#e0ddd5"),borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12}},clientView?"✓ Client view":"Client view"),
           grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
         )
       ),
@@ -2080,6 +2079,7 @@ function SavedListsView(props){
 
   var _oi=useState(null),openId=_oi[0],setOpenId=_oi[1];
   var _nm=useState(false),newMode=_nm[0],setNewMode=_nm[1];
+  var _cmp=useState(false),compactView=_cmp[0],setCompactView=_cmp[1];
   var _nn=useState(""),newName=_nn[0],setNewName=_nn[1];
   var _ri=useState(null),renamingId=_ri[0],setRenamingId=_ri[1];
   var _rn=useState(""),renameName=_rn[0],setRenameName=_rn[1];
@@ -2150,7 +2150,10 @@ function SavedListsView(props){
         h("button",{onClick:function(){if(window.confirm("Delete \""+openList.name+"\"?")){{onDeleteList(openList.id);setOpenId(null);}}},style:{background:"#fff5f5",color:"#c62828",border:"1px solid #ffcdd2",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"inherit",fontSize:13}},"Delete list")
       ),
       h("textarea",{value:openList.notes||"",onChange:function(ev){onUpdateListNotes(openList.id,ev.target.value);},placeholder:"Add a description for this zone or list…",style:{width:"100%",boxSizing:"border-box",padding:"10px 12px",border:"1px solid #e0ddd5",borderRadius:8,fontFamily:"inherit",fontSize:13,lineHeight:1.6,color:"#444",background:"#fafaf8",resize:"vertical",minHeight:60,marginBottom:12,outline:"none"}}),
-      h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginBottom:12}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
+      h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
+        h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic"}},openPlants.length+" plant"+(openPlants.length!==1?"s":"")+" in this list"),
+        !proMode&&h("button",{onClick:function(){setCompactView(!compactView);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,padding:"3px 10px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},compactView?"⊞ Cards":"☰ Compact")
+      ),
       openPlants.length===0
         ?h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#aaa"}},
             h("div",{style:{fontSize:36,marginBottom:12}},"🌿"),
@@ -2161,6 +2164,33 @@ function SavedListsView(props){
           ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);}})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
+              if(compactView){
+                return h("div",null,
+                  TYPE_LAYERS.map(function(ld){
+                    var lplants=grouped[ld.key];
+                    if(!lplants||!lplants.length)return null;
+                    return h("div",{key:ld.key,style:{marginBottom:20}},
+                      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
+                        h("span",{style:{fontSize:15,background:ld.bg,borderRadius:6,padding:"2px 6px"}},""+ld.emoji),
+                        h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
+                        h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
+                      ),
+                      lplants.map(function(p){
+                        var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+                        return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"6px 10px",background:"white",borderRadius:7,marginBottom:4,border:"1px solid #f0ede4"}},
+                          h(PlantThumb,{plant:p,size:32,radius:5}),
+                          h("div",{style:{flex:1,minWidth:0}},
+                            h("div",{style:{fontWeight:600,fontSize:14,fontFamily:"'Literata',serif",lineHeight:1.2}},p.common),
+                            h("div",{style:{fontSize:11,color:"#aaa",fontStyle:"italic"}},p.latin)
+                          ),
+                          h("span",{style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",flexShrink:0}},ss.label),
+                          h("button",{onClick:function(){onToggleInList(p.latin,openList.id);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#ddd",padding:"2px 4px",lineHeight:1,flexShrink:0}},"×")
+                        );
+                      })
+                    );
+                  })
+                );
+              }
               return h("div",null,
                 TYPE_LAYERS.map(function(ld){
                   var plants=grouped[ld.key];
