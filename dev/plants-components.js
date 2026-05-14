@@ -2223,7 +2223,7 @@ function SavedListsView(props){
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               if(compactView){
-                return h("div",null,
+                return h("div",{style:{maxWidth:860}},
                   TYPE_LAYERS.map(function(ld){
                     var lplants=grouped[ld.key];
                     if(!lplants||!lplants.length)return null;
