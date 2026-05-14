@@ -1768,7 +1768,7 @@ function PaletteView(props){
             border:"1px solid "+(listView?"#2e5339":"#e0ddd5"),background:listView?"#f0faf0":"transparent",color:listView?"#2e5339":"#888"}},
           listView?"⊞ Cards":"☰ List")
       ),
-      listView&&!isMobile
+      listView
         ?h(CompactPlantList,{plants:results,siteKey:null,hearts:hearts,onHeart:onHeart,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,vbData:vbData,proMode:proMode,showVbBadges:false})
         :(function(){
           var grouped=groupByTypeLayer(results);
