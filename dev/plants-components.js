@@ -1568,7 +1568,7 @@ function CompactPlantList(props){
   var vbData=props.vbData||{},proMode=props.proMode||false,showVbBadges=props.showVbBadges||false;
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var grouped=groupByTypeLayer(plants);
-  return h("div",{style:{maxWidth:900}},
+  return h("div",null,
     modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
@@ -1586,7 +1586,7 @@ function CompactPlantList(props){
           h("span",{style:{fontFamily:"'Literata',serif",fontSize:16,color:ld.color,fontWeight:600}},ld.title),
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:20,padding:"1px 8px",fontSize:12,fontWeight:600}},lplants.length)
         ),
-        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}},
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(380px,1fr))",gap:6}},
         lplants.map(function(p){
           var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
@@ -2225,7 +2225,7 @@ function SavedListsView(props){
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               if(compactView){
-                return h("div",{style:{maxWidth:860}},
+                return h("div",null,
                   TYPE_LAYERS.map(function(ld){
                     var lplants=grouped[ld.key];
                     if(!lplants||!lplants.length)return null;
