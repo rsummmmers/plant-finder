@@ -23,6 +23,7 @@ function App(){
   var _ss=useState(false),showSuggest=_ss[0],setShowSuggest=_ss[1];
   var _ps=useState(20),patchSize=_ps[0],setPatchSize=_ps[1];
   var _dr=useState(false),drawerOpen=_dr[0],setDrawerOpen=_dr[1];
+  var _gl=useState(false),showGlossary=_gl[0],setShowGlossary=_gl[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
@@ -176,6 +177,32 @@ function App(){
 
   // ── Render ──
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+    showGlossary&&h("div",{onClick:function(){setShowGlossary(false);},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"20px 16px 40px"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",background:"white",borderRadius:14,padding:"28px 32px",position:"relative"}},
+        h("button",{onClick:function(){setShowGlossary(false);},style:{position:"absolute",top:12,right:12,background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",lineHeight:1}},"✕"),
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:22,fontWeight:600,marginBottom:4,color:"#2e5339"}},"About These Plant Classifications"),
+        h("div",{style:{fontSize:12,color:"#aaa",marginBottom:24}},"Summers Ecoscaping Plant Planner"),
+        [
+          ["Ecoscaping","Ecological landscaping — designing gardens that function as habitat, not just aesthetics. Plants are selected for their relationships with local insects, birds, and soil communities, not just how they look."],
+          ["Native-Forward","This tool prioritizes plants native to Massachusetts and the broader Northeast. Native-forward means we start with native options and add others only when they serve a clear purpose — filling a gap natives can't fill, or serving a client need a native can't meet."],
+          ["Native to MA","Plants with natural populations in Massachusetts before European settlement. These have the deepest ecological relationships with local insects, birds, and soil life — particularly important for specialist insects that can only complete their life cycle on specific native genera."],
+          ["Native Cultivar","A cultivated variety of a native species, selected for a specific trait (flower color, compact size, extended bloom). Most still support native insects, but some traits like double flowers or very dark foliage can reduce pollen and nectar access. Noted where relevant."],
+          ["Near-Native","Plants native to eastern North America but not specifically Massachusetts — primarily species from the mid-Atlantic, Appalachians, or Great Lakes region with similar ecological relationships to our local insects. Plants native only to the Pacific Coast, Southwest, or Rocky Mountain region are not included here as near-native: their insect communities are different enough that the ecological benefit doesn't transfer."],
+          ["Safe Non-Native","Non-native plants with no documented invasive tendency in Massachusetts or neighboring states. May be desirable for traditional design or aesthetic concerns without documented ecological harm. These are not ecologically equivalent to natives but are not harmful choices."],
+          ["Caution","Plants invasive or problematic in neighboring states (particularly CT, NY, VT, NH) but not yet on the Massachusetts prohibited list. Planting is not recommended, though it remains legal. Included in this tool so designers can make informed decisions with full context."],
+          ["Invasive","Plants on the Massachusetts Prohibited Plant List — legally restricted from sale or propagation, and ecologically damaging to local ecosystems. Included in this tool for reference and identification purposes only. Not recommended for planting."],
+          ["Dog Safety","Based on ASPCA toxicity classifications. The default filter excludes plants with confirmed significant toxicity. Plants tagged 'mild' — meaning possible minor GI upset if consumed in large quantities — are shown by default, consistent with ASPCA guidance that these are generally considered non-toxic. A strict filter option excludes mild-tagged plants as well. Always consult your vet for specific concerns."],
+          ["Insect Support Numbers","Caterpillar host plant counts are drawn from research by Dr. Doug Tallamy (University of Delaware) and reflect the number of Lepidoptera (butterfly and moth) species documented using a plant genus as a larval host in the eastern US. Higher numbers indicate greater wildlife value, particularly for insectivorous birds raising young."],
+          ["Plant Photos","Some photos show the parent species rather than a specific cultivar. This is noted on the image where applicable."],
+          ["Site Suitability Scores","Best Fit / Strong / OK / Don't Use ratings reflect how well a plant performs in a given site condition based on its natural habitat preferences. These are guidelines, not rules — plants near the margins of their range can succeed with appropriate care."]
+        ].map(function(item){
+          return h("div",{key:item[0],style:{marginBottom:18}},
+            h("div",{style:{fontWeight:600,fontSize:15,color:"#2e5339",marginBottom:3}},item[0]),
+            h("div",{style:{fontSize:14,lineHeight:1.65,color:"#444"}},item[1])
+          );
+        })
+      )
+    ),
 
     // Header + tabs — fixed on desktop, normal flow on mobile
     h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
@@ -237,7 +264,9 @@ function App(){
                 search&&h("button",{onClick:function(){setSearch("");},
                   style:{position:"absolute",right:8,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.6)",fontSize:16,lineHeight:1,padding:0}},"×")
               )
-            )
+            ),
+            h("button",{onClick:function(){setShowGlossary(true);},title:"About these plant classifications",
+              style:{marginLeft:8,background:"none",border:"1.5px solid rgba(255,255,255,0.25)",borderRadius:"50%",width:28,height:28,cursor:"pointer",color:"rgba(255,255,255,0.6)",fontSize:14,fontWeight:700,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},"?")
           ])
         )
       )
