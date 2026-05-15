@@ -2114,7 +2114,7 @@ function ProcurementView(props){
       var lineTotal=qty&&perPlant?qty*perPlant:0;
       var showRow=hasVB||ov||!clientView;
       if(!showRow)return null;
-      return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:(hasVB||ov||clientView)?1:0.45}},
+      return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:1}},
         h("div",{onClick:function(){setModalPlant(p);},style:{cursor:"pointer",flexShrink:0}},h(PlantThumb,{plant:p,size:38,radius:6})),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:500,fontSize:14,lineHeight:1.2}},p.common),
