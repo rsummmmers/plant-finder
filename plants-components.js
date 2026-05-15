@@ -356,7 +356,7 @@ function PlantCard(props){
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
           h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",cursor:"help"}},ss.label),
           vbInfo&&vbInfo.vb&&h("span",{title:vbInfo.inStock?"In stock at Van Berkum ("+vbInfo.qty+" available)":"Van Berkum — currently out of stock",style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700,cursor:"help",flexShrink:0,letterSpacing:"0.5px"}},"VB"),
-          plant.sun&&h("span",{title:plant.sun,style:{fontSize:12,color:sunCl}},sunIc),
+          plant.sun&&h("span",{title:plant.sun,style:{fontSize:13,color:sunCl,fontWeight:"bold"}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
         )
@@ -1598,6 +1598,8 @@ function CompactPlantList(props){
           var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
           var cats=p.caterpillars||0;
+          var sunIc2=(function(){var s=(p.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
+          var sunCl2=(function(){var s=(p.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
           return h("div",{key:p.latin,onClick:function(){setModalPlant(p);},style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",cursor:"pointer",minWidth:0}},
             h(PlantThumb,{plant:p,size:32,radius:5}),
             h("div",{style:{flex:1,minWidth:0}},
@@ -1606,6 +1608,7 @@ function CompactPlantList(props){
             ),
             h("div",{style:{display:"flex",gap:4,alignItems:"center",flexShrink:0}},
               h("span",{style:{background:ss.bg,color:ss.text,fontSize:9,padding:"1px 5px",borderRadius:4,fontWeight:"bold",whiteSpace:"nowrap"}},ss.label),
+              p.sun&&h("span",{title:p.sun,style:{fontSize:13,color:sunCl2,fontWeight:"bold"}},sunIc2),
               cats>0&&h("span",{style:{fontSize:9,color:"#4caf50",fontWeight:"bold"}},"🦋"+cats),
               vbInfo&&vbInfo.vb&&h("span",{style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"1px 4px",borderRadius:3,fontWeight:700}},"VB"),
               h("button",{onClick:function(ev){ev.stopPropagation();onHeart(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:hearts.indexOf(p.latin)>=0?"#e57373":"#ddd",padding:"1px",lineHeight:1}},hearts.indexOf(p.latin)>=0?"♥":"♡")
