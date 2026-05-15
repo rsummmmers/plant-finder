@@ -477,9 +477,11 @@ function applyFilters(plants,f,siteKey){
     var s0=p.status.toLowerCase().replace(/[-\s]/g,"");
     if(!p.hasScores&&!f.search&&s0.indexOf("invasive")<0&&s0.indexOf("caution")<0)return false;
     var s=p.status.toLowerCase().replace(/[-\s]/g,"");
-    if(s.indexOf("invasive")>=0&&f.statuses.indexOf("invasive")<0)return false;
-    if(s==="caution"&&f.statuses.indexOf("caution")<0)return false;
-    if(!matchStatus(p,f.statuses))return false;
+    if(!f.search){
+      if(s.indexOf("invasive")>=0&&f.statuses.indexOf("invasive")<0)return false;
+      if(s==="caution"&&f.statuses.indexOf("caution")<0)return false;
+      if(!matchStatus(p,f.statuses))return false;
+    }
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
