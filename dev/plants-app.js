@@ -134,10 +134,7 @@ function App(){
   var searchActive=search.trim().length>0;
   var defaultStatuses=["native","nearnative","cultivar"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
-  var allStatuses=["native","nearnative","cultivar","nonnative","invasive","caution"];
-  var suppressStatusHighlight=searchActive&&!statusesChanged;
-  var effectiveStatuses=suppressStatusHighlight?allStatuses:filters.statuses;
-  var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,statuses:effectiveStatuses,search:search});
+  var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,search:search});
 
   var filtered=useMemo(function(){return applyFilters(plants,effectiveFilters,searchActive?null:zone);},[plants,JSON.stringify(effectiveFilters),zone,searchActive]);
   var mixFilters=useMemo(function(){return Object.assign({},filters,{sun:effectiveSun,search:"",ptypes:[],heightCap:null,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false});},[filters,effectiveSun]);
@@ -298,7 +295,7 @@ function App(){
     ),
 
     // Filter drawer — mobile bottom sheet, desktop persistent left sidebar
-    activeTab==="plants"&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:suppressStatusHighlight?Object.assign({},filters,{statuses:[]}):filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:function(){setShowSuggest(true);}}),
+    activeTab==="plants"&&h(FilterDrawer,{open:drawerOpen,onClose:function(){setDrawerOpen(false);},filters:filters,onChange:setFilters,flowerColors:flowerColors,inferredSun:inferredSun,isMobile:isMobile,zone:zone,onSetZone:setZone,onClearSearch:function(){setSearch("");},source:"plants",proMode:proMode,vbData:vbData,vbFilter:vbFilter,onVbFilter:setVbFilter,onSuggest:function(){setShowSuggest(true);}}),
 
     // Main content
     h("div",{style:(!isMobile&&activeTab==="plants")?{marginLeft:344,marginRight:0,padding:"12px 20px 80px"}:{maxWidth:1400,margin:"0 auto",padding:isMobile?"12px 16px 120px":"12px 20px 80px"}},
