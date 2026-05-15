@@ -2238,7 +2238,7 @@ function SavedListsView(props){
 
   // ── List detail view ──
   if(openList){
-    return h("div",null,
+    return h("div",{style:{maxWidth:860}},
       h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}},
         h("button",{onClick:function(){setOpenId(null);setCopied(false);setRenamingId(null);},style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4,padding:"6px 0",fontWeight:500}},"← All lists"),
         renamingId===openList.id
