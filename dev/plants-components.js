@@ -355,7 +355,7 @@ function PlantCard(props){
         h("div",{style:{fontSize:11,color:"#999",fontStyle:"italic",marginBottom:7}},plant.latin),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
           h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:"bold",cursor:"help"}},ss.label),
-          vbInfo&&vbInfo.vb&&h("span",{title:vbInfo.inStock?"In stock at Van Berkum ("+vbInfo.qty+" available)":"Van Berkum — currently out of stock",style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700,cursor:"help",flexShrink:0,letterSpacing:"0.5px"}},"VB"),
+          vbInfo&&vbInfo.vb&&h("span",{title:vbInfo.inStock?"In stock at Van Berkum ("+vbInfo.qty+" available)":"Van Berkum — currently out of stock",style:{background:vbInfo.inStock?"#2e7d32":"transparent",color:vbInfo.inStock?"white":"#9e9e9e",border:vbInfo.inStock?"none":"1.5px solid #bdbdbd",fontSize:9,padding:"2px 5px",borderRadius:3,fontWeight:700,cursor:"help",flexShrink:0,letterSpacing:"0.5px"}},"VB"+(vbInfo.price?" $"+vbInfo.price.toFixed(2):"")),
           plant.sun&&h("span",{title:plant.sun,style:{fontSize:13,color:sunCl,fontWeight:"bold"}},sunIc),
           plant.bloom&&plant.bloom!=="N/A"&&h("span",{style:{fontSize:10,color:"#aaa"}},plant.bloom),
           cats>0&&h("span",{title:"Caterpillar & moth host plant — supports "+ilabel+" species. Higher counts mean more wildlife value for birds and insects.",style:{fontSize:10,color:icolor,fontWeight:"bold",cursor:"help"}},"🦋"+ilabel)
