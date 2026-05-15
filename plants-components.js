@@ -2023,6 +2023,41 @@ function ProcurementView(props){
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   }
 
+  function doClientPrint(){
+    var today=new Date();
+    var dateStr=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+    var plantRows=sorted.filter(function(p){return (qtys[p.latin]||0)>0;}).map(function(p){
+      var v=vbLookup(vbData,p.latin);
+      var ov=overrides[p.latin]||null;
+      var qty=qtys[p.latin]||0;
+      var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
+      var clientPrice=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
+      var perPlant=clientPrice+irate;
+      var lineTotal=qty*perPlant;
+      var img=p.image?'<img src="'+p.image+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
+      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+p.common+'</div><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
+    }).join("");
+    customPlants.filter(function(cp){return cp.qty&&cp.price&&cp.name;}).forEach(function(cp){
+      plantRows+='<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee"><div style="width:52px;height:52px;background:#f5f5f5;border-radius:6px;flex-shrink:0"></div><div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+cp.name+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+cp.qty+' × $'+parseFloat(cp.price).toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+(cp.qty*cp.price).toFixed(2)+'</div></div></div>';
+    });
+    var tallyRows='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Plants + installation</span><span style="font-weight:600">$'+(plantSubtotal+installSubtotal).toFixed(2)+'</span></div>';
+    if(parseFloat(procurementFee)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Procurement fee</span><span style="font-weight:600">$'+parseFloat(procurementFee).toFixed(2)+'</span></div>';
+    if(parseFloat(designFee)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Design fee</span><span style="font-weight:600">$'+parseFloat(designFee).toFixed(2)+'</span></div>';
+    if(parseFloat(siteWork)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Site preparation</span><span style="font-weight:600">$'+parseFloat(siteWork).toFixed(2)+'</span></div>';
+    var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+list.name+' — Plant Proposal</title><style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;color:#333;line-height:1.5}@media print{body{margin:20px}button{display:none!important}}</style></head><body>'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:4px">Summers Ecoscaping</div><h1 style="margin:0;color:#2e5339;font-size:26px;font-weight:400">'+list.name+'</h1></div><div style="font-size:13px;color:#888;text-align:right">'+dateStr+'</div></div>'
+      +(list.notes?'<div style="background:#f9f8f4;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;color:#555">'+list.notes+'</div>':'')
+      +'<div style="border-top:2px solid #2e5339;margin:16px 0"></div>'
+      +plantRows
+      +'<div style="border-top:2px solid #2e5339;margin-top:20px;padding-top:16px">'+tallyRows
+      +'<div style="display:flex;justify-content:space-between;border-top:1px solid #ccc;margin-top:10px;padding-top:10px;font-size:17px;font-weight:700;color:#2e5339"><span>Total</span><span>$'+grandTotal.toFixed(2)+'</span></div></div>'
+      +'<div style="text-align:center;margin-top:32px"><button onclick="window.print()" style="background:#2e5339;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-family:Georgia,serif">Print / Save as PDF</button></div>'
+      +'</body></html>';
+    var w=window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+
   return h("div",{style:{maxWidth:860}},
     modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
@@ -2067,7 +2102,8 @@ function ProcurementView(props){
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
           !clientView&&h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
-          grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
+          clientView&&grandTotal>0&&h("button",{onClick:doClientPrint,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📄 PDF"),
+          !clientView&&grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
         )
       ),
       showRates&&h("div",{style:{marginTop:12,paddingTop:12,borderTop:"1px solid #f0ede4"}},
