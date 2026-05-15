@@ -2179,23 +2179,34 @@ function ProcurementView(props){
               ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2}},
                   perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+" ea")
                 )
-              :h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
-                  h("span",{style:{fontSize:11,background:"#e8f5e9",color:"#2e7d32",padding:"1px 6px",borderRadius:10,fontWeight:500}},"My stock"),
-                  h("span",{style:{fontSize:11,color:"#aaa"}},"cost: $"),
-                  h("input",{type:"number",min:0,step:0.01,value:ov.myCost||"",placeholder:"0.00",
-                    onChange:function(ev){saveOverride(p.latin,"myCost",ev.target.value);},
-                    style:{width:60,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
-                  h("span",{style:{fontSize:11,color:"#aaa"}},"client: $"),
-                  h("input",{type:"number",min:0,step:0.01,value:ov.clientPrice||"",placeholder:"0.00",
-                    onChange:function(ev){saveOverride(p.latin,"clientPrice",ev.target.value);},
-                    style:{width:60,border:"none",borderBottom:"1px solid #2e5339",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
-                  h("span",{style:{fontSize:11,color:"#aaa"}},"+ $"),
-                  h("input",{type:"number",min:0,step:0.5,value:ov.installRate!=null?ov.installRate:installRate,
-                    onChange:function(ev){saveOverride(p.latin,"installRate",parseFloat(ev.target.value)||0);},
-                    style:{width:45,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
-                  h("span",{style:{fontSize:11,color:"#aaa"}}," install"),
-                  h("button",{onClick:function(){clearOverride(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#aaa",padding:0}},"× use VB")
-                )
+              :(function(){
+                  var ovInstall=ov.installRate!=null?ov.installRate:installRate;
+                  var suggestedClient=ov.clientPrice||(ov.myCost?Math.round(parseFloat(ov.myCost)*(rates.markup||1.4)*100)/100:"");
+                  var perPlantOv=suggestedClient?(parseFloat(suggestedClient)+parseFloat(ovInstall||0)):null;
+                  return h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
+                    h("span",{style:{fontSize:11,background:"#e8f5e9",color:"#2e7d32",padding:"1px 6px",borderRadius:10,fontWeight:500}},"My stock"),
+                    h("span",{style:{fontSize:11,color:"#aaa"}},"cost: $"),
+                    h("input",{type:"number",min:0,step:0.01,value:ov.myCost||"",placeholder:"0.00",
+                      onChange:function(ev){
+                        var cost=ev.target.value;
+                        saveOverride(p.latin,"myCost",cost);
+                        if(!ov.clientPrice&&cost){saveOverride(p.latin,"clientPrice",(Math.round(parseFloat(cost)*(rates.markup||1.4)*100)/100).toFixed(2));}
+                      },
+                      style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                    h("span",{style:{fontSize:11,color:"#aaa"}},"client: $"),
+                    h("input",{type:"number",min:0,step:0.01,value:ov.clientPrice||"",placeholder:"0.00",
+                      onChange:function(ev){saveOverride(p.latin,"clientPrice",ev.target.value);},
+                      style:{width:55,border:"none",borderBottom:"1px solid #2e5339",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                    h("span",{style:{fontSize:11,color:"#aaa"}},"+ $"),
+                    h("input",{type:"number",min:0,step:0.5,value:ovInstall,
+                      onChange:function(ev){saveOverride(p.latin,"installRate",parseFloat(ev.target.value)||0);},
+                      style:{width:40,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                    h("span",{style:{fontSize:11,color:"#aaa"}}," install"),
+                    perPlantOv&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"= $"+perPlantOv.toFixed(2)+" ea"),
+                    perPlantOv&&qty>0&&h("span",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"· $"+(perPlantOv*qty).toFixed(2)),
+                    h("button",{onClick:function(){clearOverride(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#aaa",padding:0}},"× use VB")
+                  );
+                })()
             :hasVB
             ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
                 !clientView&&h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":"Available"),
