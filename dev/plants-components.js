@@ -2203,7 +2203,6 @@ function ProcurementView(props){
                       style:{width:40,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
                     h("span",{style:{fontSize:11,color:"#aaa"}}," install"),
                     perPlantOv&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"= $"+perPlantOv.toFixed(2)+" ea"),
-                    perPlantOv&&qty>0&&h("span",{style:{fontSize:11,color:"#2e5339",fontWeight:600}},"· $"+(perPlantOv*qty).toFixed(2)),
                     h("button",{onClick:function(){clearOverride(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#aaa",padding:0}},"× use VB")
                   );
                 })()
