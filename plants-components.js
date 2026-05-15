@@ -1956,21 +1956,27 @@ function ProcurementView(props){
     return bs_-as_;
   });
 
-  var plantSubtotal=0,installSubtotal=0,vbCostTotal=0;
+  var plantSubtotal=0,installSubtotal=0,vbCostTotal=0,selfStockRevenue=0,vbMarkup=0;
   sorted.forEach(function(p){
     var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
     var ov=overrides[p.latin]||null;
     if(!qty)return;
     if(ov&&ov.clientPrice){
-      plantSubtotal+=qty*(parseFloat(ov.clientPrice)||0);
-      vbCostTotal+=qty*(parseFloat(ov.myCost)||0);
+      var clientAmt=qty*(parseFloat(ov.clientPrice)||0);
+      var costAmt=qty*(parseFloat(ov.myCost)||0);
+      plantSubtotal+=clientAmt;
+      vbCostTotal+=costAmt;
+      selfStockRevenue+=clientAmt-costAmt;
     } else if(v&&v.price){
       var tc=getTrayCount(v.size);
       var unitVB=tc?v.price/tc:v.price;
       var unitClient=Math.round(unitVB*(rates.markup||1.4)*100)/100;
-      plantSubtotal+=qty*unitClient;
+      var clientAmt2=qty*unitClient;
+      plantSubtotal+=clientAmt2;
       var traysNeeded=tc?Math.ceil(qty/tc):null;
-      vbCostTotal+=traysNeeded?traysNeeded*v.price:qty*v.price;
+      var costAmt2=traysNeeded?traysNeeded*v.price:qty*v.price;
+      vbCostTotal+=costAmt2;
+      vbMarkup+=clientAmt2-costAmt2;
     }
     var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?getInstallRate(v.size,rates):(rates.plug||2);
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
@@ -2048,6 +2054,7 @@ function ProcurementView(props){
           !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Tax: "),h("span",{style:{fontWeight:600}},"$"+salesTax.toFixed(2))),
           !clientView&&showMargin&&h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Your cost: "),h("span",{style:{fontWeight:600}},"$"+yourCost.toFixed(2))),
           !clientView&&showMargin&&h("span",{style:{fontSize:13,fontWeight:700,color:yourMargin>=0?"#2e7d32":"#c62828"}},h("span",{style:{fontWeight:400,color:"#888"}},"Margin: "),"$"+yourMargin.toFixed(2)),
+          !clientView&&showMargin&&h("span",{style:{fontSize:11,color:"#aaa",borderLeft:"1px solid #e0ddd5",paddingLeft:8}},"markup $"+vbMarkup.toFixed(0)+" · install $"+installSubtotal.toFixed(0)+(selfStockRevenue>0?" · stock $"+selfStockRevenue.toFixed(0):"")),
           h("button",{onClick:function(){setShowMargin(!showMargin);},title:showMargin?"Present mode — hide internals":"Exit present mode",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,color:showMargin?"#ccc":"#2e5339",padding:"2px 4px",lineHeight:1}},showMargin?"👁":"👁")
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
