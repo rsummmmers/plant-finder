@@ -2046,7 +2046,7 @@ function ProcurementView(props){
     if(parseFloat(siteWork)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Site preparation</span><span style="font-weight:600">$'+parseFloat(siteWork).toFixed(2)+'</span></div>';
     var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+list.name+' — Plant Proposal</title><style>body{font-family:Georgia,serif;max-width:680px;margin:40px auto;color:#333;line-height:1.5}@media print{body{margin:20px}button{display:none!important}}</style></head><body>'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:4px">Summers Ecoscaping</div><h1 style="margin:0;color:#2e5339;font-size:26px;font-weight:400">'+list.name+'</h1></div><div style="font-size:13px;color:#888;text-align:right">'+dateStr+'</div></div>'
-      +(list.notes?'<div style="background:#f9f8f4;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;color:#555">'+list.notes+'</div>':'')
+      +(list.notes?'<div style="background:#f9f8f4;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;color:#555;white-space:pre-line">'+list.notes+'</div>':'')
       +'<div style="border-top:2px solid #2e5339;margin:16px 0"></div>'
       +plantRows
       +'<div style="border-top:2px solid #2e5339;margin-top:20px;padding-top:16px">'+tallyRows
