@@ -1900,8 +1900,10 @@ function ProcurementView(props){
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
   var _fee=useState(function(){return parseFloat(localStorage.getItem("ppb_procurement_fee"))||180;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
+  var _df=useState(function(){return parseFloat(localStorage.getItem("ppb_design_fee_"+list.id))||0;}),designFee=_df[0],setDesignFee=_df[1];
   function saveDelivery(v){setDeliveryCost(v);try{localStorage.setItem("ppb_delivery_cost",v);}catch(e){}}
   function saveFee(v){setProcurementFee(v);try{localStorage.setItem("ppb_procurement_fee",v);}catch(e){}}
+  function saveDesignFee(v){setDesignFee(v);try{localStorage.setItem("ppb_design_fee_"+list.id,v);}catch(e){}}
   var _rates=useState(function(){try{return Object.assign({},DEFAULT_INSTALL_RATES,JSON.parse(localStorage.getItem("ppb_install_rates")||"{}"));}catch(e){return Object.assign({},DEFAULT_INSTALL_RATES);}}),rates=_rates[0],setRates=_rates[1];
   var _diff=useState(function(){return parseFloat(localStorage.getItem("ppb_difficulty"))||1.0;}),difficulty=_diff[0],setDifficulty=_diff[1];
   var _rs=useState(false),showRates=_rs[0],setShowRates=_rs[1];
@@ -1983,7 +1985,7 @@ function ProcurementView(props){
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
   var customTotal=customPlants.reduce(function(s,p){return s+(p.qty||0)*(p.price||0);},0);
-  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(siteWork)||0)+customTotal;
+  var grandTotal=plantSubtotal+installSubtotal+(parseFloat(procurementFee)||0)+(parseFloat(designFee)||0)+(parseFloat(siteWork)||0)+customTotal;
   var salesTax=vbCostTotal*((rates.taxRate||0)/100);
   var yourCost=vbCostTotal+salesTax+(parseFloat(deliveryCost)||0);
   var yourMargin=grandTotal-yourCost;
@@ -2007,6 +2009,7 @@ function ProcurementView(props){
     rows.push(["","","","","","","","","Plants","","$"+plantSubtotal.toFixed(2)]);
     rows.push(["","","","","","","","","Install","","$"+installSubtotal.toFixed(2)]);
     rows.push(["","","","","","","","","Procurement fee (charged)","","$"+(parseFloat(procurementFee)||0).toFixed(2)]);
+    if(parseFloat(designFee)>0)rows.push(["","","","","","","","","Design fee","","$"+(parseFloat(designFee)||0).toFixed(2)]);
     rows.push(["","","","","","","","","Delivery cost (your cost)","","$"+(parseFloat(deliveryCost)||0).toFixed(2)]);
     rows.push(["","","","","","","","","Client total","","$"+grandTotal.toFixed(2)]);
     rows.push(["","","","","","","","","Your VB cost","","$"+vbCostTotal.toFixed(2)]);
@@ -2043,6 +2046,11 @@ function ProcurementView(props){
           !clientView&&h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Procurement fee: $"),
             h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
+              style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+          ),
+          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+            h("span",{style:{color:"#888"}},"Design fee: $"),
+            clientView?h("span",{style:{fontWeight:600}},(designFee||0).toFixed(2)):h("input",{type:"number",value:designFee,min:0,onChange:function(ev){saveDesignFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
