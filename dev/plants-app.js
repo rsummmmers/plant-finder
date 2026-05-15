@@ -141,7 +141,7 @@ function App(){
   var mixFiltered=useMemo(function(){return applyFilters(plants,mixFilters,zone);},[plants,mixFilters,zone]);
   var results=useMemo(function(){
     var sorted=sortPlants(filtered,sortBy,zone);
-    if(!proMode||!vbFilter)return sorted;
+    if(!proMode||!vbFilter||searchActive)return sorted;
     return sorted.filter(function(p){var v=vbLookup(vbData,p.latin);if(!v||!v.vb)return false;if(vbFilter==="instock")return v.inStock;if(vbFilter==="trays")return v.size&&v.size.toUpperCase().indexOf("TRAY")>=0;return true;});
   },[filtered,sortBy,zone,proMode,vbFilter,vbData]);
 
