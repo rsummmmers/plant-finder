@@ -2039,13 +2039,13 @@ function ProcurementView(props){
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Qty: "),h("span",{style:{fontWeight:600}},totalQty)),
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Plants: "),h("span",{style:{fontWeight:600}},"$"+plantSubtotal.toFixed(2))),
           h("span",{style:{fontSize:13}},h("span",{style:{color:"#888"}},"Install: "),h("span",{style:{fontWeight:600}},"$"+installSubtotal.toFixed(2))),
-          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
-            h("span",{style:{color:"#888"}},"Delivery cost: $"),
-            clientView?h("span",{style:{fontWeight:600}},"$"+deliveryCost.toFixed(2)):h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
-          ),
           !clientView&&h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
+            h("span",{style:{color:"#888"}},"Delivery cost: $"),
+            h("input",{type:"number",value:deliveryCost,min:0,onChange:function(ev){saveDelivery(parseFloat(ev.target.value)||0);},style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
+          ),
+          h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
             h("span",{style:{color:"#888"}},"Procurement fee: $"),
-            h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
+            clientView?h("span",{style:{fontWeight:600}},(procurementFee||0).toFixed(2)):h("input",{type:"number",value:procurementFee,min:0,onChange:function(ev){saveFee(parseFloat(ev.target.value)||0);},
               style:{width:55,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:13,fontWeight:600,padding:"0 2px",background:"transparent",outline:"none",textAlign:"center"}})
           ),
           h("span",{style:{fontSize:13,display:"flex",alignItems:"center",gap:4}},
