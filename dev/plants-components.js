@@ -1916,6 +1916,21 @@ function ProcurementView(props){
   function updateCustomPlant(id,field,val){saveCustomPlants(customPlants.map(function(p){return p.id===id?Object.assign({},p,{[field]:val}):p;}));}
   function removeCustomPlant(id){saveCustomPlants(customPlants.filter(function(p){return p.id!==id;}));}
 
+  var _ov=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_overrides_"+list.id)||"{}");}catch(e){return {};}}),overrides=_ov[0],setOverrides=_ov[1];
+  function saveOverride(latin,field,val){
+    var next=Object.assign({},overrides);
+    if(!next[latin])next[latin]={};
+    next[latin][field]=val;
+    setOverrides(next);
+    try{localStorage.setItem("ppb_overrides_"+list.id,JSON.stringify(next));}catch(e){}
+  }
+  function clearOverride(latin){
+    var next=Object.assign({},overrides);
+    delete next[latin];
+    setOverrides(next);
+    try{localStorage.setItem("ppb_overrides_"+list.id,JSON.stringify(next));}catch(e){}
+  }
+
   function setQty(latin,val){
     var next=Object.assign({},qtys);
     if(!val||val<=0)delete next[latin]; else next[latin]=val;
@@ -1944,8 +1959,12 @@ function ProcurementView(props){
   var plantSubtotal=0,installSubtotal=0,vbCostTotal=0;
   sorted.forEach(function(p){
     var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
+    var ov=overrides[p.latin]||null;
     if(!qty)return;
-    if(v&&v.price){
+    if(ov&&ov.clientPrice){
+      plantSubtotal+=qty*(parseFloat(ov.clientPrice)||0);
+      vbCostTotal+=qty*(parseFloat(ov.myCost)||0);
+    } else if(v&&v.price){
       var tc=getTrayCount(v.size);
       var unitVB=tc?v.price/tc:v.price;
       var unitClient=Math.round(unitVB*(rates.markup||1.4)*100)/100;
@@ -1953,7 +1972,7 @@ function ProcurementView(props){
       var traysNeeded=tc?Math.ceil(qty/tc):null;
       vbCostTotal+=traysNeeded?traysNeeded*v.price:qty*v.price;
     }
-    var irate=v?getInstallRate(v.size,rates):rates.gal1||10;
+    var irate=v?getInstallRate(v.size,rates):(rates.plug||2);
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
@@ -1995,7 +2014,7 @@ function ProcurementView(props){
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   }
 
-  return h("div",null,
+  return h("div",{style:{maxWidth:860}},
     modalPlant&&h("div",{onClick:function(){setModalPlant(null);},style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"16px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
@@ -2083,32 +2102,53 @@ function ProcurementView(props){
     ),
     sorted.map(function(p){
       var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
+      var ov=overrides[p.latin]||null;
       var trayCount=v?getTrayCount(v.size):null;
       var unitVBPrice=v&&v.price?(trayCount?v.price/trayCount:v.price):null;
-      var plantPrice=unitVBPrice?Math.round(unitVBPrice*(rates.markup||1.4)*100)/100:null;
-      var traysNeeded=trayCount&&qty?Math.ceil(qty/trayCount):null;
+      var plantPrice=ov&&ov.clientPrice?parseFloat(ov.clientPrice):unitVBPrice?Math.round(unitVBPrice*(rates.markup||1.4)*100)/100:null;
+      var traysNeeded=trayCount&&qty&&!ov?Math.ceil(qty/trayCount):null;
       var extraPlugs=traysNeeded?(traysNeeded*trayCount-qty):null;
-      var installRate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:null;
-      var perPlant=plantPrice&&installRate!==null?plantPrice+installRate:plantPrice;
+      var installRate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
+      var perPlant=plantPrice!=null?plantPrice+installRate:null;
       var qty=qtys[p.latin]||0;
       var lineTotal=qty&&perPlant?qty*perPlant:0;
-      return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:hasVB?1:0.45}},
+      var showRow=hasVB||ov||!clientView;
+      if(!showRow)return null;
+      return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"white",borderRadius:8,border:"1px solid "+(qty>0?"#2e5339":"#e0ddd5"),marginBottom:6,opacity:(hasVB||ov||clientView)?1:0.45}},
         h("div",{onClick:function(){setModalPlant(p);},style:{cursor:"pointer",flexShrink:0}},h(PlantThumb,{plant:p,size:38,radius:6})),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:500,fontSize:14,lineHeight:1.2}},p.common),
           h("div",{style:{fontSize:11,color:"#888",fontStyle:"italic"}},p.latin),
-          hasVB
+          ov
+            ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
+                h("span",{style:{fontSize:11,background:"#e8f5e9",color:"#2e7d32",padding:"1px 6px",borderRadius:10,fontWeight:500}},"My stock"),
+                !clientView&&h("span",{style:{fontSize:11,color:"#aaa"}},"cost: $"),
+                !clientView&&h("input",{type:"number",min:0,step:0.01,value:ov.myCost||"",placeholder:"0.00",
+                  onChange:function(ev){saveOverride(p.latin,"myCost",ev.target.value);},
+                  style:{width:60,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                h("span",{style:{fontSize:11,color:"#aaa"}},"client: $"),
+                h("input",{type:"number",min:0,step:0.01,value:ov.clientPrice||"",placeholder:"0.00",
+                  onChange:function(ev){saveOverride(p.latin,"clientPrice",ev.target.value);},
+                  style:{width:60,border:"none",borderBottom:"1px solid #2e5339",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                h("span",{style:{fontSize:11,color:"#aaa"}},"+ $"+installRate.toFixed(2)+" install"),
+                !clientView&&h("button",{onClick:function(){clearOverride(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#aaa",padding:0}},"× use VB")
+              )
+            :hasVB
             ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
                 h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":"Available"),
                 v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size),
                 perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+(trayCount?" /plug":" ea"),
-                  h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
-                traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":""))
+                  !clientView&&h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
+                traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":"")),
+                !clientView&&h("button",{onClick:function(){saveOverride(p.latin,"clientPrice",perPlant?perPlant.toFixed(2):"");saveOverride(p.latin,"myCost","0");},style:{background:"none",border:"none",cursor:"pointer",fontSize:10,color:"#aaa",padding:"0 0 0 4px",textDecoration:"underline"}},"use my stock")
               )
-            :h("div",{style:{fontSize:11,color:"#aaa",marginTop:2}},"source elsewhere")
+            :h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
+                h("span",{style:{fontSize:11,color:"#aaa"}},"source elsewhere —"),
+                h("button",{onClick:function(){saveOverride(p.latin,"clientPrice","");saveOverride(p.latin,"myCost","");},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#2e5339",padding:0,textDecoration:"underline"}},"set my price")
+              )
         ),
         h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
-          hasVB&&h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+          h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
             h("input",{type:"number",min:0,step:1,value:qty||"",placeholder:"0",
               onChange:function(ev){setQty(p.latin,parseInt(ev.target.value)||0);},
               style:{width:54,padding:"5px 8px",border:"1.5px solid "+(qty>0?"#2e5339":"#e0ddd5"),borderRadius:6,fontFamily:"inherit",fontSize:14,fontWeight:600,textAlign:"center",outline:"none"}}),
