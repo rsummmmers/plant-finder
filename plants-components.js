@@ -1972,7 +1972,7 @@ function ProcurementView(props){
       var traysNeeded=tc?Math.ceil(qty/tc):null;
       vbCostTotal+=traysNeeded?traysNeeded*v.price:qty*v.price;
     }
-    var irate=v?getInstallRate(v.size,rates):(rates.plug||2);
+    var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?getInstallRate(v.size,rates):(rates.plug||2);
     installSubtotal+=qty*(Math.round(irate*difficulty*100)/100);
   });
   var totalQty=Object.keys(qtys).reduce(function(s,k){return s+(qtys[k]||0);},0);
@@ -2108,7 +2108,7 @@ function ProcurementView(props){
       var plantPrice=ov&&ov.clientPrice?parseFloat(ov.clientPrice):unitVBPrice?Math.round(unitVBPrice*(rates.markup||1.4)*100)/100:null;
       var traysNeeded=trayCount&&qty&&!ov?Math.ceil(qty/trayCount):null;
       var extraPlugs=traysNeeded?(traysNeeded*trayCount-qty):null;
-      var installRate=v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
+      var installRate=ov&&ov.installRate!=null?Math.round(parseFloat(ov.installRate)*difficulty*100)/100:v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
       var perPlant=plantPrice!=null?plantPrice+installRate:null;
       var qty=qtys[p.latin]||0;
       var lineTotal=qty&&perPlant?qty*perPlant:0;
@@ -2130,7 +2130,11 @@ function ProcurementView(props){
                 h("input",{type:"number",min:0,step:0.01,value:ov.clientPrice||"",placeholder:"0.00",
                   onChange:function(ev){saveOverride(p.latin,"clientPrice",ev.target.value);},
                   style:{width:60,border:"none",borderBottom:"1px solid #2e5339",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
-                h("span",{style:{fontSize:11,color:"#aaa"}},"+ $"+installRate.toFixed(2)+" install"),
+                h("span",{style:{fontSize:11,color:"#aaa"}},"+ $"),
+                h("input",{type:"number",min:0,step:0.5,value:ov.installRate!=null?ov.installRate:installRate,
+                  onChange:function(ev){saveOverride(p.latin,"installRate",parseFloat(ev.target.value)||0);},
+                  style:{width:45,border:"none",borderBottom:"1px solid #ccc",fontFamily:"inherit",fontSize:12,background:"transparent",outline:"none",textAlign:"center"}}),
+                h("span",{style:{fontSize:11,color:"#aaa"}}," install"),
                 !clientView&&h("button",{onClick:function(){clearOverride(p.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"#aaa",padding:0}},"× use VB")
               )
             :hasVB
