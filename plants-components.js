@@ -2026,6 +2026,8 @@ function ProcurementView(props){
   function doClientPrint(){
     var today=new Date();
     var dateStr=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+    var basePath=location.origin+(location.pathname.replace(/\/?$/,"/"));
+    var listLink=basePath+"?view=palette&listname="+encodeURIComponent(list.name)+"&hearts="+list.plants.join(",");
     var plantRows=sorted.filter(function(p){return (qtys[p.latin]||0)>0;}).map(function(p){
       var v=vbLookup(vbData,p.latin);
       var ov=overrides[p.latin]||null;
@@ -2035,7 +2037,8 @@ function ProcurementView(props){
       var perPlant=clientPrice+irate;
       var lineTotal=qty*perPlant;
       var img=p.image?'<img src="'+p.image+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
-      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+p.common+'</div><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
+      var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
+      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
     }).join("");
     customPlants.filter(function(cp){return cp.qty&&cp.price&&cp.name;}).forEach(function(cp){
       plantRows+='<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee"><div style="width:52px;height:52px;background:#f5f5f5;border-radius:6px;flex-shrink:0"></div><div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+cp.name+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+cp.qty+' × $'+parseFloat(cp.price).toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+(cp.qty*cp.price).toFixed(2)+'</div></div></div>';
@@ -2051,7 +2054,8 @@ function ProcurementView(props){
       +plantRows
       +'<div style="border-top:2px solid #2e5339;margin-top:20px;padding-top:16px">'+tallyRows
       +'<div style="display:flex;justify-content:space-between;border-top:1px solid #ccc;margin-top:10px;padding-top:10px;font-size:17px;font-weight:700;color:#2e5339"><span>Total</span><span>$'+grandTotal.toFixed(2)+'</span></div></div>'
-      +'<div style="text-align:center;margin-top:32px"><button onclick="window.print()" style="background:#2e5339;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-family:Georgia,serif">Print / Save as PDF</button></div>'
+      +'<div style="margin-top:28px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888">More info about all plants listed: <a href="'+listLink+'" style="color:#2e5339">View full plant list →</a></div>'
+      +'<div style="text-align:center;margin-top:24px"><button onclick="window.print()" style="background:#2e5339;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-family:Georgia,serif">Print / Save as PDF</button></div>'
       +'</body></html>';
     var w=window.open("","_blank");
     w.document.write(html);
