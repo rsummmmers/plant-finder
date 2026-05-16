@@ -6,7 +6,8 @@ function App(){
   var _e=useState(null),error=_e[0],setError=_e[1];
 
   var initURL=useMemo(readURL,[]);
-  var initTab=initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"palette":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.view==="main"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":initURL.search?"plants":"home";
+  var initQuoteData=useMemo(function(){if(initURL.view!=="quote")return null;try{var p=new URLSearchParams(location.search);var q=p.get("q");if(!q)return null;return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(q)))));}catch(e){return null;}},[]);
+  var initTab=initURL.view==="quote"?"quote":initURL.view==="seeds"?"seeds":initURL.view==="bloom"?"bloom":initURL.view==="mix"?"palette":initURL.view==="palette"?"palette":initURL.view==="plants"?"plants":initURL.view==="main"?"plants":initURL.sharedHearts&&initURL.sharedHearts.length>0?"palette":initURL.search?"plants":"home";
   var _at=useState(initTab),activeTab=_at[0],setActiveTab=_at[1];
   var _sr=useState(initURL.search),search=_sr[0],setSearch=_sr[1];
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
@@ -178,6 +179,7 @@ function App(){
   }
 
   // ── Render ──
+  if(activeTab==="quote")return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#f9f8f4",minHeight:"100vh",color:"#333",padding:"20px 16px 60px"}},h(QuoteView,{data:initQuoteData}));
   return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
     showGlossary&&h("div",{onClick:function(){setShowGlossary(false);},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"20px 16px 40px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",background:"white",borderRadius:14,padding:"28px 32px",position:"relative"}},
@@ -313,6 +315,7 @@ function App(){
             h("p",{style:{fontSize:13,color:"#666",lineHeight:1.7}},"Near-native plants (species native to adjacent regions with documented ecological relationships in Massachusetts) are included and labeled. Use your judgment.")
           )
         ):
+        activeTab==="quote"?h(QuoteView,{data:initQuoteData}):
         activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,listView:listView,onToggleListView:toggleListView,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
