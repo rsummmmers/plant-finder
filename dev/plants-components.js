@@ -2037,7 +2037,8 @@ function ProcurementView(props){
       var clientPrice=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
       var perPlant=clientPrice+irate;
       var lineTotal=qty*perPlant;
-      var img=p.image?'<img src="'+p.image+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
+      var imgSrc=p.image?p.image.replace(/\/medium\./,"/small.").replace(/\/large\./,"/small."):"";
+      var img=imgSrc?'<img src="'+imgSrc+'" style="width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
       var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
       return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
     }
