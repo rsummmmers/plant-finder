@@ -1567,6 +1567,55 @@ function FilterDrawer(props){
   );
 }
 
+// ── QuoteView ─────────────────────────────────────────────────────────────
+function QuoteView(props){
+  var data=props.data;
+  if(!data)return h("div",{style:{fontFamily:"'Poppins',sans-serif",maxWidth:680,margin:"40px auto",padding:"20px",color:"#888",textAlign:"center"}},"Invalid quote link.");
+  var basePath=location.origin+(location.pathname.replace(/\/?$/,"/"));
+  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"white",maxWidth:680,margin:"0 auto",padding:"32px 24px",color:"#333"}},
+    h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+      h("div",null,
+        h("div",{style:{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:"#888",marginBottom:4}},"Summers Ecoscaping"),
+        h("div",{style:{fontFamily:"'Literata',serif",fontSize:26,fontWeight:400,color:"#2e5339"}},data.name)
+      ),
+      h("div",{style:{fontSize:13,color:"#888",textAlign:"right"}},data.date)
+    ),
+    data.notes&&h("div",{style:{background:"#f9f8f4",padding:"12px 16px",borderRadius:6,margin:"16px 0",fontSize:14,color:"#555",whiteSpace:"pre-line",lineHeight:1.65}},data.notes),
+    h("div",{style:{borderTop:"2px solid #2e5339",margin:"16px 0"}}),
+    TYPE_LAYERS.map(function(ld){
+      var lp=(data.plants||[]).filter(function(p){return p.t===ld.key;});
+      if(!lp.length)return null;
+      return h("div",{key:ld.key,style:{marginTop:16}},
+        h("div",{style:{fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:"#888",marginBottom:6,paddingBottom:4,borderBottom:"1px solid #eee"}},""+ld.emoji+" "+ld.title),
+        lp.map(function(p){
+          var plantUrl=basePath+"?q="+encodeURIComponent(p.l);
+          return h("div",{key:p.l,style:{display:"flex",alignItems:"center",gap:14,padding:"10px 0",borderBottom:"1px solid #eee"}},
+            h("div",{style:{flex:1}},
+              h("a",{href:plantUrl,target:"_blank",style:{fontWeight:600,fontSize:15,fontFamily:"'Literata',serif",color:"#2e5339",textDecoration:"none"}},p.c),
+              h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l)
+            ),
+            h("div",{style:{textAlign:"right",minWidth:120}},
+              h("div",{style:{fontSize:13,color:"#555"}},p.q+" × $"+parseFloat(p.p).toFixed(2)),
+              h("div",{style:{fontWeight:700,color:"#2e5339",fontSize:14}},"$"+(p.q*parseFloat(p.p)).toFixed(2))
+            )
+          );
+        })
+      );
+    }),
+    h("div",{style:{borderTop:"2px solid #2e5339",marginTop:20,paddingTop:16}},
+      h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14}},h("span",{style:{color:"#555"}},"Plants + installation"),h("span",{style:{fontWeight:600}},"$"+(data.fees.plantsInstall||0).toFixed(2))),
+      data.fees.proc>0&&h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14}},h("span",{style:{color:"#555"}},"Procurement fee"),h("span",{style:{fontWeight:600}},"$"+parseFloat(data.fees.proc).toFixed(2))),
+      data.fees.design>0&&h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14}},h("span",{style:{color:"#555"}},"Design fee"),h("span",{style:{fontWeight:600}},"$"+parseFloat(data.fees.design).toFixed(2))),
+      data.fees.site>0&&h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",fontSize:14}},h("span",{style:{color:"#555"}},"Site preparation"),h("span",{style:{fontWeight:600}},"$"+parseFloat(data.fees.site).toFixed(2))),
+      h("div",{style:{display:"flex",justifyContent:"space-between",borderTop:"1px solid #ccc",marginTop:10,paddingTop:10,fontSize:17,fontWeight:700,color:"#2e5339"}},h("span",null,"Total"),h("span",null,"$"+parseFloat(data.fees.total).toFixed(2)))
+    ),
+    h("div",{style:{marginTop:28,paddingTop:16,borderTop:"1px solid #eee",fontSize:13,color:"#888"}},
+      "More info about the plants in this proposal: ",
+      h("a",{href:basePath+"?view=palette&listname="+encodeURIComponent(data.name)+"&hearts="+(data.plants||[]).map(function(p){return p.l;}).join(","),style:{color:"#2e5339"}},"View plant list →")
+    )
+  );
+}
+
 // ── CompactPlantList ──────────────────────────────────────────────────────
 function CompactPlantList(props){
   var plants=props.plants||[],siteKey=props.siteKey,hearts=props.hearts||[];
@@ -2023,6 +2072,37 @@ function ProcurementView(props){
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   }
 
+  function doShareQuote(){
+    var activePlants2=sorted.filter(function(p){return (qtys[p.latin]||0)>0;});
+    var qdata={
+      name:list.name,
+      notes:list.notes||"",
+      date:new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}),
+      plants:activePlants2.map(function(p){
+        var v=vbLookup(vbData,p.latin);
+        var ov=overrides[p.latin]||null;
+        var qty=qtys[p.latin]||0;
+        var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
+        var cp=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
+        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2)};
+      }),
+      fees:{plantsInstall:plantSubtotal+installSubtotal,proc:parseFloat(procurementFee)||0,design:parseFloat(designFee)||0,site:parseFloat(siteWork)||0,total:grandTotal.toFixed(2)}
+    };
+    customPlants.filter(function(cp){return cp.qty&&cp.price&&cp.name;}).forEach(function(cp){
+      qdata.plants.push({c:cp.name,l:"",t:"perennial",q:cp.qty,p:parseFloat(cp.price).toFixed(2)});
+    });
+    var encoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(qdata)))));
+    var url=location.origin+location.pathname+"?view=quote&q="+encoded;
+    if(navigator.share){navigator.share({title:list.name+" — Plant Proposal",url:url}).catch(function(){});}
+    else{
+      navigator.clipboard.writeText(url).then(function(){alert("Quote link copied to clipboard!");}).catch(function(){
+        var ta=document.createElement("textarea");ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
+        document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+        alert("Quote link copied!");
+      });
+    }
+  }
+
   function doClientPrint(){
     var today=new Date();
     var dateStr=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
@@ -2131,7 +2211,8 @@ function ProcurementView(props){
         ),
         h("div",{style:{display:"flex",gap:8,flexShrink:0}},
           !clientView&&h("button",{onClick:function(){setShowRates(!showRates);},style:{background:"none",border:"1px solid #e0ddd5",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:"#888"}},"⚙ Rates"),
-          clientView&&grandTotal>0&&h("button",{onClick:doClientPrint,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📄 PDF"),
+          clientView&&grandTotal>0&&h("button",{onClick:doShareQuote,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"🔗 Share"),
+          clientView&&grandTotal>0&&h("button",{onClick:doClientPrint,style:{background:"none",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📄 PDF"),
           !clientView&&grandTotal>0&&h("button",{onClick:doExport,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600}},"📦 Export")
         )
       ),
