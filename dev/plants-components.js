@@ -2093,14 +2093,13 @@ function ProcurementView(props){
     });
     var encoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(qdata)))));
     var url=location.origin+location.pathname+"?view=quote&q="+encoded;
-    if(navigator.share){navigator.share({title:list.name+" — Plant Proposal",url:url}).catch(function(){});}
-    else{
-      navigator.clipboard.writeText(url).then(function(){alert("Quote link copied to clipboard!");}).catch(function(){
-        var ta=document.createElement("textarea");ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
-        document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
-        alert("Quote link copied!");
-      });
-    }
+    navigator.clipboard.writeText(url).then(function(){
+      alert("Quote link copied! Send it to your client.");
+    }).catch(function(){
+      var ta=document.createElement("textarea");ta.value=url;ta.style.position="fixed";ta.style.opacity="0";
+      document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+      alert("Quote link copied! Send it to your client.");
+    });
   }
 
   function doClientPrint(){
