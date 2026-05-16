@@ -2029,29 +2029,14 @@ function ProcurementView(props){
     var basePath=location.origin+(location.pathname.replace(/\/?$/,"/"));
     var listLink=basePath+"?view=palette&listname="+encodeURIComponent(list.name)+"&hearts="+list.plants.join(",");
     var activePlants=sorted.filter(function(p){return (qtys[p.latin]||0)>0;});
-    var imageUrls=activePlants.map(function(p){return p.image||"";}).filter(Boolean);
-    var uniqueUrls=[...new Set(imageUrls)];
-    var imageCache={};
-    var pending=uniqueUrls.length;
-    function finishPrint(){generatePdf(imageCache);}
-    function resizeImage(src){
-      var img=new Image();
-      img.crossOrigin="anonymous";
-      img.onload=function(){
-        try{
-          var c=document.createElement("canvas");c.width=44;c.height=44;
-          var ctx=c.getContext("2d");
-          var min=Math.min(img.width,img.height);
-          ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,44,44);
-          imageCache[src]=c.toDataURL("image/jpeg",0.55);
-        }catch(e){imageCache[src]="";}
-        if(--pending===0)finishPrint();
-      };
-      img.onerror=function(){imageCache[src]="";if(--pending===0)finishPrint();};
-      img.src=src.replace(/\/medium\./,"/small.").replace(/\/large\./,"/small.");
-    }
-    if(uniqueUrls.length===0){generatePdf(imageCache);}
-    else{uniqueUrls.forEach(resizeImage);}
+    var imgCache={};
+    activePlants.forEach(function(p){
+      if(!p.image)return;
+      var src=p.image;
+      if(src.indexOf("inaturalist")>=0){
+        imgCache[src]=src.replace(/\/original\./,"/square.").replace(/\/large\./,"/square.").replace(/\/medium\./,"/square.").replace(/\/small\./,"/square.");
+      }
+    });
     function generatePdf(imgCache){
     function renderPdfPlant(p){
       var v=vbLookup(vbData,p.latin);
@@ -2061,8 +2046,8 @@ function ProcurementView(props){
       var clientPrice=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
       var perPlant=clientPrice+irate;
       var lineTotal=qty*perPlant;
-      var imgData=p.image?(imgCache[p.image]||""):"";
-      var img=imgData?'<img src="'+imgData+'" style="width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0">':"";
+      var imgSrc=p.image?(imgCache[p.image]||""):"";
+      var img=imgSrc?'<img src="'+imgSrc+'" style="width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
       var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
       return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
     }
@@ -2097,6 +2082,7 @@ function ProcurementView(props){
     w.document.write(html);
     w.document.close();
     } // end generatePdf
+    generatePdf(imgCache);
   }
 
   return h("div",{style:{maxWidth:860}},
