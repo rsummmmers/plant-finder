@@ -1590,6 +1590,7 @@ function QuoteView(props){
         lp.map(function(p){
           var plantUrl=basePath+"?q="+encodeURIComponent(p.l);
           return h("div",{key:p.l,style:{display:"flex",alignItems:"center",gap:14,padding:"10px 0",borderBottom:"1px solid #eee"}},
+            p.i&&h("img",{src:p.i,style:{width:44,height:44,objectFit:"cover",borderRadius:6,flexShrink:0},onError:function(e){e.target.style.display="none";}}),
             h("div",{style:{flex:1}},
               h("a",{href:plantUrl,target:"_blank",style:{fontWeight:600,fontSize:15,fontFamily:"'Literata',serif",color:"#2e5339",textDecoration:"none"}},p.c),
               h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l)
@@ -2084,7 +2085,8 @@ function ProcurementView(props){
         var qty=qtys[p.latin]||0;
         var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
         var cp=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
-        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2)};
+        var imgSrc=p.image?(p.image.indexOf("inaturalist")>=0?p.image.replace(/\/medium\./,"/square.").replace(/\/large\./,"/square."):p.image):"";
+        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2),i:imgSrc};
       }),
       fees:{plantsInstall:plantSubtotal+installSubtotal,proc:parseFloat(procurementFee)||0,design:parseFloat(designFee)||0,site:parseFloat(siteWork)||0,total:grandTotal.toFixed(2)}
     };
