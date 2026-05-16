@@ -2155,7 +2155,16 @@ function ProcurementView(props){
         )
       )
     ),
-    sorted.map(function(p){
+    TYPE_LAYERS.map(function(ld){
+      var layerPlants=sorted.filter(function(p){return p.typeKey===ld.key;});
+      if(!layerPlants.length)return null;
+      return h("div",{key:ld.key},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:6,marginTop:10,paddingBottom:4,borderBottom:"1px solid #f0ede4"}},
+          h("span",{style:{fontSize:13,background:ld.bg,borderRadius:5,padding:"1px 6px"}},""+ld.emoji),
+          h("span",{style:{fontFamily:"'Literata',serif",fontSize:14,color:ld.color,fontWeight:600}},ld.title),
+          h("span",{style:{background:ld.bg,color:ld.color,borderRadius:10,padding:"0 7px",fontSize:11,fontWeight:600}},layerPlants.length)
+        ),
+        layerPlants.map(function(p){
       var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
       var ov=overrides[p.latin]||null;
       var trayCount=v?getTrayCount(v.size):null;
@@ -2229,6 +2238,8 @@ function ProcurementView(props){
           ),
           !clientView&&h("button",{onClick:function(){onRemove(p.latin);},title:"Remove from list",style:{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#ccc",padding:"4px",lineHeight:1,flexShrink:0}},"×")
         )
+      );
+        })
       );
     }),
     customPlants.length>0&&h("div",{style:{marginTop:8}},
@@ -2414,7 +2425,7 @@ function SavedListsView(props){
       h("div",{style:{fontSize:13,color:"#bbb"}},"then add plants with the \"+List\" button on any plant card.")
     ),
     h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-      lists.map(function(list){
+      lists.slice().sort(function(a,b){return(b.updated||b.created||0)-(a.updated||a.created||0);}).map(function(list){
         return h("div",{key:list.id,
           onClick:function(){setOpenId(list.id);},
           style:{background:"white",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}
