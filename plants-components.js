@@ -2028,7 +2028,8 @@ function ProcurementView(props){
     var dateStr=today.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
     var basePath=location.origin+(location.pathname.replace(/\/?$/,"/"));
     var listLink=basePath+"?view=palette&listname="+encodeURIComponent(list.name)+"&hearts="+list.plants.join(",");
-    var plantRows=sorted.filter(function(p){return (qtys[p.latin]||0)>0;}).map(function(p){
+    var activePlants=sorted.filter(function(p){return (qtys[p.latin]||0)>0;});
+    function renderPdfPlant(p){
       var v=vbLookup(vbData,p.latin);
       var ov=overrides[p.latin]||null;
       var qty=qtys[p.latin]||0;
@@ -2039,10 +2040,20 @@ function ProcurementView(props){
       var img=p.image?'<img src="'+p.image+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
       var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
       return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
+    }
+    var plantRows=TYPE_LAYERS.map(function(ld){
+      var lp=activePlants.filter(function(p){return p.typeKey===ld.key;});
+      if(!lp.length)return "";
+      return '<div style="margin-top:16px"><div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #eee">'+ld.emoji+' '+ld.title+'</div>'+lp.map(renderPdfPlant).join("")+'</div>';
     }).join("");
-    customPlants.filter(function(cp){return cp.qty&&cp.price&&cp.name;}).forEach(function(cp){
-      plantRows+='<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee"><div style="width:52px;height:52px;background:#f5f5f5;border-radius:6px;flex-shrink:0"></div><div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+cp.name+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+cp.qty+' × $'+parseFloat(cp.price).toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+(cp.qty*cp.price).toFixed(2)+'</div></div></div>';
-    });
+    var activeCustom=customPlants.filter(function(cp){return cp.qty&&cp.price&&cp.name;});
+    if(activeCustom.length){
+      plantRows+='<div style="margin-top:16px"><div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #eee">Additional</div>';
+      activeCustom.forEach(function(cp){
+        plantRows+='<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee"><div style="width:52px;height:52px;background:#f5f5f5;border-radius:6px;flex-shrink:0"></div><div style="flex:1"><div style="font-weight:600;font-size:15px;font-family:Georgia,serif">'+cp.name+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+cp.qty+' × $'+parseFloat(cp.price).toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+(cp.qty*cp.price).toFixed(2)+'</div></div></div>';
+      });
+      plantRows+='</div>';
+    }
     var tallyRows='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Plants + installation</span><span style="font-weight:600">$'+(plantSubtotal+installSubtotal).toFixed(2)+'</span></div>';
     if(parseFloat(procurementFee)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Procurement fee</span><span style="font-weight:600">$'+parseFloat(procurementFee).toFixed(2)+'</span></div>';
     if(parseFloat(designFee)>0)tallyRows+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px"><span style="color:#555">Design fee</span><span style="font-weight:600">$'+parseFloat(designFee).toFixed(2)+'</span></div>';
