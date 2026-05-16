@@ -2035,6 +2035,8 @@ function ProcurementView(props){
       var src=p.image;
       if(src.indexOf("inaturalist")>=0){
         imgCache[src]=src.replace(/\/original\./,"/square.").replace(/\/large\./,"/square.").replace(/\/medium\./,"/square.").replace(/\/small\./,"/square.");
+      } else {
+        imgCache[src]=src;
       }
     });
     function generatePdf(imgCache){
