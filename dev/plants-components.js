@@ -1005,9 +1005,10 @@ function BloomCalendar(props){
             lists.map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
-            var on=statuses.indexOf(opt.key)>=0;
+            var isNamedList=source!=="all"&&source!=="hearts";
+            var on=!isNamedList&&statuses.indexOf(opt.key)>=0;
             var shortLabel=isMobile?opt.label.replace(" to MA","").replace("Safe ","").replace(" Cultivar",""):opt.label;
-            return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:isMobile?"3px 8px":"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:isMobile?11:13,border:"1.5px solid "+(on?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.22)"),background:on?"rgba(255,255,255,0.18)":"transparent",color:on?"white":"rgba(255,255,255,0.6)",fontWeight:on?"500":"normal"}},shortLabel);
+            return h("button",{key:opt.key,onClick:function(){toggleStatus(opt.key);},style:{padding:isMobile?"3px 8px":"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:isMobile?11:13,border:"1.5px solid "+(on?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.22)"),background:on?"rgba(255,255,255,0.18)":"transparent",color:on?"white":isNamedList?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.6)",fontWeight:on?"500":"normal",opacity:isNamedList?0.45:1}},shortLabel);
           })
         ),
         // Color dot filters — same on mobile and desktop
