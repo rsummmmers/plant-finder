@@ -908,9 +908,10 @@ function BloomCalendar(props){
   var eligible=useMemo(function(){
     return plants.filter(function(p){
       if(p.bloomStart<0||p.bloomEnd<0)return false;
-      if(!matchStatus(p,statuses))return false;
+      var isNamedList=source!=="all"&&source!=="hearts";
+      if(!isNamedList&&!matchStatus(p,statuses))return false;
       if(source==="hearts"&&hearts.indexOf(p.latin)<0)return false;
-      if(source!=="all"&&source!=="hearts"){var sl=lists.find(function(l){return l.id===source;});if(!sl||sl.plants.indexOf(p.latin)<0)return false;}
+      if(isNamedList){var sl=lists.find(function(l){return l.id===source;});if(!sl||sl.plants.indexOf(p.latin)<0)return false;}
       if(exclude.indexOf("tree")>=0&&p.typeKey==="tree")return false;
       if(exclude.indexOf("shrub")>=0&&p.typeKey==="shrub")return false;
       if(exclude.indexOf("perennial")>=0&&(p.typeKey==="perennial"||p.typeKey==="ground"||p.typeKey==="vine"))return false;
