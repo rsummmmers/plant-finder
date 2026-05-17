@@ -27,6 +27,8 @@ function App(){
   var _gl=useState(false),showGlossary=_gl[0],setShowGlossary=_gl[1];
   var _lv=useState(function(){return localStorage.getItem("ppb_list_view")==="1";}),listView=_lv[0],setListView=_lv[1];
   function toggleListView(){setListView(function(v){var n=!v;localStorage.setItem("ppb_list_view",n?"1":"0");return n;});}
+  var _bli=useState(null),bloomListId=_bli[0],setBloomListId=_bli[1];
+  function goToBloom(listId){setBloomListId(listId);setActiveTab("bloom");}
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
@@ -321,8 +323,8 @@ function App(){
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},isMobile:isMobile,proMode:proMode,vbData:vbData}):
-        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists}):
+        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},onGoToBloom:goToBloom,isMobile:isMobile,proMode:proMode,vbData:vbData}):
+        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
         h("div",null,
