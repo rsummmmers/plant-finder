@@ -166,6 +166,11 @@ function baseSpecies(latin){
 function vbLookup(vbData,latin){
   return vbData[latin]||vbData[baseSpecies(latin)]||null;
 }
+function vbLookupAll(vbData,latin){
+  var all=vbData&&vbData._allSizes;
+  if(!all)return null;
+  return all[latin]||all[baseSpecies(latin)]||null;
+}
 
 function applyInheritance(plants){
   var speciesMap={};
@@ -272,7 +277,7 @@ function loadVBData(){
       var row0=parseRow(lines[i])[0]||"";
       if(row0.trim().toUpperCase()==="QTY"){headerIdx=i;break;}
     }
-    var map={};
+    var map={},allSizes={};
     if(headerIdx>=0){
       for(var i=headerIdx+1;i<lines.length;i++){
         var row=parseRow(lines[i]);
@@ -293,9 +298,21 @@ function loadVBData(){
         if(!existing||(!existing.inStock&&inStock)||(existing.inStock===inStock&&((isTray&&!existingIsTray)||(isTray===existingIsTray&&qty>existing.qty)))){
           map[dbLatin]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
         }
+        if(!allSizes[dbLatin])allSizes[dbLatin]=[];
+        allSizes[dbLatin].push({vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating});
       }
     }
+    // Sort each allSizes array: in-stock first, then trays, then by qty desc
+    Object.keys(allSizes).forEach(function(k){
+      allSizes[k].sort(function(a,b){
+        if(a.inStock!==b.inStock)return a.inStock?-1:1;
+        var at=a.size.toUpperCase().indexOf("TRAY")>=0,bt=b.size.toUpperCase().indexOf("TRAY")>=0;
+        if(at!==bt)return at?-1:1;
+        return b.qty-a.qty;
+      });
+    });
     map._weekOf=weekOf;
+    map._allSizes=allSizes;
     return map;
   }).catch(function(){return {};});
 }
