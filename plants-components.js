@@ -1951,6 +1951,8 @@ function ProcurementView(props){
   var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){},onUpdateNotes=props.onUpdateNotes||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
+  var _sz=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_selsize_"+list.id)||"{}");}catch(e){return {};}}),selSizes=_sz[0],setSelSizes=_sz[1];
+  function setSelSize(latin,size){setSelSizes(function(prev){var n=Object.assign({},prev);n[latin]=size;try{localStorage.setItem("ppb_selsize_"+list.id,JSON.stringify(n));}catch(e){}return n;});}
   var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
   var _fee=useState(function(){return parseFloat(localStorage.getItem("ppb_procurement_fee"))||180;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
   var _df=useState(function(){return parseFloat(localStorage.getItem("ppb_design_fee_"+list.id))||0;}),designFee=_df[0],setDesignFee=_df[1];
@@ -2276,7 +2278,10 @@ function ProcurementView(props){
           h("span",{style:{background:ld.bg,color:ld.color,borderRadius:10,padding:"0 7px",fontSize:11,fontWeight:600}},layerPlants.length)
         ),
         layerPlants.map(function(p){
-      var v=vbLookup(vbData,p.latin),hasVB=v&&v.vb,inStock=v&&v.inStock;
+      var allSzArr=vbLookupAll(vbData,p.latin)||[];
+      var selSz=selSizes[p.latin];
+      var v=(selSz?allSzArr.find(function(s){return s.size===selSz;}):null)||vbLookup(vbData,p.latin);
+      var hasVB=v&&v.vb,inStock=v&&v.inStock;
       var ov=overrides[p.latin]||null;
       var trayCount=v?getTrayCount(v.size):null;
       var unitVBPrice=v&&v.price?(trayCount?v.price/trayCount:v.price):null;
@@ -2328,8 +2333,17 @@ function ProcurementView(props){
                 })()
             :hasVB
             ?h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:2,flexWrap:"wrap"}},
-                !clientView&&h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":"Available"),
-                !clientView&&v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size),
+                !clientView&&h("span",{style:{fontSize:11,background:inStock?"#e8f5e9":"#f5f5f5",color:inStock?"#2e7d32":"#999",padding:"1px 6px",borderRadius:10,fontWeight:500}},inStock?"In stock":v.nextDate?"Next: "+v.nextDate:"Out of stock"),
+                !clientView&&(allSzArr.length>1
+                  ?h("select",{value:v.size||"",onChange:function(ev){setSelSize(p.latin,ev.target.value);},
+                      style:{fontSize:11,border:"1px solid #e0ddd5",borderRadius:4,padding:"1px 4px",fontFamily:"inherit",background:"white",cursor:"pointer"}},
+                      allSzArr.map(function(s){
+                        var tc=getTrayCount(s.size);
+                        var label=s.size+(tc?" → plugs":"")+(s.inStock?" ("+s.qty+" avail)":s.nextDate?" · "+s.nextDate:" · out");
+                        return h("option",{key:s.size,value:s.size,style:{color:s.inStock?"#333":"#aaa"}},label);
+                      })
+                    )
+                  :v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size)),
                 perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+((!clientView&&trayCount)?" /plug":" ea"),
                   !clientView&&h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
                 !clientView&&traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":"")),
