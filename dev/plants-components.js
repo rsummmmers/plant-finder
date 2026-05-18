@@ -1953,6 +1953,7 @@ function ProcurementView(props){
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _sz=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_selsize_"+list.id)||"{}");}catch(e){return {};}}),selSizes=_sz[0],setSelSizes=_sz[1];
   function setSelSize(latin,size){setSelSizes(function(prev){var n=Object.assign({},prev);n[latin]=size;try{localStorage.setItem("ppb_selsize_"+list.id,JSON.stringify(n));}catch(e){}return n;});}
+  function getVB(latin){var all=vbLookupAll(vbData,latin)||[];var sel=selSizes[latin];return(sel?all.find(function(s){return s.size===sel;}):null)||vbLookup(vbData,latin);}
   var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
   var _fee=useState(function(){return parseFloat(localStorage.getItem("ppb_procurement_fee"))||180;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
   var _df=useState(function(){return parseFloat(localStorage.getItem("ppb_design_fee_"+list.id))||0;}),designFee=_df[0],setDesignFee=_df[1];
@@ -2015,7 +2016,7 @@ function ProcurementView(props){
 
   var plantSubtotal=0,installSubtotal=0,vbCostTotal=0,selfStockRevenue=0,vbMarkup=0;
   sorted.forEach(function(p){
-    var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
+    var v=getVB(p.latin),qty=qtys[p.latin]||0;
     var ov=overrides[p.latin]||null;
     if(!qty)return;
     if(ov&&ov.clientPrice){
@@ -2050,7 +2051,7 @@ function ProcurementView(props){
     var dateStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
     var rows=[["common_name","vb_name","latin_name","size","in_stock","qty_ordered","tray_note","vb_unit_price","plant_client_price","install_per_plant","line_total"]];
     sorted.forEach(function(p){
-      var v=vbLookup(vbData,p.latin),qty=qtys[p.latin]||0;
+      var v=getVB(p.latin),qty=qtys[p.latin]||0;
       if(!qty)return;
       var tc=v?getTrayCount(v.size):null;
       var unitVB=v&&v.price?(tc?v.price/tc:v.price):0;
@@ -2085,7 +2086,7 @@ function ProcurementView(props){
       notes:list.notes||"",
       date:new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}),
       plants:activePlants2.map(function(p){
-        var v=vbLookup(vbData,p.latin);
+        var v=getVB(p.latin);
         var ov=overrides[p.latin]||null;
         var qty=qtys[p.latin]||0;
         var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
@@ -2127,7 +2128,7 @@ function ProcurementView(props){
     });
     function generatePdf(imgCache){
     function renderPdfPlant(p){
-      var v=vbLookup(vbData,p.latin);
+      var v=getVB(p.latin);
       var ov=overrides[p.latin]||null;
       var qty=qtys[p.latin]||0;
       var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
