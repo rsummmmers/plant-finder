@@ -29,6 +29,7 @@ function App(){
   function toggleListView(){setListView(function(v){var n=!v;localStorage.setItem("ppb_list_view",n?"1":"0");return n;});}
   var _bli=useState(null),bloomListId=_bli[0],setBloomListId=_bli[1];
   function goToBloom(listId){setBloomListId(listId);setActiveTab("bloom");}
+  var _lk=useState(0),listsKey=_lk[0],setListsKey=_lk[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
@@ -237,6 +238,7 @@ function App(){
             return h("button",{key:tab.key,onClick:function(){
               setSearch("");
               setActiveTab(tab.key);
+              if(tab.key==="lists"){setListsKey(function(k){return k+1;});}
               if(tab.key==="plants"){setDrawerOpen(true);}
               else{setDrawerOpen(false);setShowSuggest(false);}
             },
@@ -323,7 +325,7 @@ function App(){
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
-        activeTab==="lists"?h(SavedListsView,{lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},onGoToBloom:goToBloom,isMobile:isMobile,proMode:proMode,vbData:vbData}):
+        activeTab==="lists"?h(SavedListsView,{key:listsKey,lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},onGoToBloom:goToBloom,isMobile:isMobile,proMode:proMode,vbData:vbData}):
         activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId}):
         activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
