@@ -251,11 +251,16 @@ function loadVBData(){
         if(e){cwByExample[e]=dbLatin;}
       });
     });
+    function isCultivar(name){return /[‘’’\x27‘’]/.test(name);}
     function matchVBName(vbName){
       var low=vbName.toLowerCase().trim();
       if(cwByExample[low])return cwByExample[low];
-      var base=low.replace(/\s*['''\x27‘’].*/,"").trim();
-      if(cwByNorm[base])return cwByNorm[base];
+      var base=low.replace(/\s*[‘’’\x27’’].*/,"").trim();
+      if(cwByNorm[base]){
+        // Don’t match a plain-species VB name to a cultivar DB entry
+        if(!isCultivar(vbName)&&isCultivar(cwByNorm[base]))return null;
+        return cwByNorm[base];
+      }
       var parts=base.split(/\s+/);
       if(parts.length>=2&&/^[a-z]\.$/.test(parts[1])){
         var genus=parts[0],abbr=parts[1][0];
