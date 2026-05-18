@@ -299,7 +299,11 @@ function loadVBData(){
           map[dbLatin]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
         }
         if(!allSizes[dbLatin])allSizes[dbLatin]=[];
-        allSizes[dbLatin].push({vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating});
+        var existingSz=allSizes[dbLatin].find(function(s){return s.size===size;});
+        if(!existingSz||(!existingSz.inStock&&inStock)||(existingSz.inStock===inStock&&qty>existingSz.qty)){
+          if(existingSz){allSizes[dbLatin].splice(allSizes[dbLatin].indexOf(existingSz),1);}
+          allSizes[dbLatin].push({vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating});
+        }
       }
     }
     // Sort each allSizes array: in-stock first, then trays, then by qty desc
