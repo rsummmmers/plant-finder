@@ -537,6 +537,7 @@ function applyFilters(plants,f,siteKey){
     if(f.edibleOnly&&!p.edible)return false;
     if(f.medicinalOnly&&!p.medicinal)return false;
     if(f.rwinter){var w=(p.seasonal||"").toLowerCase().indexOf("winter")>=0||(p.evergreen||"").toLowerCase()==="yes";if(!w)return false;}
+    if(f.bloomMonth!==null&&!blooms(p,f.bloomMonth))return false;
     return true;
   });
 }
