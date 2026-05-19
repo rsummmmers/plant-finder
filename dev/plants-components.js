@@ -1928,16 +1928,22 @@ function HomeView(props){
 }
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
-var DEFAULT_INSTALL_RATES={markup:1.4,taxRate:6.25,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
+var DEFAULT_INSTALL_RATES={markup:1.4,taxRate:6.25,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25,gal5:50};
 var INSTALL_RATE_LABELS=[
   {key:"plug",   label:"Plug / tray / 3½\""},
   {key:"bareroot",label:"Bare-root"},
   {key:"qt1",    label:"1 qt"},
   {key:"qt2",    label:"2 qt"},
-  {key:"gal1",   label:"TRGA / #1"},
+  {key:"gal1",   label:"TRGA / #1 gallon"},
   {key:"gal2",   label:"2 gal"},
   {key:"gal3",   label:"3 gal"},
+  {key:"gal5",   label:"5 gal"},
 ];
+function displaySize(size){
+  var s=(size||"").trim();
+  if(s==="#1"||s==="TRGA")return s+" gallon";
+  return s;
+}
 function getInstallRate(size,rates){
   var s=(size||"").trim().toUpperCase();
   if(s.indexOf("TRAY")>=0||s==='3 1/2"'||s==="3 1/2\"")return rates.plug||2;
@@ -1946,6 +1952,7 @@ function getInstallRate(size,rates){
   if(s==="TRGA"||s==="#1")return rates.gal1||10;
   if(s==="2GA")return rates.gal2||18;
   if(s==="3GA")return rates.gal3||25;
+  if(s==="5GA")return rates.gal5||50;
   return rates.gal1||10;
 }
 function getTrayCount(size){
@@ -2352,11 +2359,11 @@ function ProcurementView(props){
                       style:{fontSize:11,border:"1px solid #e0ddd5",borderRadius:4,padding:"1px 4px",fontFamily:"inherit",background:"white",cursor:"pointer"}},
                       allSzArr.map(function(s){
                         var tc=getTrayCount(s.size);
-                        var label=s.size+(tc?" → plugs":"")+(s.inStock?" ("+s.qty+" avail)":s.nextDate?" · "+s.nextDate:" · out");
+                        var label=displaySize(s.size)+(tc?" → plugs":"")+(s.inStock?" ("+s.qty+" avail)":s.nextDate?" · "+s.nextDate:" · out");
                         return h("option",{key:s.size,value:s.size,style:{color:s.inStock?"#333":"#aaa"}},label);
                       })
                     )
-                  :v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size)),
+                  :v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":displaySize(v.size))),
                 perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+((!clientView&&trayCount)?" /plug":" ea"),
                   !clientView&&h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
                 !clientView&&traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":"")),
