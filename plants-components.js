@@ -1954,8 +1954,8 @@ function ProcurementView(props){
   var _sz=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_selsize_"+list.id)||"{}");}catch(e){return {};}}),selSizes=_sz[0],setSelSizes=_sz[1];
   function setSelSize(latin,size){setSelSizes(function(prev){var n=Object.assign({},prev);n[latin]=size;try{localStorage.setItem("ppb_selsize_"+list.id,JSON.stringify(n));}catch(e){}return n;});}
   function getVB(latin){var all=vbLookupAll(vbData,latin)||[];var sel=selSizes[latin];return(sel?all.find(function(s){return s.size===sel;}):null)||vbLookup(vbData,latin);}
-  var _del=useState(function(){return parseFloat(localStorage.getItem("ppb_delivery_cost"))||180;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
-  var _fee=useState(function(){return parseFloat(localStorage.getItem("ppb_procurement_fee"))||180;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
+  var _del=useState(function(){var v=parseFloat(localStorage.getItem("ppb_delivery_cost"));return isNaN(v)?180:v;}),deliveryCost=_del[0],setDeliveryCost=_del[1];
+  var _fee=useState(function(){var v=parseFloat(localStorage.getItem("ppb_procurement_fee"));return isNaN(v)?180:v;}),procurementFee=_fee[0],setProcurementFee=_fee[1];
   var _df=useState(function(){return parseFloat(localStorage.getItem("ppb_design_fee_"+list.id))||0;}),designFee=_df[0],setDesignFee=_df[1];
   function saveDelivery(v){setDeliveryCost(v);try{localStorage.setItem("ppb_delivery_cost",v);}catch(e){}}
   function saveFee(v){setProcurementFee(v);try{localStorage.setItem("ppb_procurement_fee",v);}catch(e){}}
