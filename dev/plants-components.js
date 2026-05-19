@@ -1412,7 +1412,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
@@ -1503,6 +1503,18 @@ function FilterDrawer(props){
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Bloom month"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}},
+            MONTHS_SHORT.map(function(m,i){
+              var on=f.bloomMonth===i;
+              return h("button",{key:i,onClick:function(){set({bloomMonth:on?null:i});},
+                style:{padding:"5px 4px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,
+                  border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#f0faf0":"transparent",
+                  color:on?"#2e5339":"#555",fontWeight:on?"600":"normal",textAlign:"center"}},m);
+            })
+          )
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Browse pressure"),
