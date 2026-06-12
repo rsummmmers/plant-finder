@@ -1412,7 +1412,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
@@ -1503,6 +1503,18 @@ function FilterDrawer(props){
               h("div",{style:{width:11,height:11,borderRadius:"50%",background:COLOR_MAP[c]||"#ccc",border:c==="white"?"1px solid #ccc":"none"}}),c
             );
           }))
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Bloom month"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4}},
+            MONTHS_SHORT.map(function(m,i){
+              var on=f.bloomMonth===i;
+              return h("button",{key:i,onClick:function(){set({bloomMonth:on?null:i});},
+                style:{padding:"5px 4px",borderRadius:4,cursor:"pointer",fontFamily:"inherit",fontSize:12,
+                  border:"1px solid "+(on?"#2e5339":"#ddd"),background:on?"#f0faf0":"transparent",
+                  color:on?"#2e5339":"#555",fontWeight:on?"600":"normal",textAlign:"center"}},m);
+            })
+          )
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Browse pressure"),
@@ -1596,7 +1608,8 @@ function QuoteView(props){
             p.i&&h("img",{src:p.i,style:{width:44,height:44,objectFit:"cover",borderRadius:6,flexShrink:0},onError:function(e){e.target.style.display="none";}}),
             h("div",{style:{flex:1}},
               h("a",{href:plantUrl,target:"_blank",style:{fontWeight:600,fontSize:15,fontFamily:"'Literata',serif",color:"#2e5339",textDecoration:"none"}},p.c),
-              h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l)
+              h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l),
+              p.s&&h("div",{style:{fontSize:11,color:"#aaa",marginTop:1}},p.s)
             ),
             h("div",{style:{textAlign:"right",minWidth:120}},
               h("div",{style:{fontSize:13,color:"#555"}},p.q+" × $"+parseFloat(p.p).toFixed(2)),
@@ -1916,16 +1929,22 @@ function HomeView(props){
 }
 
 // ── ProcurementView ───────────────────────────────────────────────────────────
-var DEFAULT_INSTALL_RATES={markup:1.4,taxRate:6.25,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25};
+var DEFAULT_INSTALL_RATES={markup:1.4,taxRate:6.25,plug:2,bareroot:3,qt1:5,qt2:8,gal1:10,gal2:18,gal3:25,gal5:50};
 var INSTALL_RATE_LABELS=[
   {key:"plug",   label:"Plug / tray / 3½\""},
   {key:"bareroot",label:"Bare-root"},
   {key:"qt1",    label:"1 qt"},
   {key:"qt2",    label:"2 qt"},
-  {key:"gal1",   label:"TRGA / #1"},
+  {key:"gal1",   label:"TRGA / #1 gallon"},
   {key:"gal2",   label:"2 gal"},
   {key:"gal3",   label:"3 gal"},
+  {key:"gal5",   label:"5 gal"},
 ];
+function displaySize(size){
+  var s=(size||"").trim();
+  if(s==="#1"||s==="TRGA")return s+" gallon";
+  return s;
+}
 function getInstallRate(size,rates){
   var s=(size||"").trim().toUpperCase();
   if(s.indexOf("TRAY")>=0||s==='3 1/2"'||s==="3 1/2\"")return rates.plug||2;
@@ -1934,6 +1953,7 @@ function getInstallRate(size,rates){
   if(s==="TRGA"||s==="#1")return rates.gal1||10;
   if(s==="2GA")return rates.gal2||18;
   if(s==="3GA")return rates.gal3||25;
+  if(s==="5GA")return rates.gal5||50;
   return rates.gal1||10;
 }
 function getTrayCount(size){
@@ -2092,7 +2112,7 @@ function ProcurementView(props){
         var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
         var cp=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
         var imgSrc=p.image?(p.image.indexOf("inaturalist")>=0?p.image.replace(/\/medium\./,"/square.").replace(/\/large\./,"/square."):p.image):"";
-        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2),i:imgSrc};
+        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2),i:imgSrc,s:v?(getTrayCount(v.size)?"plug":displaySize(v.size)):""};
       }),
       fees:{plantsInstall:plantSubtotal+installSubtotal,proc:parseFloat(procurementFee)||0,design:parseFloat(designFee)||0,site:parseFloat(siteWork)||0,total:grandTotal.toFixed(2)}
     };
@@ -2138,7 +2158,8 @@ function ProcurementView(props){
       var imgSrc=p.image?(imgCache[p.image]||""):"";
       var img=imgSrc?'<img src="'+imgSrc+'" style="width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
       var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
-      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
+      var sizeLabel=v?(getTrayCount(v.size)?"plug":displaySize(v.size)):"";
+      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div>'+(sizeLabel?'<div style="font-size:11px;color:#aaa;margin-top:1px">'+sizeLabel+'</div>':'')+'</div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
     }
     var plantRows=TYPE_LAYERS.map(function(ld){
       var lp=activePlants.filter(function(p){return p.typeKey===ld.key;});
@@ -2340,11 +2361,12 @@ function ProcurementView(props){
                       style:{fontSize:11,border:"1px solid #e0ddd5",borderRadius:4,padding:"1px 4px",fontFamily:"inherit",background:"white",cursor:"pointer"}},
                       allSzArr.map(function(s){
                         var tc=getTrayCount(s.size);
-                        var label=s.size+(tc?" → plugs":"")+(s.inStock?" ("+s.qty+" avail)":s.nextDate?" · "+s.nextDate:" · out");
+                        var label=displaySize(s.size)+(tc?" → plugs":"")+(s.inStock?" ("+s.qty+" avail)":s.nextDate?" · "+s.nextDate:" · out");
                         return h("option",{key:s.size,value:s.size,style:{color:s.inStock?"#333":"#aaa"}},label);
                       })
                     )
-                  :v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":v.size)),
+                  :v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?v.size+" → plugs":displaySize(v.size))),
+                clientView&&v.size&&h("span",{style:{fontSize:11,color:"#aaa"}},trayCount?"plug":displaySize(v.size)),
                 perPlant&&h("span",{style:{fontSize:12,color:"#2e5339",fontWeight:600}},"$"+perPlant.toFixed(2)+((!clientView&&trayCount)?" /plug":" ea"),
                   !clientView&&h("span",{style:{fontSize:10,color:"#aaa",fontWeight:400}},plantPrice?" ($"+plantPrice.toFixed(2)+" + $"+installRate.toFixed(2)+" install)":"")),
                 !clientView&&traysNeeded&&h("span",{style:{fontSize:11,fontWeight:extraPlugs>0?"600":"normal",color:extraPlugs>0?"#e65100":"#888",background:extraPlugs>0?"#fff3e0":"transparent",padding:extraPlugs>0?"1px 5px":"0",borderRadius:extraPlugs>0?6:0}},traysNeeded+" tray"+(traysNeeded>1?"s":"")+(extraPlugs>0?" · "+extraPlugs+" plugs unused":"")),
