@@ -1608,7 +1608,8 @@ function QuoteView(props){
             p.i&&h("img",{src:p.i,style:{width:44,height:44,objectFit:"cover",borderRadius:6,flexShrink:0},onError:function(e){e.target.style.display="none";}}),
             h("div",{style:{flex:1}},
               h("a",{href:plantUrl,target:"_blank",style:{fontWeight:600,fontSize:15,fontFamily:"'Literata',serif",color:"#2e5339",textDecoration:"none"}},p.c),
-              h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l)
+              h("div",{style:{fontStyle:"italic",color:"#888",fontSize:12}},p.l),
+              p.s&&h("div",{style:{fontSize:11,color:"#aaa",marginTop:1}},p.s)
             ),
             h("div",{style:{textAlign:"right",minWidth:120}},
               h("div",{style:{fontSize:13,color:"#555"}},p.q+" × $"+parseFloat(p.p).toFixed(2)),
@@ -2111,7 +2112,7 @@ function ProcurementView(props){
         var irate=ov&&ov.installRate!=null?parseFloat(ov.installRate):v?Math.round(getInstallRate(v.size,rates)*difficulty*100)/100:Math.round((rates.plug||2)*difficulty*100)/100;
         var cp=ov&&ov.clientPrice?parseFloat(ov.clientPrice):v&&v.price?(function(){var tc=getTrayCount(v.size);var u=tc?v.price/tc:v.price;return Math.round(u*(rates.markup||1.4)*100)/100;})():0;
         var imgSrc=p.image?(p.image.indexOf("inaturalist")>=0?p.image.replace(/\/medium\./,"/square.").replace(/\/large\./,"/square."):p.image):"";
-        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2),i:imgSrc};
+        return {c:p.common,l:p.latin,t:p.typeKey,q:qty,p:(cp+irate).toFixed(2),i:imgSrc,s:v?displaySize(v.size):""};
       }),
       fees:{plantsInstall:plantSubtotal+installSubtotal,proc:parseFloat(procurementFee)||0,design:parseFloat(designFee)||0,site:parseFloat(siteWork)||0,total:grandTotal.toFixed(2)}
     };
@@ -2157,7 +2158,8 @@ function ProcurementView(props){
       var imgSrc=p.image?(imgCache[p.image]||""):"";
       var img=imgSrc?'<img src="'+imgSrc+'" style="width:44px;height:44px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.style.display=\'none\'">':"";
       var plantUrl=basePath+"?q="+encodeURIComponent(p.latin);
-      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div></div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
+      var sizeLabel=v?displaySize(v.size):"";
+      return '<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #eee">'+img+'<div style="flex:1"><a href="'+plantUrl+'" target="_blank" style="font-weight:600;font-size:15px;font-family:Georgia,serif;color:#2e5339;text-decoration:none">'+p.common+'</a><div style="font-style:italic;color:#888;font-size:12px">'+p.latin+'</div>'+(sizeLabel?'<div style="font-size:11px;color:#aaa;margin-top:1px">'+sizeLabel+'</div>':'')+'</div><div style="text-align:right;min-width:120px"><div style="font-size:13px;color:#555">'+qty+' × $'+perPlant.toFixed(2)+'</div><div style="font-weight:700;color:#2e5339;font-size:14px">$'+lineTotal.toFixed(2)+'</div></div></div>';
     }
     var plantRows=TYPE_LAYERS.map(function(ld){
       var lp=activePlants.filter(function(p){return p.typeKey===ld.key;});
