@@ -501,7 +501,7 @@ function matchStatus(plant,statuses){
 function applyFilters(plants,f,siteKey){
   return plants.filter(function(p){
     var s0=p.status.toLowerCase().replace(/[-\s]/g,"");
-    if(!p.hasScores&&!f.search&&s0.indexOf("invasive")<0&&s0.indexOf("caution")<0)return false;
+      if(siteKey&&!p.hasScores&&!f.search&&s0.indexOf("invasive")<0&&s0.indexOf("caution")<0)return false;
     var s=p.status.toLowerCase().replace(/[-\s]/g,"");
     if(!f.search){
       if(s.indexOf("invasive")>=0&&f.statuses.indexOf("invasive")<0)return false;
