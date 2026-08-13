@@ -35,7 +35,7 @@ function renderTypeSection(ld,plants,isMobile,cardFn){
 
 function groupByTypeLayer(plants){
   var grouped={};
-  TYPE_LAYERS.forEach(function(l){grouped[l.key]=[];});
+  TYPE_LAYERS.forEach(function(l){grouped[l.key]=[];});var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
   plants.forEach(function(p){var tk=p.typeKey;if(grouped[tk])grouped[tk].push(p);else grouped["perennial"].push(p);});
   return grouped;
 }
@@ -55,6 +55,7 @@ function Lightbox(props){
     var dx=ev.changedTouches[0].clientX-touchX.current;
     if(dx<-50)setIdx(function(i){return Math.min(photos.length-1,i+1);});
     if(dx>50)setIdx(function(i){return Math.max(0,i-1);});
+    
     touchX.current=null;
   }
 
@@ -326,6 +327,27 @@ function PlantCard(props){
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
+  var _fb=useState(_thumbFallbackCache[plant.latin]||null),fallbackImg=_fb[0],setFallbackImg=_fb[1];
+  useEffect(function(){
+    if(plant.image||fallbackImg)return;
+    var name=taxonQ(plant.latin);
+    if(!name)return;
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var t=(d.results||[])[0];
+        if(!t)return Promise.reject("no taxon");
+        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+t.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes");
+      })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var obs=(d.results||[])[0];
+        var photo=obs&&obs.photos&&obs.photos[0];
+        var url=photo&&photo.url&&photo.url.replace("square","medium");
+        if(url){_thumbFallbackCache[plant.latin]=url;setFallbackImg(url);}
+      })
+      .catch(function(){});
+  },[plant.image,plant.latin]);
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
