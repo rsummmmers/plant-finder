@@ -355,7 +355,7 @@ function PlantCard(props){
   var ilabel=""+cats;
 
   if(gridMode){
-    var img=plant.image;
+    var img=plant.image||fallbackImg;
     var sunIc=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
     var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
