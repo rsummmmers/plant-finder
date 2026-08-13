@@ -41,6 +41,39 @@ function groupByTypeLayer(plants){
 }
 
 // ── Lightbox ──────────────────────────────────────────────────────────────
+function Lightbox(props){
+  var photos=props.photos,startIdx=props.startIdx,onClose=props.onClose;
+  var _s=useState(startIdx||0),idx=_s[0],setIdx=_s[1];
+  var touchX=useRef(null);
+
+  if(!photos||!photos.length)return null;
+  var cur=photos[idx];
+
+  function onTS(ev){touchX.current=ev.touches[0].clientX;}
+  function onTE(ev){
+    if(touchX.current===null)return;
+    var dx=ev.changedTouches[0].clientX-touchX.current;
+    if(dx<-50)setIdx(function(i){return Math.min(photos.length-1,i+1);});
+    if(dx>50)setIdx(function(i){return Math.max(0,i-1);});
+    touchX.current=null;
+  }
+
+  return h("div",{
+    style:{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.94)",
+      display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"},
+    onTouchStart:onTS,onTouchEnd:onTE,onClick:onClose
+  },
+    h("button",{onClick:onClose,style:{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:20,borderRadius:"50%",width:44,height:44,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"✕"),
+    idx>0&&h("button",{onClick:function(ev){ev.stopPropagation();setIdx(function(i){return i-1;});},style:{position:"absolute",left:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:24,borderRadius:"50%",width:48,height:48,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"‹"),
+    idx<photos.length-1&&h("button",{onClick:function(ev){ev.stopPropagation();setIdx(function(i){return i+1;});},style:{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.15)",border:"none",color:"white",fontSize:24,borderRadius:"50%",width:48,height:48,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"›"),
+    h("img",{src:cur.large||cur.medium,alt:"",onClick:function(ev){ev.stopPropagation();},style:{maxWidth:"90vw",maxHeight:"75vh",borderRadius:12,objectFit:"contain"}}),
+    photos.length>1&&h("div",{style:{display:"flex",gap:7,marginTop:14}},
+      photos.map(function(_,i){return h("div",{key:i,onClick:function(ev){ev.stopPropagation();setIdx(i);},style:{width:8,height:8,borderRadius:"50%",background:i===idx?"white":"rgba(255,255,255,0.3)",cursor:"pointer"}});})
+    ),
+    cur.credit&&h("div",{style:{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:8,maxWidth:"80vw",textAlign:"center"}},cur.credit),
+    h("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:11,marginTop:4}},"Swipe or use arrow keys \u00b7 click outside to close")
+  );
+}
 useEffect(function(){
   if(plant.image||fallbackImg)return;
   var name=taxonQ(plant.latin);
