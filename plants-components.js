@@ -103,16 +103,33 @@ function INatLink({ latinName }) {
     style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
   },"iNaturalist \u2197");
 }
-
+var _thumbFallbackCache = {};
 // ── PlantThumb ────────────────────────────────────────────────────────────
 function PlantThumb(props){
   var plant=props.plant,size=props.size||48,radius=props.radius||8;
   var _s=useState(false),failed=_s[0],setFailed=_s[1];
+  var _f=useState(_thumbFallbackCache[plant.latin]||null),fallbackImg=_f[0],setFallbackImg=_f[1];
+
+  useEffect(function(){
+    if(plant.image||fallbackImg)return;
+    var name=taxonQ(plant.latin);
+    if(!name)return;
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var t=(d.results||[])[0];
+        var url=t&&t.default_photo&&(t.default_photo.medium_url||t.default_photo.square_url);
+        if(url){_thumbFallbackCache[plant.latin]=url;setFallbackImg(url);}
+      })
+      .catch(function(){});
+  },[plant.image,plant.latin]);
+
+  var imgSrc=plant.image||fallbackImg;
   var _tk=plant.typeKey;
   var bg=CAT_BG[plant.category]||(_tk==="tree"?"#e8f5e9":_tk==="shrub"?"#fff8e1":_tk==="grass"?"#f9fbe7":_tk==="fern"?"#e0f2f1":_tk==="vine"?"#f3e5f5":_tk==="ground"?"#e8f5e9":_tk==="perennial"?"#fffde7":"#f0ede4");
   var fg=CAT_FG[plant.category]||(_tk==="tree"?"#2e7d32":_tk==="shrub"?"#f57f17":_tk==="grass"?"#827717":_tk==="fern"?"#00695c":_tk==="vine"?"#6a1b9a":_tk==="ground"?"#2e7d32":_tk==="perennial"?"#f9a825":"#4a7c59");
   var em=CAT_EMOJI[plant.category]||(_tk==="tree"?"\ud83c\udf33":_tk==="shrub"?"\ud83c\udf3e":_tk==="grass"?"\ud83c\udf3e":_tk==="fern"?"\ud83c\udf3f":_tk==="vine"?"\ud83c\udf3f":_tk==="ground"?"\ud83c\udf3f":_tk==="perennial"?"\ud83c\udf3c":"\ud83c\udf3f");
-  if(!plant.image||failed){
+  if(!imgSrc||failed){
     return h("div",{style:{width:size,height:size,borderRadius:radius,flexShrink:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
       h("div",{style:{fontSize:size*0.38,lineHeight:1}},em),
       h("div",{style:{fontSize:size*0.18,fontWeight:"bold",color:fg}},plant.common.charAt(0))
@@ -120,11 +137,11 @@ function PlantThumb(props){
   }
   if(plant.inheritedImage){
     return h("div",{style:{position:"relative",width:size,height:size,flexShrink:0}},
-      h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
+      h("img",{src:imgSrc,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
       h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:4,left:4,color:"rgba(255,255,255,0.85)",fontSize:9,fontStyle:"italic",textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species")
     );
   }
-  return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
+  return h("img",{src:imgSrc,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
 }
 
 // ── ColorDots ─────────────────────────────────────────────────────────────
