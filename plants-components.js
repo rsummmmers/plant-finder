@@ -35,7 +35,7 @@ function renderTypeSection(ld,plants,isMobile,cardFn){
 
 function groupByTypeLayer(plants){
   var grouped={};
-  TYPE_LAYERS.forEach(function(l){grouped[l.key]=[];});var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
+  TYPE_LAYERS.forEach(function(l){grouped[l.key]=[];});
   plants.forEach(function(p){var tk=p.typeKey;if(grouped[tk])grouped[tk].push(p);else grouped["perennial"].push(p);});
   return grouped;
 }
