@@ -164,12 +164,12 @@ function baseSpecies(latin){
   return parts.slice(0,n).join(" ");
 }
 function vbLookup(vbData,latin){
-  return vbData[latin]||vbData[baseSpecies(latin)]||null;
+  return vbData[latin.toLowerCase()]||vbData[baseSpecies(latin).toLowerCase()]||null;
 }
 function vbLookupAll(vbData,latin){
   var all=vbData&&vbData._allSizes;
   if(!all)return null;
-  return all[latin]||all[baseSpecies(latin)]||null;
+  return all[latin.toLowerCase()]||all[baseSpecies(latin).toLowerCase()]||null;
 }
 
 function applyInheritance(plants){
@@ -297,17 +297,18 @@ function loadVBData(){
         var inStock=!outOfStock&&qty>0;
         var dbLatin=matchVBName(vbName);
         if(!dbLatin)continue;
-        var existing=map[dbLatin];
+        var key=dbLatin.toLowerCase();
+        var existing=map[key];
         var isTray=size.toUpperCase().indexOf("TRAY")>=0;
         var existingIsTray=existing&&existing.size&&existing.size.toUpperCase().indexOf("TRAY")>=0;
         if(!existing||(!existing.inStock&&inStock)||(existing.inStock===inStock&&((isTray&&!existingIsTray)||(isTray===existingIsTray&&qty>existing.qty)))){
-          map[dbLatin]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
+          map[key]={vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating};
         }
-        if(!allSizes[dbLatin])allSizes[dbLatin]=[];
-        var existingSz=allSizes[dbLatin].find(function(s){return s.size===size;});
+        if(!allSizes[key])allSizes[key]=[];
+        var existingSz=allSizes[key].find(function(s){return s.size===size;});
         if(!existingSz||(!existingSz.inStock&&inStock)||(existingSz.inStock===inStock&&qty>existingSz.qty)){
-          if(existingSz){allSizes[dbLatin].splice(allSizes[dbLatin].indexOf(existingSz),1);}
-          allSizes[dbLatin].push({vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating});
+          if(existingSz){allSizes[key].splice(allSizes[key].indexOf(existingSz),1);}
+          allSizes[key].push({vb:true,inStock:inStock,qty:qty,price:price,size:size,vbName:cwVbName[dbLatin]||vbName,nextDate:nextDate,rating:rating});
         }
       }
     }
