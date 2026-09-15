@@ -346,6 +346,7 @@ var p=new URLSearchParams(window.location.search);
     statuses:   p.get("st")?p.get("st").split(","):["native","nearnative","cultivar"],
     concerns:   p.get("cx")?p.get("cx").split(","):[],
     heightCap:  p.get("hc")?parseFloat(p.get("hc")):null,
+    heightMin:  p.get("hf")?parseFloat(p.get("hf")):null,
     moisture:   p.get("mo")||null,
     sun:        p.get("su")||null,
     irrigated:  p.get("ir")==="1",
@@ -366,6 +367,7 @@ function pushURL(s){
   if(JSON.stringify(s.statuses.slice().sort())!==JSON.stringify(def.slice().sort()))p.set("st",s.statuses.join(","));
   if(s.concerns&&s.concerns.length)p.set("cx",s.concerns.join(","));
   if(s.heightCap)p.set("hc",String(s.heightCap));
+  if(s.heightMin)p.set("hf",String(s.heightMin));
   if(s.moisture)p.set("mo",s.moisture);
   if(s.sun)p.set("su",s.sun);
   if(s.irrigated)p.set("ir","1");
@@ -510,6 +512,7 @@ function applyFilters(plants,f,siteKey){
     }
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
+    if(f.heightMin&&p.heightFt<f.heightMin)return false;
     if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
     if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<3)return false;
     var cx=f.concerns||[];

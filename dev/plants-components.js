@@ -1412,7 +1412,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:[],ptypes:[],heightCap:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,heightMin:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
@@ -1460,12 +1460,24 @@ function FilterDrawer(props){
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},PLANT_TYPES.map(function(g){return P(g.emoji+" "+g.label,f.ptypes.indexOf(g.key)>=0,function(){togPt(g.key);});}))
         ),
         h("div",null,
-          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Max height"),
-          h("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            h("input",{type:"number",min:1,max:120,value:f.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);set({heightCap:v>0?v:null});},placeholder:"e.g. 8 for shrubs, 25 for small trees",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",flex:1}}),
-            f.heightCap&&h("span",{style:{fontSize:14,color:"#888"}},"ft"),
-            f.heightCap&&h("button",{onClick:function(){set({heightCap:null});},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
-          )
+          h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Height"),
+          h("div",{style:{display:"flex",alignItems:"flex-start",gap:10}},
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:11,color:"#999",marginBottom:4}},"Min (ft)"),
+              h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                h("input",{type:"number",min:1,max:120,value:f.heightMin||"",onChange:function(ev){var v=parseFloat(ev.target.value);set({heightMin:v>0?v:null});},placeholder:"e.g. 3",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",width:"100%"}}),
+                f.heightMin&&h("button",{onClick:function(){set({heightMin:null});},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
+              )
+            ),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:11,color:"#999",marginBottom:4}},"Max (ft)"),
+              h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                h("input",{type:"number",min:1,max:120,value:f.heightCap||"",onChange:function(ev){var v=parseFloat(ev.target.value);set({heightCap:v>0?v:null});},placeholder:"e.g. 8",style:{border:"1.5px solid #e0ddd5",borderRadius:8,padding:"8px 12px",fontFamily:"inherit",fontSize:14,outline:"none",width:"100%"}}),
+                f.heightCap&&h("button",{onClick:function(){set({heightCap:null});},style:{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
+              )
+            )
+          ),
+          h("div",{style:{fontSize:11,color:"#aaa",marginTop:6}},"e.g. Min 3 / Max 8 for shrubs, Max 25 for small trees")
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Moisture"),
