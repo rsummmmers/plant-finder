@@ -470,6 +470,48 @@ function rowToPlant(row){
   };
 }
 
+// Conservative fallback estimate for a plant with all 7 microzone scores blank.
+// Never returns above 3 ("OK") — deliberately withholds "Strong"/"Best Fit" since
+// Sun/Moisture text alone can't support that level of confidence. Only used when
+// plant.hasScores is false; real manually-entered scores always take precedence
+// and this function is never consulted for a plant that has any of them.
+function zoneFallbackScore(plant,zoneKey){
+  var sun=(plant.sun||"").toLowerCase();
+  var moist=(plant.moisture||"").toLowerCase();
+  var fullSun=sun.indexOf("full sun")>=0;
+  var partSun=sun.indexOf("part")>=0;
+  var shade=sun.indexOf("shade")>=0;
+  var dryish=moist.indexOf("dry")>=0||moist.indexOf("mesic")>=0;
+  var wetish=moist.indexOf("moist")>=0||moist.indexOf("wet")>=0;
+  function score(matches,contradicts){
+    if(contradicts)return 1;      // data actively points away from this zone
+    if(matches)return 3;          // data plausibly aligns — capped at "OK", not higher
+    return 2;                     // no clear signal either way — neutral, not confident
+  }
+  switch(zoneKey){
+    // "High and exposed" and "Sloped and dry" both reduce to the same signal
+    // (full sun + dry) from Sun/Moisture text alone — the data can't tell slope
+    // position or wind exposure apart, so both deliberately get identical treatment
+    // rather than a manufactured distinction.
+    case "Dry Upper Slope":
+    case "Dry Slope":
+      return score(fullSun&&dryish&&!wetish,wetish);
+    case "Mesic South- Facing Heat":
+      return score(fullSun&&dryish&&!wetish,shade||wetish);
+    case "Mid-Slope Mesic":
+      // "Typical yard" = average conditions by definition — the least
+      // differentiated zone, so most plants plausibly fit here absent better data.
+      return 3;
+    case "Moist Lower Area":
+      return score(wetish,dryish&&!wetish);
+    case "Woodland Edge":
+      return score((partSun||shade)&&!dryish,fullSun&&!partSun&&!shade);
+    case "Conifer Shade":
+      return score(shade,fullSun);
+    default:
+      return 2;
+  }
+}
 function getSiteScore(plant,key){
   if(!key)return null;
   if(ZONE_KEYS.indexOf(key)>=0)return plant.scores[key]||0;
@@ -503,8 +545,6 @@ function matchStatus(plant,statuses){
 
 function applyFilters(plants,f,siteKey){
   return plants.filter(function(p){
-    var s0=p.status.toLowerCase().replace(/[-\s]/g,"");
-    if(!p.hasScores&&!f.search&&s0.indexOf("invasive")<0&&s0.indexOf("caution")<0)return false;
     var s=p.status.toLowerCase().replace(/[-\s]/g,"");
     if(!f.search){
       if(s.indexOf("invasive")>=0&&f.statuses.indexOf("invasive")<0)return false;
@@ -515,13 +555,13 @@ function applyFilters(plants,f,siteKey){
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.heightMin&&p.heightFt<f.heightMin)return false;
     if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
-    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.scores[siteKey]||0)<3)return false;
+    if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.hasScores?(p.scores[siteKey]||0):zoneFallbackScore(p,siteKey))<3)return false;
     var cx=f.concerns||[];
     if(cx.indexOf("shadedby_norway")>=0&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
     if(cx.indexOf("shadedby_pine")>=0&&(p.whitePine==="avoid"||!p.whitePine))return false;
-    if(cx.indexOf("shadedby_conifer")>=0&&(p.scores["Conifer Shade"]||0)<2)return false;
+    if(cx.indexOf("shadedby_conifer")>=0&&(p.hasScores?(p.scores["Conifer Shade"]||0):zoneFallbackScore(p,"Conifer Shade"))<2)return false;
     if(cx.indexOf("near_walnut")>=0&&p.juglone==="sensitive")return false;
-    if(cx.indexOf("postconstruction")>=0&&(getSiteScore(p,"postconstruction")||0)<3)return false;
+    if(cx.indexOf("postconstruction")>=0&&(p.hasScores?getSiteScore(p,"postconstruction"):Math.max(zoneFallbackScore(p,"Dry Upper Slope"),zoneFallbackScore(p,"Dry Slope")))<3)return false;
     if(f.deerLevel==="high"&&p.deerPressure==="high")return false;
     if(f.deerLevel==="mod"&&(p.deerPressure==="high"||p.deerPressure==="medium"))return false;
     if(f.rabbitLevel==="high"&&p.rabbitDamage==="high")return false;
