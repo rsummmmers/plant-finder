@@ -2,11 +2,11 @@
 
 var STATUS_LABEL_TIPS={
   "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
-  "Near-Native":     "Native to adjacent regions with documented ecological relationships in MA — close ecological value to natives",
+  "Near-Native":     "Not historically native to Massachusetts, but native to an adjacent state in an ecoregion shared with Massachusetts",
   "Native Cultivar": "A selected variety of a MA native — may have reduced wildlife value compared to straight species",
-  "Safe Non-Native": "Not invasive, but has limited relationships with native wildlife",
+  "Safe Non-Native": "Non-native with no documented regional ecological concern — vigorous garden behavior by itself doesn't trigger Caution",
   "Invasive":        "Invasive — do not plant; spreads aggressively and displaces native ecosystems",
-  "Caution":         "Invasive in neighboring states — use with caution in MA",
+  "Caution":         "Non-native with documented ecological concern in MA or the Northeast (e.g. escape from cultivation, problematic spread in natural areas, credible emerging-invasive concern) — but doesn't meet the Invasive threshold",
   "Hybrid":          "Native/non-native hybrid",
 };
 
