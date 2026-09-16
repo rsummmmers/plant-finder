@@ -382,26 +382,40 @@ function pushURL(s){
 }
 
 // ── Data parsing ──────────────────────────────────────────────────────────
+// Single-pass, quote-aware CSV parser. Tracks quote state across the WHOLE
+// text, not per-line -- a field containing a literal embedded newline (a
+// normal, legal CSV construct, e.g. a multi-paragraph Notes cell) stays
+// part of that one field/row instead of corrupting the row it's in and
+// silently truncating everything after it. (The old per-line-split version
+// had exactly this bug -- fixed 2026-09-16.)
 function parseCSV(text){
-  var lines=text.split(/\r?\n/);
-  function pl(line){
-    var out=[],f="",q=false;
-    for(var i=0;i<line.length;i++){
-      var c=line[i];
-      if(c==='"'){if(q&&line[i+1]==='"'){f+='"';i++;}else q=!q;}
-      else if(c===','&&!q){out.push(f);f="";}
-      else f+=c;
+  var rows=[],row=[],field="",q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){
+      if(c==='"'){
+        if(text[i+1]==='"'){field+='"';i++;}
+        else q=false;
+      } else field+=c;
+    } else {
+      if(c==='"')q=true;
+      else if(c===',' ){row.push(field);field="";}
+      else if(c==='\r'){ /* skip; \n below ends the row */ }
+      else if(c==='\n'){row.push(field);field="";rows.push(row);row=[];}
+      else field+=c;
     }
-    out.push(f);return out;
   }
-  var headers=pl(lines[0]),rows=[];
-  for(var i=1;i<lines.length;i++){
-    if(!lines[i].trim())continue;
-    var vals=pl(lines[i]),row={};
-    headers.forEach(function(h,idx){row[h.trim()]=(vals[idx]||"").trim();});
-    rows.push(row);
+  if(field!==""||row.length>0){row.push(field);rows.push(row);}
+  if(!rows.length)return [];
+  var headers=rows[0],out=[];
+  for(var r=1;r<rows.length;r++){
+    var vals=rows[r];
+    if(vals.length===1&&!vals[0].trim())continue; // skip blank lines, same as before
+    var obj={};
+    headers.forEach(function(h,idx){obj[h.trim()]=(vals[idx]||"").trim();});
+    out.push(obj);
   }
-  return rows;
+  return out;
 }
 
 function getTypeKey(cat){
