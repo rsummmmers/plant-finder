@@ -13,7 +13,7 @@ function App(){
   var _z=useState(initURL.zone),zone=_z[0],setZone=_z[1];
   var _op=useState(null),openPop=_op[0],setOpenPop=_op[1];
   var _f=useState({
-    statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,heightMin:initURL.heightMin,
+    statuses:initURL.statuses,ptypes:initURL.ptypes,heightCap:initURL.heightCap,heightMin:initURL.heightMin,showCultivars:initURL.showCultivars,
     concerns:initURL.concerns,moisture:initURL.moisture,sun:initURL.sun,
     irrigated:initURL.irrigated,rflower:initURL.rflower,rwinter:initURL.rwinter,
     edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,
@@ -136,7 +136,7 @@ function App(){
   var inferredSun=useMemo(function(){var z=MICROZONES.find(function(z){return z.key===zone;});return z?z.impliesSun||null:null;},[zone]);
   var effectiveSun=inferredSun||filters.sun;
   var searchActive=search.trim().length>0;
-  var defaultStatuses=["native","nearnative","cultivar"];
+  var defaultStatuses=["native","nearnative"];
   var statusesChanged=JSON.stringify(filters.statuses.slice().sort())!==JSON.stringify(defaultStatuses.slice().sort());
   var effectiveFilters=Object.assign({},filters,{sun:searchActive?filters.sun:effectiveSun,search:search});
 
@@ -157,7 +157,7 @@ function App(){
     return Object.entries(c).sort(function(a,b){return b[1]-a[1];}).slice(0,10).map(function(x){return x[0];});
   },[plants]);
 
-  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.heightMin,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel,filters.bloomMonth!==null,proMode&&vbFilter]).filter(Boolean).length;
+  var activeFilterCount=[zone].concat(filters.concerns,filters.ptypes,[filters.heightCap,filters.heightMin,filters.showCultivars,filters.moisture,filters.sun&&!inferredSun].concat(filters.rflower),[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,statusesChanged,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel,filters.bloomMonth!==null,proMode&&vbFilter]).filter(Boolean).length;
   var badgeCount=activeFilterCount-(statusesChanged?1:0)+filters.statuses.length;
   var moreCount=filters.rflower.length+[filters.rwinter,filters.edibleOnly,filters.medicinalOnly,filters.deerLevel,filters.rabbitLevel,filters.voleLevel,filters.dogsLevel,filters.catsLevel,filters.childrenLevel].filter(Boolean).length;
 
@@ -172,7 +172,7 @@ function App(){
   function setDogsLevel(v){setFilters(function(f){return Object.assign({},f,{dogsLevel:v});});}
   function setCatsLevel(v){setFilters(function(f){return Object.assign({},f,{catsLevel:v});});}
   function setChildrenLevel(v){setFilters(function(f){return Object.assign({},f,{childrenLevel:v});});}
-  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.heightMin&&!filters.moisture&&!filters.sun&&!search&&!filters.deerLevel&&!filters.rabbitLevel&&!filters.voleLevel&&!filters.dogsLevel&&!filters.catsLevel&&!filters.childrenLevel&&!statusesChanged;
+  var noFilters=!zone&&!filters.concerns.length&&!filters.ptypes.length&&!filters.heightCap&&!filters.heightMin&&!filters.showCultivars&&!filters.moisture&&!filters.sun&&!search&&!filters.deerLevel&&!filters.rabbitLevel&&!filters.voleLevel&&!filters.dogsLevel&&!filters.catsLevel&&!filters.childrenLevel&&!statusesChanged;
 
   function TipBtn(text,label2,active,dark,onClick){
     return h("span",{className:"tip-wrap"},
@@ -342,7 +342,7 @@ function App(){
             ),
             filters.edibleOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\ud83c\udf74 Edible",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{edibleOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
-            h("button",{onClick:function(){setZone(null);setSearch("");setFilters({statuses:["native","nearnative","cultivar"],ptypes:[],heightCap:null,heightMin:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:5,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
+            h("button",{onClick:function(){setZone(null);setSearch("");setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:5,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
           showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},

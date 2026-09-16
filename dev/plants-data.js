@@ -23,7 +23,6 @@ var SCORE_COLORS=["#ccc","#ef5350","#ff9800","#fdd835","#66bb6a","#2e7d32"];
 var STATUS_OPTS=[
   {key:"native",    label:"Native to MA",   bg:"#e8f5e9",fg:"#2e7d32"},
   {key:"nearnative",label:"Near-Native",    bg:"#e3f2fd",fg:"#1565c0"},
-  {key:"cultivar",  label:"Native Cultivar",bg:"#f3e5f5",fg:"#6a1b9a"},
   {key:"nonnative", label:"Safe Non-Native",bg:"#fff8e1",fg:"#f57f17"},
   {key:"invasive",  label:"\u26d4 Invasive",  bg:"#fde8e8",fg:"#b71c1c"},
   {key:"caution",   label:"\u26a0\ufe0f Caution",   bg:"#fff3cd",fg:"#7d4e00"},
@@ -344,10 +343,11 @@ var p=new URLSearchParams(window.location.search);
     search:     p.get("q")||"",
     zone:       p.get("zone")||null,
     ptypes:     p.get("pt")?p.get("pt").split(","):[],
-    statuses:   p.get("st")?p.get("st").split(","):["native","nearnative","cultivar"],
+    statuses:   p.get("st")?p.get("st").split(","):["native","nearnative"],
     concerns:   p.get("cx")?p.get("cx").split(","):[],
     heightCap:  p.get("hc")?parseFloat(p.get("hc")):null,
     heightMin:  p.get("hf")?parseFloat(p.get("hf")):null,
+    showCultivars: p.get("cv")==="1",
     moisture:   p.get("mo")||null,
     sun:        p.get("su")||null,
     irrigated:  p.get("ir")==="1",
@@ -364,11 +364,12 @@ function pushURL(s){
   if(s.search)p.set("q",s.search);
   if(s.zone)p.set("zone",s.zone);
   if(s.ptypes&&s.ptypes.length)p.set("pt",s.ptypes.join(","));
-  var def=["native","nearnative","cultivar"];
+  var def=["native","nearnative"];
   if(JSON.stringify(s.statuses.slice().sort())!==JSON.stringify(def.slice().sort()))p.set("st",s.statuses.join(","));
   if(s.concerns&&s.concerns.length)p.set("cx",s.concerns.join(","));
   if(s.heightCap)p.set("hc",String(s.heightCap));
   if(s.heightMin)p.set("hf",String(s.heightMin));
+  if(s.showCultivars)p.set("cv","1");
   if(s.moisture)p.set("mo",s.moisture);
   if(s.sun)p.set("su",s.sun);
   if(s.irrigated)p.set("ir","1");
@@ -438,6 +439,15 @@ function monthIdx(s){
   return -1;
 }
 
+// A cultivar name in the wild uses any of these quote styles around the
+// cultivar name, e.g. Digitalis purpurea 'Snow Thimble' or Leucanthemum x
+// superbum "Snow Lady". Used to infer cultivar-ness from the Latin Name
+// itself, so a plain status (Native/Near-Native/Safe Non-Native) plus a
+// quoted cultivar name is enough -- no need to also spell "Cultivar" into
+// the status text just to get inheritance from the parent species.
+var CULTIVAR_NAME_RE=/[‘’'"]/;
+var PLAIN_TIER_STATUSES={"Native":1,"Near-Native":1,"Near Native":1,"Safe Non-Native":1,"Safe Non Native":1};
+
 function rowToPlant(row){
   var scores={};
   ZONE_KEYS.forEach(function(k){var m=(row[k]||"").match(/\d/);scores[k]=m?parseInt(m[0]):0;});
@@ -446,6 +456,8 @@ function rowToPlant(row){
   var inat=row["inaturalist image url"]||"";
   var status=row["Ecological Status"]||"";
   var cat=row["Category"]||"";
+  var latinName=row["Latin Name"]||"";
+  var isCultivar=status.indexOf("Cultivar")>=0||(CULTIVAR_NAME_RE.test(latinName)&&!!PLAIN_TIER_STATUSES[status]);
   return{
     common:row["Common Name"]||"",latin:row["Latin Name"]||"",
     category:cat,status:status,
@@ -477,7 +489,7 @@ function rowToPlant(row){
     medicinal:!!(row["medicinal"]||"").trim().match(/^(yes|true|with caveats)/i),
     medicinalNotes:row["medicinal_notes"]||"",
     medicinalValue:(row["medicinal"]||"").trim().toLowerCase(),
-    isCultivar:status.indexOf("Cultivar")>=0,
+    isCultivar:isCultivar,
     isWoody:!!WOODY_SET[cat]||(cat.toLowerCase().indexOf("tree")>=0||cat.toLowerCase().indexOf("shrub")>=0||cat.toLowerCase().indexOf("canopy")>=0||cat.toLowerCase().indexOf("evergreen")>=0||cat.toLowerCase().indexOf("vine")>=0),
     isCanopy:!!CANOPY_SET[cat]||(cat.toLowerCase().indexOf("canopy")>=0||(cat.toLowerCase().indexOf("tree")>=0&&cat.toLowerCase().indexOf("small")<0&&cat.toLowerCase().indexOf("midstory")<0)),
     typeKey:getTypeKey(cat),scores:scores,hasScores:hasScores,
@@ -547,9 +559,12 @@ function getSiteScore(plant,key){
 
 function matchStatus(plant,statuses){
   if(!statuses||!statuses.length)return true;
-  var s=plant.status.toLowerCase().replace(/-/g,"").replace(/ /g,"");
+  // Strip "cultivar" before tier-matching -- cultivar-ness is now an
+  // independent axis (see isCultivar / the "Show cultivars" filter),
+  // not part of the native/near-native/non-native tier itself. This keeps
+  // e.g. "Native Cultivar" correctly matching the "Native" tier checkbox.
+  var s=plant.status.toLowerCase().replace(/-/g,"").replace(/ /g,"").replace(/cultivar/g,"");
   if(statuses.indexOf("native")>=0&&s==="native")return true;
-  if(statuses.indexOf("cultivar")>=0&&s.indexOf("cultivar")>=0)return true;
   if(statuses.indexOf("nearnative")>=0&&(s==="nearnative"||s==="nearnative"))return true;
   if(statuses.indexOf("nonnative")>=0&&(s==="safenonnative"||s==="nonnative"||s.indexOf("hybrid")>=0))return true;
   if(statuses.indexOf("invasive")>=0&&s.indexOf("invasive")>=0)return true;
@@ -568,6 +583,7 @@ function applyFilters(plants,f,siteKey){
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.heightMin&&p.heightFt<f.heightMin)return false;
+    if(!f.showCultivars&&p.isCultivar&&!f.search)return false;
     if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
     if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.hasScores?(p.scores[siteKey]||0):zoneFallbackScore(p,siteKey))<3)return false;
     var cx=f.concerns||[];
