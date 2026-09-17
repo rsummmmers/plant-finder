@@ -31,6 +31,13 @@ function App(){
   function goToBloom(listId){setBloomListId(listId);setActiveTab("bloom");}
   var _lk=useState(0),listsKey=_lk[0],setListsKey=_lk[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
+  // iOS Safari doesn't reposition position:fixed elements against the
+  // shrunk visual viewport when the keyboard opens -- the bottom nav bar
+  // ends up floating mid-screen, pinned to where the pre-keyboard viewport's
+  // bottom used to be, right above the keyboard/autofill bar. Simplest
+  // reliable fix: hide the fixed bar entirely while a text input has focus,
+  // rather than trying to track window.visualViewport math for one bar.
+  var _kb=useState(false),keyboardOpen=_kb[0],setKeyboardOpen=_kb[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
@@ -105,6 +112,20 @@ function App(){
     function onResize(){setIsMobile(window.innerWidth<700);}
     window.addEventListener("resize",onResize);
     return function(){window.removeEventListener("resize",onResize);};
+  },[]);
+
+  useEffect(function(){
+    function isTextInput(el){
+      return el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
+    }
+    function onFocusIn(ev){if(isTextInput(ev.target))setKeyboardOpen(true);}
+    function onFocusOut(ev){if(isTextInput(ev.target))setKeyboardOpen(false);}
+    document.addEventListener("focusin",onFocusIn);
+    document.addEventListener("focusout",onFocusOut);
+    return function(){
+      document.removeEventListener("focusin",onFocusIn);
+      document.removeEventListener("focusout",onFocusOut);
+    };
   },[]);
 
   useEffect(function(){
@@ -413,8 +434,11 @@ function App(){
       )
     ),
 
-    // Mobile bottom nav
-    isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
+    // Mobile bottom nav -- hidden while the keyboard is open (see
+    // keyboardOpen above): iOS Safari doesn't reposition fixed elements
+    // against the shrunk visual viewport, so it would otherwise float
+    // mid-screen instead of sitting above the keyboard.
+    isMobile&&!keyboardOpen&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Explore",   icon:"\ud83d\udd0d"},
         {key:"palette", label:"My Plants", icon:"\u2665", count:hearts.length},
