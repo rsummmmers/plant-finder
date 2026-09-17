@@ -556,11 +556,27 @@ function monthIdx(s){
 // Cultivar") that don't carry a quoted name at all.
 var CULTIVAR_NAME_RE=/[‘’'"]/;
 
+// Some curated image URLs (checked 2026-09-17: 66 of them) point at a raw
+// Wikimedia Commons original instead of a sized thumbnail -- one was 5.3MB
+// at 4296x3214, which loads slowly enough on mobile to look broken/dead
+// even though the URL itself is fine. Wikimedia serves resized versions of
+// any file via a documented URL convention (insert "thumb/" after
+// "commons/", append "/<width>px-<filename>"), so rewrite any raw original
+// down to a reasonable width rather than editing 66 CSV cells by hand --
+// this also covers any future curated URL that has the same problem.
+function wikimediaThumb(url,widthPx){
+  if(!url)return url;
+  var clean=url.split("?")[0];
+  var m=clean.match(/^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/)([0-9a-f])\/([0-9a-f]{2})\/(.+)$/i);
+  if(!m)return url;
+  return m[1]+"thumb/"+m[2]+"/"+m[3]+"/"+m[4]+"/"+(widthPx||500)+"px-"+m[4];
+}
+
 function rowToPlant(row){
   var scores={};
   ZONE_KEYS.forEach(function(k){var m=(row[k]||"").match(/\d/);scores[k]=m?parseInt(m[0]):0;});
   var hasScores=Object.values(scores).some(function(s){return s>0;});
-  var cur=row["curated image url"]||"";
+  var cur=wikimediaThumb(row["curated image url"]||"");
   var inat=row["inaturalist image url"]||"";
   var status=row["Ecological Status"]||"";
   var cat=row["Category"]||"";
