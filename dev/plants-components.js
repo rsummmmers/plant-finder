@@ -1864,7 +1864,7 @@ function PaletteView(props){
         ):
         h("div",null,
           h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your list yet."),
-          h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+          h("button",{onClick:function(){onGoToPlants(search);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Search Explore for \u201c"+search+"\u201d \u2192")
         )
     ),
     // Plant cards — grouped by type
