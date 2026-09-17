@@ -116,7 +116,11 @@ function App(){
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
-  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});}},[]);
+  // Always load VB data (not just in pro mode) -- pro mode still gates the
+  // pricing badges below, but plain "is this in Van Berkum's catalog" info
+  // (used by VBLink, a reference link with no pricing) needs to work for
+  // regular browsing too, not just procurement/quoting.
+  useEffect(function(){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});},[]);
 
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
@@ -326,8 +330,8 @@ function App(){
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
         activeTab==="lists"?h(SavedListsView,{key:listsKey,lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},onGoToBloom:goToBloom,isMobile:isMobile,proMode:proMode,vbData:vbData}):
-        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId}):
-        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
+        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId,vbData:vbData}):
+        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true,vbData:vbData}):
         // Plants tab
         h("div",null,
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
@@ -344,7 +348,7 @@ function App(){
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             h("button",{onClick:function(){setZone(null);setSearch("");setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:5,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
-          showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
+          showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);},vbData:vbData}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
             h("span",{style:{fontSize:28,flexShrink:0}},"\ud83c\udf31"),
             h("div",null,
@@ -399,7 +403,7 @@ function App(){
           listView
             ?h(CompactPlantList,{plants:results,siteKey:zone,hearts:hearts,onHeart:toggleHeart,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,vbData:vbData,proMode:proMode,showVbBadges:showVbBadges})
             :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(185px,1fr))",gap:isMobile?10:14,marginTop:4,marginTop:4}},
-            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null});})),
+            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null,vbData:vbData});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),

@@ -327,7 +327,11 @@ function PlantCard(props){
   var gridMode=props.gridMode||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
-  var vbInfo=props.vbInfo||null;
+  var vbInfo=props.vbInfo||null; // pro-mode-gated $ price badge, unchanged -- don't reuse below
+  // VBLink (the reference link, no pricing) should work in every view, not
+  // just pro mode / the one place vbInfo happened to get computed -- so it
+  // looks itself up from the always-loaded vbData prop instead.
+  var vbLinkInfo=props.vbData?vbLookup(props.vbData,plant.latin):null;
   var _s=useState(defaultOpen),open=_s[0],setOpen=_s[1];
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
@@ -405,7 +409,7 @@ function PlantCard(props){
                 h(PhotoGallery,{plant:plant}),
                 h("div",{style:{flex:1,minWidth:180}},
                   h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
-                  h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbInfo&&vbInfo.vb&&h(VBLink,{name:vbInfo.vbName})),
+                  h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbLinkInfo&&vbLinkInfo.vb&&h(VBLink,{name:vbLinkInfo.vbName})),
                   (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗")))),
                   (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."))),
                   plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
@@ -523,7 +527,7 @@ function PlantCard(props){
         h(PhotoGallery,{plant:plant}),
         h("div",{style:{flex:1,minWidth:180}},
           h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
-          h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbInfo&&vbInfo.vb&&h(VBLink,{name:vbInfo.vbName})),
+          h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbLinkInfo&&vbLinkInfo.vb&&h(VBLink,{name:vbLinkInfo.vbName})),
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
   h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
@@ -643,7 +647,7 @@ var p=new URLSearchParams();
 
 // ── SuggestPanel ──────────────────────────────────────────────────────────
 function SuggestPanel(props){
-  var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
+  var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose,vbData=props.vbData;
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _ex=useState([]),excluded=_ex[0],setExcluded=_ex[1];
   var scale=count/20;
@@ -681,7 +685,7 @@ function SuggestPanel(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,vbData:vbData})
         )
       )
     ),
@@ -724,6 +728,7 @@ function HabitatView(props){
   var plants=props.plants,concerns=props.concerns,heightCap=props.heightCap,
       patchSize=props.patchSize,hearts=props.hearts,onHeart=props.onHeart,onLoosen=props.onLoosen;
   var isMobile=props.isMobile||false;
+  var vbData=props.vbData;
   var scale=patchSize/20;
   var HT={
     canopy:   Math.max(1, Math.round(2*scale)),
@@ -845,7 +850,7 @@ function HabitatView(props){
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
-            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true})
+            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true,vbData:vbData})
           );
         }))
       );
@@ -855,7 +860,7 @@ function HabitatView(props){
 
 // ── SeedCard ──────────────────────────────────────────────────────────────
 function SeedCard(props){
-  var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
+  var plant=props.plant,status=props.status,monthIdx=props.monthIdx,vbData=props.vbData;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
@@ -870,7 +875,7 @@ function SeedCard(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true})
+          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true,vbData:vbData})
         )
       )
     ),
@@ -924,6 +929,7 @@ function SeedCard(props){
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
   var lists=props.lists||[];
+  var vbData=props.vbData;
   var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
@@ -1010,7 +1016,7 @@ function BloomCalendar(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,vbData:vbData})
         )
       )
     ),
@@ -1252,6 +1258,7 @@ var BLOOM_COLOR_GROUPS={
 // ── SeedCalendar ──────────────────────────────────────────────────────────
 function SeedCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
+  var vbData=props.vbData;
   var now=new Date();
   var _m=useState(now.getMonth()),monthIdx=_m[0],setMonthIdx=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
@@ -1379,9 +1386,9 @@ function SeedCalendar(props){
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
     h("div",{style:{maxWidth:1400,margin:"0 auto",padding:"16px 20px 80px"}},
-      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx});})),
-      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx});}))),
-      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx});}))),
+      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx,vbData:vbData});})),
+      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx,vbData:vbData});}))),
+      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx,vbData:vbData});}))),
       ripeNow.length===0&&comingSoon.length===0&&justPassed.length===0&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},
         h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),
         h("div",{style:{fontStyle:"italic",fontSize:16}},"No seed collection activity around "+MONTHS[monthIdx]+"."),
@@ -1691,7 +1698,7 @@ function CompactPlantList(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,vbData:vbData})
         )
       )
     ),
@@ -1843,7 +1850,7 @@ function PaletteView(props){
     )),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile})
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile,vbData:vbData})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -1889,7 +1896,7 @@ function PaletteView(props){
               var plants=grouped[ld.key];
               if(!plants||!plants.length)return null;
               return renderTypeSection(ld,plants,isMobile,function(p){
-                return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});
+                return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:true,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,vbData:vbData});
               });
             })
           );
@@ -2245,7 +2252,7 @@ function ProcurementView(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true,vbData:vbData})
         )
       )
     ),
@@ -2583,7 +2590,7 @@ function SavedListsView(props){
                   var plants=grouped[ld.key];
                   if(!plants||!plants.length)return null;
                   return renderTypeSection(ld,plants,isMobile,function(p){
-                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,onRemove:function(){onToggleInList(p.latin,openList.id);}});
+                    return h(PlantCard,{key:p.latin,plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList,onRemove:function(){onToggleInList(p.latin,openList.id);},vbData:vbData});
                   });
                 })
               );
