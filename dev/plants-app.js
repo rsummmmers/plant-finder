@@ -31,13 +31,17 @@ function App(){
   function goToBloom(listId){setBloomListId(listId);setActiveTab("bloom");}
   var _lk=useState(0),listsKey=_lk[0],setListsKey=_lk[1];
   var _mob=useState(window.innerWidth<700),isMobile=_mob[0],setIsMobile=_mob[1];
-  // iOS Safari doesn't reposition position:fixed elements against the
-  // shrunk visual viewport when the keyboard opens -- the bottom nav bar
-  // ends up floating mid-screen, pinned to where the pre-keyboard viewport's
-  // bottom used to be, right above the keyboard/autofill bar. Simplest
-  // reliable fix: hide the fixed bar entirely while a text input has focus,
-  // rather than trying to track window.visualViewport math for one bar.
-  var _kb=useState(false),keyboardOpen=_kb[0],setKeyboardOpen=_kb[1];
+  // iOS WebKit (Safari and every other iOS browser -- Chrome/Firefox/Edge on
+  // iOS are all WebKit under the hood) doesn't reposition position:fixed
+  // elements against the shrunk visual viewport when the keyboard opens, so
+  // a bar pinned to bottom:0 ends up floating wherever the pre-keyboard
+  // viewport's bottom used to be. Hiding the bar entirely while typing (the
+  // first fix here) technically solved the floating, but Rachel didn't want
+  // it to fully vanish either -- so instead, track window.visualViewport and
+  // shift the bar up by exactly the keyboard's height, keeping it pinned
+  // just above the keyboard rather than hidden or floating. Falls back to
+  // the normal bottom:0 (no offset) on any browser without visualViewport.
+  var _kbOff=useState(0),kbOffset=_kbOff[0],setKbOffset=_kbOff[1];
 
   var _h=useState(function(){return initURL.sharedHearts.length?initURL.sharedHearts:loadHearts();}),hearts=_h[0],setHearts=_h[1];
   var _ls=useState(loadLists),lists=_ls[0],setLists=_ls[1];
@@ -115,16 +119,18 @@ function App(){
   },[]);
 
   useEffect(function(){
-    function isTextInput(el){
-      return el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
+    if(!window.visualViewport)return;
+    function onVVChange(){
+      var vv=window.visualViewport;
+      var offset=Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));
+      setKbOffset(offset);
     }
-    function onFocusIn(ev){if(isTextInput(ev.target))setKeyboardOpen(true);}
-    function onFocusOut(ev){if(isTextInput(ev.target))setKeyboardOpen(false);}
-    document.addEventListener("focusin",onFocusIn);
-    document.addEventListener("focusout",onFocusOut);
+    window.visualViewport.addEventListener("resize",onVVChange);
+    window.visualViewport.addEventListener("scroll",onVVChange);
+    onVVChange();
     return function(){
-      document.removeEventListener("focusin",onFocusIn);
-      document.removeEventListener("focusout",onFocusOut);
+      window.visualViewport.removeEventListener("resize",onVVChange);
+      window.visualViewport.removeEventListener("scroll",onVVChange);
     };
   },[]);
 
@@ -137,11 +143,7 @@ function App(){
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
-  // Always load VB data (not just in pro mode) -- pro mode still gates the
-  // pricing badges below, but plain "is this in Van Berkum's catalog" info
-  // (used by VBLink, a reference link with no pricing) needs to work for
-  // regular browsing too, not just procurement/quoting.
-  useEffect(function(){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});},[]);
+  useEffect(function(){if(proMode){loadVBData().then(function(data){setVbWeekOf(data._weekOf||"");setVbData(data);});}},[]);
 
   // DATA OWNER TASK: After editing Google Sheets → File > Download > CSV
   //   → save as plants.csv in repo root → commit & push → GitHub Pages auto-redeploys.
@@ -286,6 +288,7 @@ function App(){
             h("div",{key:"searchbox",style:{marginLeft:"auto",display:"flex",alignItems:"center",padding:"6px 0"}},
               h("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
                 h("input",{ref:searchRef,value:search,
+                  type:"search",autoComplete:"off",autoCorrect:"off",autoCapitalize:"off",spellCheck:false,
                   onChange:function(ev){setSearch(ev.target.value);if(!searchActive&&ev.target.value){setActiveTab("plants");setDrawerOpen(false);}},
                   onFocus:function(){if(!searchActive){setActiveTab("plants");setDrawerOpen(false);}},
                   placeholder:"Search plants…",
@@ -311,7 +314,7 @@ function App(){
         activeTab==="plants"&&h("div",{style:{padding:"10px 20px 0"}},
           isMobile&&h("div",{style:{position:"relative",marginBottom:8,display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{position:"relative",flex:1}},
-              h("input",{ref:searchRef,value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{width:"100%",padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
+              h("input",{ref:searchRef,value:search,type:"search",autoComplete:"off",autoCorrect:"off",autoCapitalize:"off",spellCheck:false,onChange:function(ev){setSearch(ev.target.value);},placeholder:loading?"Loading\u2026":"Search Massachusetts plants\u2026",style:{width:"100%",padding:"10px 44px 10px 18px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
               search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#888",lineHeight:1}},"\u00d7")
             )
           ),
@@ -351,8 +354,8 @@ function App(){
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
           }}):
         activeTab==="lists"?h(SavedListsView,{key:listsKey,lists:lists,plants:plants,hearts:hearts,onHeart:toggleHeart,onCreateList:createList,onDeleteList:deleteList,onRenameList:renameList,onUpdateListNotes:updateListNotes,onToggleInList:togglePlantInList,onGoToExplore:function(){setActiveTab("plants");},onGoToBloom:goToBloom,isMobile:isMobile,proMode:proMode,vbData:vbData}):
-        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId,vbData:vbData}):
-        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true,vbData:vbData}):
+        activeTab==="bloom"?h(BloomCalendar,{plants:plants,embedded:true,onHeart:toggleHeart,hearts:hearts,lists:lists,initSource:bloomListId}):
+        activeTab==="seeds"?h(SeedCalendar,{plants:plants,embedded:true}):
         // Plants tab
         h("div",null,
           activeFilterCount>0&&h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,marginTop:6}},
@@ -369,7 +372,7 @@ function App(){
             filters.medicinalOnly&&h("div",{style:{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:5,background:"#f0faf0",border:"1px solid #c8e6c9",fontSize:12,color:"#2e5339"}},"\u2615 Medicinal",h("span",{onClick:function(){setFilters(function(f){return Object.assign({},f,{medicinalOnly:false});});},style:{cursor:"pointer",opacity:0.5,fontSize:14}},"\xd7")),
             h("button",{onClick:function(){setZone(null);setSearch("");setFilters({statuses:["native","nearnative"],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});},style:{fontSize:13,color:"#c62828",background:"#fff5f5",border:"1px solid #ffcdd2",borderRadius:5,padding:"4px 12px",cursor:"pointer",fontFamily:"inherit",fontWeight:500}},"✕ Clear all")
           ),
-          showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);},vbData:vbData}),
+          showSuggest&&h(SuggestPanel,{plants:filtered,siteKey:zone,count:patchSize,hearts:hearts,onHeart:toggleHeart,onClose:function(){setShowSuggest(false);}}),
           noFilters&&!showSuggest&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"16px 20px",marginBottom:16,display:"flex",alignItems:"center",gap:12}},
             h("span",{style:{fontSize:28,flexShrink:0}},"\ud83c\udf31"),
             h("div",null,
@@ -424,7 +427,7 @@ function App(){
           listView
             ?h(CompactPlantList,{plants:results,siteKey:zone,hearts:hearts,onHeart:toggleHeart,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,vbData:vbData,proMode:proMode,showVbBadges:showVbBadges})
             :h("div",{style:{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(185px,1fr))",gap:isMobile?10:14,marginTop:4,marginTop:4}},
-            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null,vbData:vbData});})),
+            results.map(function(p){return h(PlantCard,{key:p.latin,plant:p,siteKey:zone,hearted:hearts.indexOf(p.latin)>=0,onHeart:toggleHeart,edibleOnly:filters.edibleOnly,medicinalOnly:filters.medicinalOnly,gridMode:true,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,selectMode:selectMode,isSelected:selectedLatins.indexOf(p.latin)>=0,onToggleSelected:toggleSelected,vbInfo:(proMode&&showVbBadges)?(vbLookup(vbData,p.latin)||null):null});})),
           results.length===0&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
             h("div",{style:{fontSize:40,marginBottom:12}},"\ud83e\udd14"),
             h("div",{style:{fontStyle:"italic",marginBottom:10,fontSize:16}},"No plants match all your filters."),
@@ -434,11 +437,10 @@ function App(){
       )
     ),
 
-    // Mobile bottom nav -- hidden while the keyboard is open (see
-    // keyboardOpen above): iOS Safari doesn't reposition fixed elements
-    // against the shrunk visual viewport, so it would otherwise float
-    // mid-screen instead of sitting above the keyboard.
-    isMobile&&!keyboardOpen&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
+    // Mobile bottom nav -- shifted up by kbOffset (see visualViewport effect
+    // above) so it tracks the actual visible area instead of floating
+    // wherever the pre-keyboard viewport's bottom used to be.
+    isMobile&&h("div",{style:{position:"fixed",bottom:kbOffset,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:kbOffset?0:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
       [
         {key:"plants",  label:"Explore",   icon:"\ud83d\udd0d"},
         {key:"palette", label:"My Plants", icon:"\u2665", count:hearts.length},
