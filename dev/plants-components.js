@@ -122,23 +122,31 @@ function VBLink({ name }) {
 function PlantThumb(props){
   var plant=props.plant,size=props.size||48,radius=props.radius||8;
   var _s=useState(false),failed=_s[0],setFailed=_s[1];
+  var _fb=useState(undefined),fallback=_fb[0],setFallback=_fb[1];
+  useEffect(function(){
+    if(plant.image)return;
+    var live=true;
+    fetchPlantFallbackImage(plant.latin).then(function(url){if(live)setFallback(url);});
+    return function(){live=false;};
+  },[plant.latin,plant.image]);
   var _tk=plant.typeKey;
   var bg=CAT_BG[plant.category]||(_tk==="tree"?"#e8f5e9":_tk==="shrub"?"#fff8e1":_tk==="grass"?"#f9fbe7":_tk==="fern"?"#e0f2f1":_tk==="vine"?"#f3e5f5":_tk==="ground"?"#e8f5e9":_tk==="perennial"?"#fffde7":"#f0ede4");
   var fg=CAT_FG[plant.category]||(_tk==="tree"?"#2e7d32":_tk==="shrub"?"#f57f17":_tk==="grass"?"#827717":_tk==="fern"?"#00695c":_tk==="vine"?"#6a1b9a":_tk==="ground"?"#2e7d32":_tk==="perennial"?"#f9a825":"#4a7c59");
   var em=CAT_EMOJI[plant.category]||(_tk==="tree"?"\ud83c\udf33":_tk==="shrub"?"\ud83c\udf3e":_tk==="grass"?"\ud83c\udf3e":_tk==="fern"?"\ud83c\udf3f":_tk==="vine"?"\ud83c\udf3f":_tk==="ground"?"\ud83c\udf3f":_tk==="perennial"?"\ud83c\udf3c":"\ud83c\udf3f");
-  if(!plant.image||failed){
+  var effImg=plant.image||fallback;
+  if(!effImg||failed){
     return h("div",{style:{width:size,height:size,borderRadius:radius,flexShrink:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
       h("div",{style:{fontSize:size*0.38,lineHeight:1}},em),
       h("div",{style:{fontSize:size*0.18,fontWeight:"bold",color:fg}},plant.common.charAt(0))
     );
   }
-  if(plant.inheritedImage){
+  if(plant.inheritedImage||(!plant.image&&fallback)){
     return h("div",{style:{position:"relative",width:size,height:size,flexShrink:0}},
-      h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
+      h("img",{src:effImg,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
       h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:4,left:4,color:"rgba(255,255,255,0.85)",fontSize:9,fontStyle:"italic",textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species")
     );
   }
-  return h("img",{src:plant.image,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
+  return h("img",{src:effImg,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
 }
 
 // ── ColorDots ─────────────────────────────────────────────────────────────
@@ -176,11 +184,8 @@ function RiskBadges(props){
 }
 
 // ── Photo gallery ─────────────────────────────────────────────────────────
-function taxonQ(latin){
-  return latin.replace(/['''][^''']*[''']/g,"").replace(/cultivars?/ig,"")
-    .replace(/hybrids?/ig,"").replace(/spp?/ig,"").replace(/var\b.*/ig,"")
-    .replace(/[x\xd7]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");
-}
+// taxonQ() now lives in plants-data.js (shared with the grid/thumbnail photo
+// fallback below, so both search iNaturalist the same way).
 
 function PhotoGallery(props){
   var plant=props.plant;
@@ -327,6 +332,13 @@ function PlantCard(props){
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
+  var _fb=useState(undefined),imgFallback=_fb[0],setImgFallback=_fb[1];
+  useEffect(function(){
+    if(plant.image)return;
+    var live=true;
+    fetchPlantFallbackImage(plant.latin).then(function(url){if(live)setImgFallback(url);});
+    return function(){live=false;};
+  },[plant.latin,plant.image]);
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
   var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
   var cats=plant.caterpillars||0;
@@ -334,13 +346,15 @@ function PlantCard(props){
   var ilabel=""+cats;
 
   if(gridMode){
-    var img=plant.image;
+    var img=plant.image||imgFallback;
+    var imgIsFallback=!plant.image&&!!imgFallback;
     var sunIc=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
     var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
         img&&plant.inheritedImage&&h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:6,left:8,color:"rgba(255,255,255,0.85)",fontSize:10,fontStyle:"italic",fontWeight:400,textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species"),
+        img&&imgIsFallback&&h("div",{title:"Auto-matched reference photo — not a curated photo of this exact plant",style:{position:"absolute",bottom:6,left:8,color:"rgba(255,255,255,0.85)",fontSize:10,fontStyle:"italic",fontWeight:400,textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"reference photo"),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
             h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),

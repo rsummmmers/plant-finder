@@ -338,16 +338,28 @@ var LS_LISTS_KEY="ppb_lists_v1";
 function loadLists(){try{return JSON.parse(localStorage.getItem(LS_LISTS_KEY)||"[]");}catch(err){return[];}}
 function saveLists(a){try{localStorage.setItem(LS_LISTS_KEY,JSON.stringify(a));}catch(err){}}
 
-// ── Live species-photo fallback ──────────────────────────────────────────
-// For a straight (non-cultivar) plant with no curated/iNat image of its own,
+// Strips a cultivar's quoted name, "cultivar"/"hybrid" words, a var/subsp
+// suffix, and a bare hybrid marker ("x"/"×") down to a genus (+ species, when
+// present) that iNaturalist's taxa search can actually match against. Shared
+// by PhotoGallery's live per-plant photo lookup and the grid/thumbnail
+// fallback below, so both search iNaturalist the same way.
+function taxonQ(latin){
+  return latin.replace(/['''"][^'''"]*['''"]/g,"").replace(/cultivars?/ig,"")
+    .replace(/hybrids?/ig,"").replace(/spp?/ig,"").replace(/var\b.*/ig,"")
+    .replace(/[x\xd7]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");
+}
+
+// ── Live photo fallback (grid/thumbnail scale) ───────────────────────────
+// For any plant with no curated/iNat image of its own -- cultivar or not --
 // look up a photo live via iNaturalist's public taxa API instead of leaving
-// a blank placeholder. Never used for cultivars -- a genus/species photo
-// could show the wrong look entirely (e.g. a plain-green species photo for a
-// purple-black cultivar), so cultivars keep the existing placeholder/parent-
-// species-row behavior untouched. Results are cached in localStorage per
-// Latin Name (a species is looked up once per browser, ever) and requests
-// are throttled to a few at a time so rendering a full results grid doesn't
-// fire 100+ simultaneous calls at iNaturalist.
+// a blank placeholder, the same way the detail modal's PhotoGallery already
+// does per-plant. For a cultivar this generally lands on the parent
+// species' (or, for a genus-only cultivar, the genus's) representative
+// photo -- not an exact match, but far better than a blank tile, and this is
+// exactly what the modal already shows people today. Results are cached in
+// localStorage per search query (looked up once per browser, ever) and
+// requests are throttled to a few at a time so rendering a full results grid
+// doesn't fire 100+ simultaneous calls at iNaturalist.
 var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v1";
 function loadInatFallbackCache(){try{return JSON.parse(localStorage.getItem(INAT_FALLBACK_CACHE_KEY)||"{}");}catch(err){return{};}}
 function saveInatFallbackCache(c){try{localStorage.setItem(INAT_FALLBACK_CACHE_KEY,JSON.stringify(c));}catch(err){}}
@@ -357,12 +369,12 @@ function _inatFallbackPump(){
   while(_inatFallbackActive<INAT_FALLBACK_MAX_CONCURRENT&&_inatFallbackQueue.length){
     var job=_inatFallbackQueue.shift();
     _inatFallbackActive++;
-    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.latin)+"&rank=species,hybrid,genus&per_page=1")
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.query)+"&per_page=1")
       .then(function(r){return r.json();})
       .then(function(data){
         var res=data&&data.results&&data.results[0];
         var url=(res&&res.default_photo&&res.default_photo.medium_url)||null;
-        _inatFallbackCache[job.latin]=url;
+        _inatFallbackCache[job.query]=url;
         saveInatFallbackCache(_inatFallbackCache);
         job.resolve(url);
       })
@@ -370,9 +382,11 @@ function _inatFallbackPump(){
       .then(function(){_inatFallbackActive--;_inatFallbackPump();});
   }
 }
-function fetchSpeciesFallbackImage(latin){
-  if(_inatFallbackCache[latin]!==undefined)return Promise.resolve(_inatFallbackCache[latin]);
-  return new Promise(function(resolve){_inatFallbackQueue.push({latin:latin,resolve:resolve});_inatFallbackPump();});
+function fetchPlantFallbackImage(latin){
+  var query=taxonQ(latin);
+  if(!query)return Promise.resolve(null);
+  if(_inatFallbackCache[query]!==undefined)return Promise.resolve(_inatFallbackCache[query]);
+  return new Promise(function(resolve){_inatFallbackQueue.push({query:query,resolve:resolve});_inatFallbackPump();});
 }
 
 // ── URL helpers ────────────────────────────────────────────────────────────
