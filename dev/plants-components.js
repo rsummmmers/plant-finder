@@ -1812,6 +1812,9 @@ function PaletteView(props){
   }
 
   return h("div",null,
+    hearted.length>0&&h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5,marginBottom:10}},
+      "The plants you've hearted, grouped by type below — tap a category to filter this list to just that type. Search narrows further within it. \"Suggest a mix\" adds a layered starting combination (canopy, shrubs, perennials, groundcover) on top of what you've already saved."
+    ),
     // Palette header bar — sticky on desktop only
     h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#D9D9BF",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
