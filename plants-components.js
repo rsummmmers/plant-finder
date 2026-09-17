@@ -2,11 +2,12 @@
 
 var STATUS_LABEL_TIPS={
   "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
-  "Near-Native":     "Native to adjacent regions with documented ecological relationships in MA — close ecological value to natives",
+  "Near-Native":     "Not historically native to Massachusetts, but native to an adjacent state in an ecoregion shared with Massachusetts",
   "Native Cultivar": "A selected variety of a MA native — may have reduced wildlife value compared to straight species",
-  "Safe Non-Native": "Not invasive, but has limited relationships with native wildlife",
+  "Near-Native Cultivar": "A selected variety of a near-native species (see Near-Native) — may have reduced wildlife value compared to the straight species",
+  "Safe Non-Native": "Non-native with no documented regional ecological concern — vigorous garden behavior by itself doesn't trigger Caution",
   "Invasive":        "Invasive — do not plant; spreads aggressively and displaces native ecosystems",
-  "Caution":         "Invasive in neighboring states — use with caution in MA",
+  "Caution":         "Non-native with documented ecological concern in MA or the Northeast (e.g. escape from cultivation, problematic spread in natural areas, credible emerging-invasive concern) — but doesn't meet the Invasive threshold",
   "Hybrid":          "Native/non-native hybrid",
 };
 
@@ -46,6 +47,17 @@ function Lightbox(props){
   var _s=useState(startIdx||0),idx=_s[0],setIdx=_s[1];
   var touchX=useRef(null);
 
+  useEffect(function(){
+    setIdx(startIdx||0);
+    function onKey(ev){
+      if(ev.key==="ArrowLeft")setIdx(function(i){return Math.max(0,i-1);});
+      if(ev.key==="ArrowRight")setIdx(function(i){return Math.min(photos.length-1,i+1);});
+      if(ev.key==="Escape")onClose();
+    }
+    window.addEventListener("keydown",onKey);
+    return function(){window.removeEventListener("keydown",onKey);};
+  },[startIdx]);
+
   if(!photos||!photos.length)return null;
   var cur=photos[idx];
 
@@ -55,7 +67,6 @@ function Lightbox(props){
     var dx=ev.changedTouches[0].clientX-touchX.current;
     if(dx<-50)setIdx(function(i){return Math.min(photos.length-1,i+1);});
     if(dx>50)setIdx(function(i){return Math.max(0,i-1);});
-    
     touchX.current=null;
   }
 
@@ -93,52 +104,39 @@ function INatLink({ latinName }) {
     style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
   },"iNaturalist \u2197");
 }
-var _thumbFallbackCache = {};
+// VBLink (search link to Van Berkum's site) was tried and removed 2026-09-17
+// -- Rachel found it doesn't actually pre-fill their search results (just
+// opens their plain search page), so it wasn't worth the confusion.
+
 // ── PlantThumb ────────────────────────────────────────────────────────────
 function PlantThumb(props){
   var plant=props.plant,size=props.size||48,radius=props.radius||8;
   var _s=useState(false),failed=_s[0],setFailed=_s[1];
-  var _f=useState(_thumbFallbackCache[plant.latin]||null),fallbackImg=_f[0],setFallbackImg=_f[1];
-
-useEffect(function(){
-    if(plant.image||fallbackImg)return;
-    var name=taxonQ(plant.latin);
-    if(!name)return;
-    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var t=(d.results||[])[0];
-        if(!t)return Promise.reject("no taxon");
-        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+t.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes");
-      })
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var obs=(d.results||[])[0];
-        var photo=obs&&obs.photos&&obs.photos[0];
-        var url=photo&&photo.url&&photo.url.replace("square","medium");
-        if(url){_thumbFallbackCache[plant.latin]=url;setFallbackImg(url);}
-      })
-      .catch(function(){});
-  },[plant.image,plant.latin]);
-
-  var imgSrc=plant.image||fallbackImg;
+  var _fb=useState(undefined),fallback=_fb[0],setFallback=_fb[1];
+  useEffect(function(){
+    if(plant.image)return;
+    var live=true;
+    fetchPlantFallbackImage(plant.latin).then(function(url){if(live)setFallback(url);});
+    return function(){live=false;};
+  },[plant.latin,plant.image]);
   var _tk=plant.typeKey;
   var bg=CAT_BG[plant.category]||(_tk==="tree"?"#e8f5e9":_tk==="shrub"?"#fff8e1":_tk==="grass"?"#f9fbe7":_tk==="fern"?"#e0f2f1":_tk==="vine"?"#f3e5f5":_tk==="ground"?"#e8f5e9":_tk==="perennial"?"#fffde7":"#f0ede4");
   var fg=CAT_FG[plant.category]||(_tk==="tree"?"#2e7d32":_tk==="shrub"?"#f57f17":_tk==="grass"?"#827717":_tk==="fern"?"#00695c":_tk==="vine"?"#6a1b9a":_tk==="ground"?"#2e7d32":_tk==="perennial"?"#f9a825":"#4a7c59");
   var em=CAT_EMOJI[plant.category]||(_tk==="tree"?"\ud83c\udf33":_tk==="shrub"?"\ud83c\udf3e":_tk==="grass"?"\ud83c\udf3e":_tk==="fern"?"\ud83c\udf3f":_tk==="vine"?"\ud83c\udf3f":_tk==="ground"?"\ud83c\udf3f":_tk==="perennial"?"\ud83c\udf3c":"\ud83c\udf3f");
-  if(!imgSrc||failed){
+  var effImg=plant.image||fallback;
+  if(!effImg||failed){
     return h("div",{style:{width:size,height:size,borderRadius:radius,flexShrink:0,background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
       h("div",{style:{fontSize:size*0.38,lineHeight:1}},em),
       h("div",{style:{fontSize:size*0.18,fontWeight:"bold",color:fg}},plant.common.charAt(0))
     );
   }
-  if(plant.inheritedImage){
+  if(plant.inheritedImage||(!plant.image&&fallback)){
     return h("div",{style:{position:"relative",width:size,height:size,flexShrink:0}},
-      h("img",{src:imgSrc,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
+      h("img",{src:effImg,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",display:"block"}}),
       h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:4,left:4,color:"rgba(255,255,255,0.85)",fontSize:9,fontStyle:"italic",textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species")
     );
   }
-  return h("img",{src:imgSrc,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
+  return h("img",{src:effImg,alt:plant.common,onError:function(){setFailed(true);},loading:"lazy",style:{width:size,height:size,borderRadius:radius,objectFit:"cover",flexShrink:0}});
 }
 
 // ── ColorDots ─────────────────────────────────────────────────────────────
@@ -176,11 +174,8 @@ function RiskBadges(props){
 }
 
 // ── Photo gallery ─────────────────────────────────────────────────────────
-function taxonQ(latin){
-  return latin.replace(/['''][^''']*[''']/g,"").replace(/cultivars?/ig,"")
-    .replace(/hybrids?/ig,"").replace(/spp?/ig,"").replace(/var\b.*/ig,"")
-    .replace(/[x\xd7]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");
-}
+// taxonQ() now lives in plants-data.js (shared with the grid/thumbnail photo
+// fallback below, so both search iNaturalist the same way).
 
 function PhotoGallery(props){
   var plant=props.plant;
@@ -327,41 +322,29 @@ function PlantCard(props){
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
-  var _fb=useState(_thumbFallbackCache[plant.latin]||null),fallbackImg=_fb[0],setFallbackImg=_fb[1];
+  var _fb=useState(undefined),imgFallback=_fb[0],setImgFallback=_fb[1];
   useEffect(function(){
-    if(plant.image||fallbackImg)return;
-    var name=taxonQ(plant.latin);
-    if(!name)return;
-    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var t=(d.results||[])[0];
-        if(!t)return Promise.reject("no taxon");
-        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+t.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes");
-      })
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var obs=(d.results||[])[0];
-        var photo=obs&&obs.photos&&obs.photos[0];
-        var url=photo&&photo.url&&photo.url.replace("square","medium");
-        if(url){_thumbFallbackCache[plant.latin]=url;setFallbackImg(url);}
-      })
-      .catch(function(){});
-  },[plant.image,plant.latin]);
+    if(plant.image)return;
+    var live=true;
+    fetchPlantFallbackImage(plant.latin).then(function(url){if(live)setImgFallback(url);});
+    return function(){live=false;};
+  },[plant.latin,plant.image]);
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
-  var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var ss=getStatusBadge(plant);
   var cats=plant.caterpillars||0;
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
 
   if(gridMode){
-    var img=plant.image||fallbackImg;
+    var img=plant.image||imgFallback;
+    var imgIsFallback=!plant.image&&!!imgFallback;
     var sunIc=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
     var sunCl=(function(){var s=(plant.sun||"").toLowerCase();return s.indexOf("part")>=0?"#d97706":s.indexOf("shade")>=0?"#6b7280":"#f59e0b";})();
     return h("div",{style:{background:"white",borderRadius:10,overflow:"hidden",boxShadow:isSelected?"0 0 0 3px #2e5339":"0 2px 8px rgba(0,0,0,0.10)",display:"flex",flexDirection:"column"}},
       h("div",{onClick:function(){if(selectMode){onToggleSelected(plant.latin);}else{setOpen(true);}},style:{position:"relative",height:200,background:"#c8d5c8",cursor:"pointer",overflow:"hidden",flexShrink:0}},
         img&&h("img",{src:img,alt:plant.common,loading:"lazy",style:{width:"100%",height:"100%",objectFit:"cover",display:"block"}}),
         img&&plant.inheritedImage&&h("div",{title:"Photo shows parent species, not this specific cultivar",style:{position:"absolute",bottom:6,left:8,color:"rgba(255,255,255,0.85)",fontSize:10,fontStyle:"italic",fontWeight:400,textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"parent species"),
+        img&&imgIsFallback&&h("div",{title:"Auto-matched reference photo — not a curated photo of this exact plant",style:{position:"absolute",bottom:6,left:8,color:"rgba(255,255,255,0.85)",fontSize:10,fontStyle:"italic",fontWeight:400,textShadow:"0 1px 3px rgba(0,0,0,0.7)",pointerEvents:"none"}},"reference photo"),
         !img&&h("div",{style:{width:"100%",height:"100%",background:"linear-gradient(150deg,#dce8dc 0%,#c8d8c4 100%)",display:"flex",alignItems:"center",justifyContent:"center"}},
           h("svg",{xmlns:"http://www.w3.org/2000/svg",viewBox:"0 0 80 80",width:64,height:64,style:{opacity:0.3}},
             h("path",{d:"M40 6 C58 6 70 20 70 40 C70 60 56 74 40 74 C24 74 10 60 10 40 C10 20 22 6 40 6Z",fill:"none",stroke:"#2e5339",strokeWidth:2.5}),
@@ -412,8 +395,9 @@ function PlantCard(props){
                 h(PhotoGallery,{plant:plant}),
                 h("div",{style:{flex:1,minWidth:180}},
                   h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
-                  (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{display:"flex",gap:12,marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗"),h(INatLink,{latinName:plant.latin})))),
-                  (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin})))),
+                  h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin})),
+                  (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗")))),
+                  (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."))),
                   plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
                   plant.cultivarNotes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#666",fontStyle:"italic",whiteSpace:"pre-line"}},h("span",{style:{fontWeight:600,fontStyle:"normal"}},"Cultivar notes: "),plant.cultivarNotes),
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
@@ -425,7 +409,7 @@ function PlantCard(props){
                     plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
                     plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
                     plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-                    cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"🦋 Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
+                    cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"🦋 Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")))
                   ),
                   h(RiskBadges,{plant:plant}),
                   h(SeedSection,{plant:plant,defaultOpen:false}),
@@ -529,18 +513,17 @@ function PlantCard(props){
         h(PhotoGallery,{plant:plant}),
         h("div",{style:{flex:1,minWidth:180}},
           h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
+          h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin})),
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
   h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
-  h("div",{style:{display:"flex",gap:12,marginTop:4}},
-    h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list \u2197"),
-    h(INatLink,{latinName:plant.latin})
+  h("div",{style:{marginTop:4}},
+    h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list \u2197")
   )
 )),
 (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},
   h("strong",null,"\u26a0\ufe0f Use with caution"),
-  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),
-  h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin}))
+  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts.")
 )),
 plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
                   plant.cultivarNotes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#666",fontStyle:"italic",whiteSpace:"pre-line"}},h("span",{style:{fontWeight:600,fontStyle:"normal"}},"Cultivar notes: "),plant.cultivarNotes),
@@ -553,7 +536,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),
@@ -865,7 +848,7 @@ function SeedCard(props){
   var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
-  var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var ss=getStatusBadge(plant);
   var scolor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
   var sbg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
   var slabel=status==="now"?"\ud83d\udfe2 Ripe now":status==="soon"?"\ud83d\udfe1 Coming soon":"\u26ab Just passed";
@@ -1369,7 +1352,7 @@ function SeedCalendar(props){
     ),
     h("div",{style:{maxWidth:1400,margin:"12px auto 0",padding:"0 20px"}},
       h("div",{style:{position:"relative"}},
-        h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
+        h("input",{value:search,type:"search",autoComplete:"off",autoCorrect:"off",autoCapitalize:"off",spellCheck:false,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search seed plants\u2026",style:{width:"100%",padding:"9px 36px 9px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
         search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}},"\u00d7")
       )
     ),
@@ -1449,7 +1432,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:[],ptypes:[],heightCap:null,heightMin:null,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
@@ -1490,7 +1473,10 @@ function FilterDrawer(props){
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Include"),
-          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}))
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
+            visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}),
+            P("Show cultivars",!!f.showCultivars,function(){set({showCultivars:!f.showCultivars});},"#f3e5f5","#6a1b9a")
+          )
         ),
         h("div",null,
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Plant type"),
@@ -1710,7 +1696,7 @@ function CompactPlantList(props){
         ),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(380px,100%),1fr))",gap:6}},
         lplants.map(function(p){
-          var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+          var ss=getStatusBadge(p);
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
           var cats=p.caterpillars||0;
           var sunIc2=(function(){var s=(p.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
@@ -1851,7 +1837,7 @@ function PaletteView(props){
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
-      h("input",{value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your list\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
+      h("input",{value:search,type:"search",autoComplete:"off",autoCorrect:"off",autoCapitalize:"off",spellCheck:false,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search your list\u2026",style:{width:"100%",padding:"10px 40px 10px 16px",border:"1.5px solid #e0ddd5",borderRadius:10,fontFamily:"inherit",fontSize:16,background:"white",outline:"none",color:"#2c2c2c"}}),
       search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#aaa"}},"\u2715")
     ),
     // Empty state
@@ -2567,7 +2553,7 @@ function SavedListsView(props){
                       ),
                       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:5}},
                       lplants.map(function(p){
-                        var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+                        var ss=getStatusBadge(p);
                         return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",minWidth:0}},
                           h(PlantThumb,{plant:p,size:30,radius:5}),
                           h("div",{style:{flex:1,minWidth:0}},
