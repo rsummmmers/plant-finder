@@ -4,6 +4,7 @@ var STATUS_LABEL_TIPS={
   "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
   "Near-Native":     "Not historically native to Massachusetts, but native to an adjacent state in an ecoregion shared with Massachusetts",
   "Native Cultivar": "A selected variety of a MA native — may have reduced wildlife value compared to straight species",
+  "Near-Native Cultivar": "A selected variety of a near-native species (see Near-Native) — may have reduced wildlife value compared to the straight species",
   "Safe Non-Native": "Non-native with no documented regional ecological concern — vigorous garden behavior by itself doesn't trigger Caution",
   "Invasive":        "Invasive — do not plant; spreads aggressively and displaces native ecosystems",
   "Caution":         "Non-native with documented ecological concern in MA or the Northeast (e.g. escape from cultivation, problematic spread in natural areas, credible emerging-invasive concern) — but doesn't meet the Invasive threshold",
@@ -329,7 +330,7 @@ function PlantCard(props){
     return function(){live=false;};
   },[plant.latin,plant.image]);
   var score=siteKey?(getSiteScore(plant,siteKey)||0):null;
-  var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var ss=getStatusBadge(plant);
   var cats=plant.caterpillars||0;
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
@@ -847,7 +848,7 @@ function SeedCard(props){
   var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
-  var ss=STATUS_COLORS_MAP[plant.status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var ss=getStatusBadge(plant);
   var scolor=status==="now"?"#2e7d32":status==="soon"?"#f57f17":"#999";
   var sbg=status==="now"?"#e8f5e9":status==="soon"?"#fff8e1":"#f5f5f5";
   var slabel=status==="now"?"\ud83d\udfe2 Ripe now":status==="soon"?"\ud83d\udfe1 Coming soon":"\u26ab Just passed";
@@ -1695,7 +1696,7 @@ function CompactPlantList(props){
         ),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(min(380px,100%),1fr))",gap:6}},
         lplants.map(function(p){
-          var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+          var ss=getStatusBadge(p);
           var vbInfo=(proMode&&showVbBadges)?vbLookup(vbData,p.latin):null;
           var cats=p.caterpillars||0;
           var sunIc2=(function(){var s=(p.sun||"").toLowerCase();return s.indexOf("part")>=0?"◑":s.indexOf("shade")>=0?"●":"☀";})();
@@ -2552,7 +2553,7 @@ function SavedListsView(props){
                       ),
                       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:5}},
                       lplants.map(function(p){
-                        var ss=STATUS_COLORS_MAP[p.status]||{bg:"#f5f5f5",text:"#555",label:p.status};
+                        var ss=getStatusBadge(p);
                         return h("div",{key:p.latin,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f0ede4",minWidth:0}},
                           h(PlantThumb,{plant:p,size:30,radius:5}),
                           h("div",{style:{flex:1,minWidth:0}},

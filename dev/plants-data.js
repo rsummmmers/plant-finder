@@ -32,6 +32,7 @@ var STATUS_COLORS_MAP={
   "Native Cultivar":          {bg:"#f3e5f5",text:"#6a1b9a",label:"Native Cultivar"},
   "Near-Native":              {bg:"#e3f2fd",text:"#1565c0",label:"Near-Native"},
   "Near Native":              {bg:"#e3f2fd",text:"#1565c0",label:"Near-Native"},
+  "Near-Native Cultivar":     {bg:"#e8eaf6",text:"#3949ab",label:"Near-Native Cultivar"},
   "Safe Non-Native":          {bg:"#fff8e1",text:"#f57f17",label:"Safe Non-Native"},
   "Safe Non Native":          {bg:"#fff8e1",text:"#f57f17",label:"Safe Non-Native"},
   "Native/Non-Native Hybrid": {bg:"#fce4ec",text:"#880e4f",label:"Hybrid"},
@@ -39,6 +40,22 @@ var STATUS_COLORS_MAP={
   "Invasive":                 {bg:"#fde8e8",text:"#b71c1c",label:"\u26d4 Invasive"},
   "Caution":                  {bg:"#fff3cd",text:"#7d4e00",label:"\u26a0\ufe0f Caution"},
 };
+
+// Most cultivar rows only ever carry a plain tier status ("Native",
+// "Near-Native", ...) with cultivar-ness inferred from a quoted Latin Name
+// (see isCultivar in rowToPlant) rather than literal "... Cultivar" text --
+// only legacy rows spell it out. So the visible badge needs to reflect
+// isCultivar even when the raw status string doesn't say so, otherwise a
+// Near-Native cultivar (and any newly-added Native cultivar that isn't
+// hand-labeled "Native Cultivar") looks identical to the plain species.
+function getStatusBadge(plant){
+  var status=plant.status;
+  if(plant.isCultivar&&status.indexOf("Cultivar")<0){
+    if(status==="Native")status="Native Cultivar";
+    else if(status==="Near-Native"||status==="Near Native")status="Near-Native Cultivar";
+  }
+  return STATUS_COLORS_MAP[status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+}
 
 var PLANT_TYPES=[
 {key:"tree",   label:"Trees",  emoji:"🌳", tip:"Large & understory trees — plants with a single woody trunk",
@@ -674,7 +691,7 @@ function applyFilters(plants,f,siteKey){
     if(f.ptypes&&f.ptypes.length&&f.ptypes.indexOf(p.typeKey)<0)return false;
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.heightMin&&p.heightFt<f.heightMin)return false;
-    if(!f.showCultivars&&p.isCultivar&&!f.search)return false;
+    if(!f.showCultivars&&p.isCultivar)return false;
     if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
     if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.hasScores?(p.scores[siteKey]||0):zoneFallbackScore(p,siteKey))<3)return false;
     var cx=f.concerns||[];
