@@ -28,6 +28,18 @@
        the browser's own round "x" clear button, which would double up with
        the app's existing custom one, so hide the native one. */
     input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;}
+    /* Mobile app shell: fixed-height flex column so the bottom nav bar is a
+       plain flex item (not position:fixed), which is what actually fixes
+       the iOS keyboard-floating bug -- position:fixed is sized against the
+       OLD (non-keyboard-aware) layout viewport, but 100dvh (dynamic
+       viewport height, supported iOS 15.4+) correctly shrinks when the
+       keyboard opens, so a flex item pinned to the bottom of a properly
+       dvh-sized shell just naturally stays above the keyboard. The two
+       height declarations are a deliberate CSS-cascade fallback -- 100vh
+       first for older browsers, then 100dvh overrides it where supported;
+       do not collapse these into one line. */
+    .app-shell-mobile{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+    .app-scroll-mobile{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
   </style>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" href="favicon.png" sizes="32x32">
