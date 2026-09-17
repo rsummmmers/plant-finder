@@ -441,12 +441,13 @@ function monthIdx(s){
 
 // A cultivar name in the wild uses any of these quote styles around the
 // cultivar name, e.g. Digitalis purpurea 'Snow Thimble' or Leucanthemum x
-// superbum "Snow Lady". Used to infer cultivar-ness from the Latin Name
-// itself, so a plain status (Native/Near-Native/Safe Non-Native) plus a
-// quoted cultivar name is enough -- no need to also spell "Cultivar" into
-// the status text just to get inheritance from the parent species.
+// superbum "Snow Lady". A quoted name is a definitive cultivar marker on its
+// own, independent of Ecological Status -- Ajuga reptans 'Black Scallop' and
+// Miscanthus sinensis 'Gracillimus' are cultivars whether their status is
+// Safe Non-Native, Caution, or Invasive. So this applies to any status; the
+// separate "Cultivar" text check just covers legacy rows (e.g. "Native
+// Cultivar") that don't carry a quoted name at all.
 var CULTIVAR_NAME_RE=/[‘’'"]/;
-var PLAIN_TIER_STATUSES={"Native":1,"Near-Native":1,"Near Native":1,"Safe Non-Native":1,"Safe Non Native":1};
 
 function rowToPlant(row){
   var scores={};
@@ -457,7 +458,7 @@ function rowToPlant(row){
   var status=row["Ecological Status"]||"";
   var cat=row["Category"]||"";
   var latinName=row["Latin Name"]||"";
-  var isCultivar=status.indexOf("Cultivar")>=0||(CULTIVAR_NAME_RE.test(latinName)&&!!PLAIN_TIER_STATUSES[status]);
+  var isCultivar=status.indexOf("Cultivar")>=0||CULTIVAR_NAME_RE.test(latinName);
   return{
     common:row["Common Name"]||"",latin:row["Latin Name"]||"",
     category:cat,status:status,
