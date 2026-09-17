@@ -103,6 +103,20 @@ function INatLink({ latinName }) {
     style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
   },"iNaturalist \u2197");
 }
+// Rachel's primary supplier \u2014 link to a live search on their site rather than a
+// guessed product URL (they don't expose stable per-plant permalinks). Only
+// rendered when vbInfo confirms this plant is actually in their catalog, using
+// their own catalog name (vbInfo.vbName) as the search term for the best hit.
+function vbSearchUrl(name){
+  return "https://www.vanberkumnursery.com/search-our-plants/?_sf_search="+encodeURIComponent(name);
+}
+function VBLink({ name }) {
+  if (!name) return null;
+  return h("a",{href:vbSearchUrl(name),target:"_blank",rel:"noopener noreferrer",
+    title:"Search for this plant at Van Berkum Nursery",
+    style:{fontSize:"0.75rem",color:"#2e5339",textDecoration:"none",whiteSpace:"nowrap"}
+  },"Van Berkum \u2197");
+}
 
 // ── PlantThumb ────────────────────────────────────────────────────────────
 function PlantThumb(props){
@@ -377,8 +391,9 @@ function PlantCard(props){
                 h(PhotoGallery,{plant:plant}),
                 h("div",{style:{flex:1,minWidth:180}},
                   h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
-                  (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{display:"flex",gap:12,marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗"),h(INatLink,{latinName:plant.latin})))),
-                  (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin})))),
+                  h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbInfo&&vbInfo.vb&&h(VBLink,{name:vbInfo.vbName})),
+                  (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗")))),
+                  (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."))),
                   plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
                   plant.cultivarNotes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#666",fontStyle:"italic",whiteSpace:"pre-line"}},h("span",{style:{fontWeight:600,fontStyle:"normal"}},"Cultivar notes: "),plant.cultivarNotes),
                   h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",fontSize:13}},
@@ -390,7 +405,7 @@ function PlantCard(props){
                     plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
                     plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
                     plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-                    cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"🦋 Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
+                    cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"🦋 Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")))
                   ),
                   h(RiskBadges,{plant:plant}),
                   h(SeedSection,{plant:plant,defaultOpen:false}),
@@ -494,18 +509,17 @@ function PlantCard(props){
         h(PhotoGallery,{plant:plant}),
         h("div",{style:{flex:1,minWidth:180}},
           h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
+          h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin}),vbInfo&&vbInfo.vb&&h(VBLink,{name:vbInfo.vbName})),
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
   h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
-  h("div",{style:{display:"flex",gap:12,marginTop:4}},
-    h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list \u2197"),
-    h(INatLink,{latinName:plant.latin})
+  h("div",{style:{marginTop:4}},
+    h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list \u2197")
   )
 )),
 (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},
   h("strong",null,"\u26a0\ufe0f Use with caution"),
-  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."),
-  h("div",{style:{marginTop:4}},h(INatLink,{latinName:plant.latin}))
+  h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts.")
 )),
 plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
                   plant.cultivarNotes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#666",fontStyle:"italic",whiteSpace:"pre-line"}},h("span",{style:{fontWeight:600,fontStyle:"normal"}},"Cultivar notes: "),plant.cultivarNotes),
@@ -518,7 +532,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
   plant.flowerColor&&h("div",{style:{display:"flex",alignItems:"center",gap:5,gridColumn:"1/-1"}},h("span",{style:{color:"#888"}},"Flower: "),h(ColorDots,{colorStr:plant.flowerColor,size:12})),
-cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")),h(INatLink,{latinName:plant.latin}))
+cats>0&&h("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:12}},h("span",null,h("span",{style:{color:"#888"}},"\ud83e\udd8b Caterpillar host: "),h("span",{style:{color:icolor,fontWeight:"bold"}},ilabel+" species")))
 ),
 h(RiskBadges,{plant:plant}),
 h(SeedSection,{plant:plant,defaultOpen:defaultSeedOpen}),

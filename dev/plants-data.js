@@ -207,7 +207,10 @@ function applyInheritance(plants){
 
 function GoBotanyLink({ latinName }) {
   if (!latinName) return null;
-  var parts = latinName.trim().toLowerCase().split(/\s+/);
+  // Caller passes baseSpecies(plant.latin) so this already has any cultivar
+  // name stripped; also drop a bare hybrid marker ("x"/"×") so a hybrid taxon
+  // like "Astilbe x arendsii" links to genus/species, not genus/x.
+  var parts = latinName.trim().toLowerCase().split(/\s+/).filter(function(p){return p!=="x"&&p!=="\xd7";});
   if (parts.length < 2) return null;
   var url = "https://gobotany.nativeplanttrust.org/species/" + parts[0] + "/" + parts[1] + "/";
   return h("a", {
@@ -334,6 +337,43 @@ function saveHearts(a){try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch
 var LS_LISTS_KEY="ppb_lists_v1";
 function loadLists(){try{return JSON.parse(localStorage.getItem(LS_LISTS_KEY)||"[]");}catch(err){return[];}}
 function saveLists(a){try{localStorage.setItem(LS_LISTS_KEY,JSON.stringify(a));}catch(err){}}
+
+// ── Live species-photo fallback ──────────────────────────────────────────
+// For a straight (non-cultivar) plant with no curated/iNat image of its own,
+// look up a photo live via iNaturalist's public taxa API instead of leaving
+// a blank placeholder. Never used for cultivars -- a genus/species photo
+// could show the wrong look entirely (e.g. a plain-green species photo for a
+// purple-black cultivar), so cultivars keep the existing placeholder/parent-
+// species-row behavior untouched. Results are cached in localStorage per
+// Latin Name (a species is looked up once per browser, ever) and requests
+// are throttled to a few at a time so rendering a full results grid doesn't
+// fire 100+ simultaneous calls at iNaturalist.
+var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v1";
+function loadInatFallbackCache(){try{return JSON.parse(localStorage.getItem(INAT_FALLBACK_CACHE_KEY)||"{}");}catch(err){return{};}}
+function saveInatFallbackCache(c){try{localStorage.setItem(INAT_FALLBACK_CACHE_KEY,JSON.stringify(c));}catch(err){}}
+var _inatFallbackCache=loadInatFallbackCache();
+var _inatFallbackQueue=[],_inatFallbackActive=0,INAT_FALLBACK_MAX_CONCURRENT=3;
+function _inatFallbackPump(){
+  while(_inatFallbackActive<INAT_FALLBACK_MAX_CONCURRENT&&_inatFallbackQueue.length){
+    var job=_inatFallbackQueue.shift();
+    _inatFallbackActive++;
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.latin)+"&rank=species,hybrid,genus&per_page=1")
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var res=data&&data.results&&data.results[0];
+        var url=(res&&res.default_photo&&res.default_photo.medium_url)||null;
+        _inatFallbackCache[job.latin]=url;
+        saveInatFallbackCache(_inatFallbackCache);
+        job.resolve(url);
+      })
+      .catch(function(){job.resolve(null);})
+      .then(function(){_inatFallbackActive--;_inatFallbackPump();});
+  }
+}
+function fetchSpeciesFallbackImage(latin){
+  if(_inatFallbackCache[latin]!==undefined)return Promise.resolve(_inatFallbackCache[latin]);
+  return new Promise(function(resolve){_inatFallbackQueue.push({latin:latin,resolve:resolve});_inatFallbackPump();});
+}
 
 // ── URL helpers ────────────────────────────────────────────────────────────
 function readURL(){
