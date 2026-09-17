@@ -1849,7 +1849,7 @@ function PaletteView(props){
     hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
       h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your list is empty"),
-      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
+      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20,maxWidth:420,marginLeft:"auto",marginRight:"auto",lineHeight:1.6}},"Not sure where to start with a habitat-friendly mix? Here's a starting suggestion. Remove plants you don't like for an updated starter set. Use the \"Explore\" feature to find plants for your site's conditions, and heart the plants you like to add them to this set."),
       h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
         h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
         h("button",{onClick:onGoToPlants,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
