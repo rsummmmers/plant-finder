@@ -396,6 +396,7 @@ function PlantCard(props){
                 h("div",{style:{flex:1,minWidth:180}},
                   h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
                   h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin})),
+                  h("div",{style:{fontSize:12,color:"#999",lineHeight:1.5,marginBottom:10}},"Growing conditions below reflect this plant's natural preferences, not planting instructions for every site. Deer/Rabbit/Vole ratings show typical browsing pressure, not guarantees. Tap a thumbnail to enlarge the photo, or the heart ♡ to save this plant to your list."),
                   (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},h("strong",null,"⛔ Invasive species"),h("div",null,"This plant is prohibited or highly invasive in Massachusetts."),h("div",{style:{marginTop:4}},h("a",{href:"https://www.mass.gov/info-details/massachusetts-prohibited-plant-list",target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:"#b71c1c",textDecoration:"none"}},"MA Invasives list ↗")))),
                   (plant.status==="Caution"&&h("div",{style:{background:"#fff3cd",border:"1px solid #ffe082",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#7d4e00",lineHeight:1.5}},h("strong",null,"⚠️ Use with caution"),h("div",null,"This plant is invasive or problematic in neighboring states and may cause ecological harm if planted in Massachusetts."))),
                   plant.notes&&h("p",{style:{margin:"0 0 10px",fontSize:14,lineHeight:1.6,color:"#444",whiteSpace:"pre-line"}},plant.notes),
@@ -514,6 +515,7 @@ function PlantCard(props){
         h("div",{style:{flex:1,minWidth:180}},
           h("div",{style:{marginBottom:8}},h("span",{title:STATUS_LABEL_TIPS[ss.label]||ss.label,style:{background:ss.bg,color:ss.text,fontSize:11,padding:"2px 8px",borderRadius:10,fontWeight:"bold",cursor:"help"}},ss.label)),
           h("div",{style:{display:"flex",gap:12,marginBottom:10,flexWrap:"wrap"}},h(GoBotanyLink,{latinName:baseSpecies(plant.latin)}),h(INatLink,{latinName:plant.latin})),
+                  h("div",{style:{fontSize:12,color:"#999",lineHeight:1.5,marginBottom:10}},"Growing conditions below reflect this plant's natural preferences, not planting instructions for every site. Deer/Rabbit/Vole ratings show typical browsing pressure, not guarantees. Tap a thumbnail to enlarge the photo, or the heart ♡ to save this plant to your list."),
           (plant.status==="Invasive"&&h("div",{style:{background:"#fde8e8",border:"1px solid #f5c6c6",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:13,color:"#b71c1c",lineHeight:1.5}},
   h("strong",null,"\u26d4 Invasive species"),
   h("div",null,"This plant is prohibited or highly invasive in Massachusetts. It is included for identification and educational purposes only \u2014 not for planting."),
@@ -1812,6 +1814,9 @@ function PaletteView(props){
   }
 
   return h("div",null,
+    hearted.length>0&&h("div",{style:{fontSize:13,color:"#888",lineHeight:1.5,marginBottom:10}},
+      "The plants you've hearted, grouped by type below — tap a category to filter this list to just that type. Search narrows further within it. \"Suggest a mix\" adds a layered starting combination (canopy, shrubs, perennials, groundcover) on top of what you've already saved."
+    ),
     // Palette header bar — sticky on desktop only
     h("div",{style:isMobile?{marginBottom:8}:{position:"sticky",top:140,zIndex:50,background:"#D9D9BF",paddingBottom:8,marginBottom:4}},
     h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px"}},
@@ -1844,7 +1849,7 @@ function PaletteView(props){
     hearted.length===0&&!showMix&&h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#888"}},
       h("div",{style:{fontSize:40,marginBottom:12}},"\u2661"),
       h("div",{style:{fontStyle:"italic",fontSize:16,marginBottom:6}},"Your list is empty"),
-      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20}},"Browse plants and heart what you like, or get a suggested starting mix."),
+      h("div",{style:{fontSize:13,color:"#aaa",marginBottom:20,maxWidth:420,marginLeft:"auto",marginRight:"auto",lineHeight:1.6}},"Not sure where to start with a habitat-friendly mix? Here's a starting suggestion. Remove plants you don't like for an updated starter set. Use the \"Explore\" feature to find plants for your site's conditions, and heart the plants you like to add them to this set."),
       h("div",{style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}},
         h("button",{onClick:function(){setShowMix(true);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"\ud83c\udf3f Suggest a mix"),
         h("button",{onClick:onGoToPlants,style:{background:"white",color:"#2e5339",border:"1.5px solid #2e5339",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Browse plants \u2192")
@@ -1859,7 +1864,7 @@ function PaletteView(props){
         ):
         h("div",null,
           h("div",{style:{fontStyle:"italic",fontSize:15,marginBottom:12}},"\u201c"+search+"\u201d isn\u2019t in your list yet."),
-          h("button",{style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"+ Suggest this plant")
+          h("button",{onClick:function(){onGoToPlants(search);},style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14}},"Search Explore for \u201c"+search+"\u201d \u2192")
         )
     ),
     // Plant cards — grouped by type

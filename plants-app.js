@@ -43,6 +43,7 @@ function App(){
   function hideVbBadges(){sessionStorage.setItem("ppb_vb_hidden","1");setShowVbBadges(false);}
   var _vbw=useState(""),vbWeekOf=_vbw[0],setVbWeekOf=_vbw[1];
   var searchRef=useRef(null);
+  var scrollRef=useRef(null); // the mobile app-shell's own scroll container (see .app-scroll-mobile)
 
   function focusSearch(){setActiveTab("plants");setTimeout(function(){if(searchRef.current)searchRef.current.focus();},80);}
 
@@ -112,7 +113,10 @@ function App(){
   },[activeTab,search,zone,filters,sortBy,label]);
 
   useEffect(function(){
-    requestAnimationFrame(function(){requestAnimationFrame(function(){window.scrollTo(0,0);});});
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      window.scrollTo(0,0); // desktop: body is still the real scroller
+      if(scrollRef.current)scrollRef.current.scrollTop=0; // mobile: .app-scroll-mobile is
+    });});
     setSelectMode(false);setSelectedLatins([]);
   },[activeTab]);
 
@@ -183,7 +187,9 @@ function App(){
 
   // ── Render ──
   if(activeTab==="quote")return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#f9f8f4",minHeight:"100vh",color:"#333",padding:"20px 16px 60px"}},h(QuoteView,{data:initQuoteData}));
-  return h("div",{style:{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",minHeight:"100vh",color:"#2c2c2c",paddingBottom:isMobile?"calc(80px + env(safe-area-inset-bottom,0px))":"0",paddingTop:isMobile?"0":"140px"}},
+  return h("div",{className:isMobile?"app-shell-mobile":"",style:isMobile
+    ?{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",color:"#2c2c2c"}
+    :{fontFamily:"'Poppins',sans-serif",background:"#D9D9BF",minHeight:"100vh",color:"#2c2c2c",paddingTop:"140px"}},
     showGlossary&&h("div",{onClick:function(){setShowGlossary(false);},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.6)",overflowY:"auto",padding:"20px 16px 40px"}},
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",background:"white",borderRadius:14,padding:"28px 32px",position:"relative"}},
         h("button",{onClick:function(){setShowGlossary(false);},style:{position:"absolute",top:12,right:12,background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",lineHeight:1}},"✕"),
@@ -210,6 +216,14 @@ function App(){
         })
       )
     ),
+
+    // Scrollable content -- on mobile this is the actual scroll container
+    // (.app-scroll-mobile, flex:1/overflow-y:auto inside the fixed-height
+    // .app-shell-mobile shell above); on desktop it's display:contents, a
+    // total no-op that doesn't change desktop's existing document-scroll
+    // layout at all. Everything from the header through the footer lives
+    // in here; only the bottom nav sits outside it as a plain flex item.
+    h("div",{ref:scrollRef,className:isMobile?"app-scroll-mobile":"",style:isMobile?{}:{display:"contents"}},
 
     // Header + tabs — fixed on desktop, normal flow on mobile
     h("div",{style:{position:isMobile?"relative":"fixed",top:0,left:0,right:0,zIndex:200,background:"#150f09"}},
@@ -321,7 +335,7 @@ function App(){
           )
         ):
         activeTab==="quote"?h(QuoteView,{data:initQuoteData}):
-        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(){setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,listView:listView,onToggleListView:toggleListView,onLoosen:function(type){
+        activeTab==="palette"?h(PaletteView,{hearts:hearts,plants:plants,onHeart:toggleHeart,onClear:function(){setHearts([]);saveHearts([]);},onGoToPlants:function(term){if(term)setSearch(term);setActiveTab("plants");},mixFiltered:mixFiltered,patchSize:patchSize,concerns:filters.concerns,activeFilterCount:activeFilterCount,onOpenFilters:function(){setDrawerOpen(true);},isMobile:isMobile,label:label,onLabelChange:setLabel,lists:lists,onToggleInList:togglePlantInList,onCreateList:createList,onBulkAdd:bulkAddToList,proMode:proMode,vbData:vbData,vbFilter:vbFilter,listView:listView,onToggleListView:toggleListView,onLoosen:function(type){
             if(type==="shadedby")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c.indexOf("shadedby")<0;})});});
             if(type==="near_walnut")setFilters(function(f){return Object.assign({},f,{concerns:f.concerns.filter(function(c){return c!=="near_walnut";})});});
             if(type==="height")setFilters(function(f){return Object.assign({},f,{heightCap:null});});
@@ -410,8 +424,20 @@ function App(){
       )
     ),
 
-    // Mobile bottom nav
-    isMobile&&h("div",{style:{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",WebkitTransform:"translateZ(0)"}},
+
+    // Footer
+    h("div",{style:{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5",lineHeight:2}},
+      h("div",null,"Created by ",h("a",{href:"https://www.summersgardening.com",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Rachel Noack Summers / Summers EcoScaping")," \u00b7 Built with Claude (Anthropic)"),
+      h("div",null,"Images from iNaturalist and other Creative Commons sources \u00b7 Plant data compiled from publicly available sources"),
+      h("div",null,"Native plant designations specific to Massachusetts per ",h("a",{href:"https://gobotany.nativeplanttrust.org",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Go Botany / Native Plant Trust")),
+      h("div",null,h("a",{href:SHEET_VIEW,target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"View source data \u2192")," \u00b7 Edits, suggestions, additions and corrections are welcome"),
+      h("div",null,"Questions, suggestions, collaboration: ",h("a",{href:"mailto:rsummmmers@gmail.com",style:{color:"#2e5339",textDecoration:"none"}},"rsummmmers@gmail.com"))
+    )
+    ),
+
+    // Mobile bottom nav -- plain flex item now (not position:fixed); see
+    // .app-shell-mobile / .app-scroll-mobile in index.html for why.
+    isMobile&&h("div",{style:{background:"white",borderTop:"1px solid #e0ddd5",display:"flex",paddingBottom:"env(safe-area-inset-bottom,0px)",flexShrink:0}},
       [
         {key:"plants",  label:"Explore",   icon:"\ud83d\udd0d"},
         {key:"palette", label:"My Plants", icon:"\u2665", count:hearts.length},
@@ -446,14 +472,5 @@ function App(){
         );
       })
     ),
-
-    // Footer
-    h("div",{style:{textAlign:"center",padding:"20px 16px",color:"#aaa",fontSize:12,borderTop:"1px solid #e0ddd5",lineHeight:2}},
-      h("div",null,"Created by ",h("a",{href:"https://www.summersgardening.com",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Rachel Noack Summers / Summers EcoScaping")," \u00b7 Built with Claude (Anthropic)"),
-      h("div",null,"Images from iNaturalist and other Creative Commons sources \u00b7 Plant data compiled from publicly available sources"),
-      h("div",null,"Native plant designations specific to Massachusetts per ",h("a",{href:"https://gobotany.nativeplanttrust.org",target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"Go Botany / Native Plant Trust")),
-      h("div",null,h("a",{href:SHEET_VIEW,target:"_blank",rel:"noopener noreferrer",style:{color:"#2e5339",textDecoration:"none"}},"View source data \u2192")," \u00b7 Edits, suggestions, additions and corrections are welcome"),
-      h("div",null,"Questions, suggestions, collaboration: ",h("a",{href:"mailto:rsummmmers@gmail.com",style:{color:"#2e5339",textDecoration:"none"}},"rsummmmers@gmail.com"))
-    )
   );
 }
