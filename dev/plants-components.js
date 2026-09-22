@@ -323,6 +323,13 @@ function SeedSection(props){
 function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var gridMode=props.gridMode||false;
+  // Set by callers (Bloom, Seed) that already open PlantCard inside their own
+  // dedicated single-plant modal with defaultOpen:true -- collapsing the row
+  // there just leaves a closed header sitting inside an already-open modal,
+  // needing a second click to see the content again. Not set anywhere the
+  // row is browsed inline in a list (CompactPlantList, Suggest, Procurement),
+  // where the expand/collapse is the actual point.
+  var hideRowToggle=props.hideRowToggle||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
   var vbInfo=props.vbInfo||null;
@@ -511,7 +518,7 @@ function PlantCard(props){
         h("div",{style:{fontSize:13,fontWeight:"bold",letterSpacing:-1}},"\u25cf".repeat(score)),
         h("div",{style:{fontSize:8,opacity:0.85,lineHeight:1}},SCORE_LABELS[score])
       ),
-      h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}},
+      h("div",{onClick:hideRowToggle?undefined:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:hideRowToggle?"default":"pointer"}},
         h(PlantThumb,{plant:plant,size:50,radius:8}),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:"bold",fontSize:16,fontFamily:"'Literata',serif"}},plant.common),
@@ -526,7 +533,7 @@ function PlantCard(props){
             cats>0&&h("span",{style:{fontSize:11,color:icolor,fontWeight:"bold"}},"\ud83e\udd8b"+ilabel)
           )
         ),
-        h("span",{className:"no-print",style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
+        !hideRowToggle&&h("span",{className:"no-print",style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
       ),
       h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},title:"Add to a saved list",
         style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2e5339",lineHeight:1,padding:"6px 9px",fontFamily:"inherit",flexShrink:0}},"+List"),
@@ -897,7 +904,7 @@ function SeedCard(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
+          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true,hideRowToggle:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -1039,7 +1046,7 @@ function BloomCalendar(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,hideRowToggle:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
