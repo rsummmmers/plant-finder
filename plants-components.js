@@ -1,5 +1,13 @@
 // Plant Palette Builder — UI components
 
+// Newest-first ordering for saved lists, used everywhere a list of lists is
+// shown (the "add to list" pickers, the bloom-calendar list selector, the
+// Saved Lists view itself) so a long-time user with dozens of lists finds
+// recent ones at the top instead of having to scroll to the bottom.
+function sortListsNewest(lists){
+  return lists.slice().sort(function(a,b){return(b.updated||b.created||0)-(a.updated||a.created||0);});
+}
+
 var STATUS_LABEL_TIPS={
   "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
   "Near-Native":     "Not historically native to Massachusetts, but native to an adjacent state in an ecoregion shared with Massachusetts",
@@ -315,6 +323,13 @@ function SeedSection(props){
 function PlantCard(props){
   var plant=props.plant,siteKey=props.siteKey,hearted=props.hearted,onHeart=props.onHeart,onRemove=props.onRemove,edibleOnly=props.edibleOnly,medicinalOnly=props.medicinalOnly,defaultOpen=props.defaultOpen||false,defaultSeedOpen=props.defaultSeedOpen||false;
   var gridMode=props.gridMode||false;
+  // Set by callers (Bloom, Seed) that already open PlantCard inside their own
+  // dedicated single-plant modal with defaultOpen:true -- collapsing the row
+  // there just leaves a closed header sitting inside an already-open modal,
+  // needing a second click to see the content again. Not set anywhere the
+  // row is browsed inline in a list (CompactPlantList, Suggest, Procurement),
+  // where the expand/collapse is the actual point.
+  var hideRowToggle=props.hideRowToggle||false;
   var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var selectMode=props.selectMode||false,isSelected=props.isSelected||false,onToggleSelected=props.onToggleSelected||function(){};
   var vbInfo=props.vbInfo||null;
@@ -322,6 +337,7 @@ function PlantCard(props){
   var _lp=useState(false),listPickerOpen=_lp[0],setListPickerOpen=_lp[1];
   var _nl=useState(false),newListMode=_nl[0],setNewListMode=_nl[1];
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
+  var _lps=useState(""),listPickerSearch=_lps[0],setListPickerSearch=_lps[1];
   var _fb=useState(undefined),imgFallback=_fb[0],setImgFallback=_fb[1];
   useEffect(function(){
     if(plant.image)return;
@@ -334,6 +350,58 @@ function PlantCard(props){
   var cats=plant.caterpillars||0;
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
+
+  // Computed once, outside the gridMode/list-row branches below, so the
+  // "+List" button works from BOTH -- it was previously only defined inside
+  // the gridMode return, so opening a plant from anywhere that renders
+  // PlantCard without gridMode (Bloom, Seeds, Suggest a mix, Procurement...)
+  // had a "+List" button that set state but had no modal to actually show.
+  var listPickerModal=listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+    h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
+      h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("div",null,
+          h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
+          h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
+        ),
+        h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+      ),
+      lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
+      lists.length>6&&h("div",{style:{padding:"8px 16px",borderBottom:"1px solid #f0ede4"}},
+        h("input",{value:listPickerSearch,type:"search",autoComplete:"off",onChange:function(ev){setListPickerSearch(ev.target.value);},placeholder:"Search your lists…",style:{width:"100%",padding:"6px 10px",border:"1.5px solid #e0ddd5",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none"}})
+      ),
+      h("div",{style:{maxHeight:280,overflowY:"auto"}},
+        (function(){
+          var sortedLists=sortListsNewest(lists);
+          var filtered=listPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
+          if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+listPickerSearch+"\".");
+          return filtered.map(function(list){
+            var inList=list.plants.indexOf(plant.latin)>=0;
+            return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
+              h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
+              h("span",{style:{fontSize:14,flex:1}},list.name),
+              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
+            );
+          });
+        })()
+      ),
+      newListMode
+        ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
+            h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
+              onKeyDown:function(ev){
+                if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
+                if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
+              },
+              placeholder:"List name…",
+              style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
+            }),
+            h("div",{style:{display:"flex",gap:6,marginTop:8}},
+              h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
+              h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+            )
+          )
+        :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
+    )
+  );
 
   if(gridMode){
     var img=plant.image||imgFallback;
@@ -388,7 +456,10 @@ function PlantCard(props){
                 h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:20,lineHeight:1.2}},plant.common),
                 h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginTop:2}},plant.latin)
               ),
-              h("button",{onClick:function(){onHeart(plant.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:26,color:hearted?"#e57373":"#ddd",lineHeight:1,padding:4,flexShrink:0}},hearted?"♥":"♡")
+              h("div",{style:{display:"flex",alignItems:"center",gap:4,flexShrink:0}},
+                h("button",{onClick:function(){setListPickerOpen(true);},title:"Add to a saved list",style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2e5339",lineHeight:1,padding:"6px 9px",fontFamily:"inherit"}},"+List"),
+                h("button",{onClick:function(){onHeart(plant.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:26,color:hearted?"#e57373":"#ddd",lineHeight:1,padding:4}},hearted?"♥":"♡")
+              )
             ),
             h("div",{style:{padding:"0 14px 16px"}},
               h("div",{style:{display:"flex",gap:16,marginTop:14,flexWrap:"wrap"}},
@@ -437,42 +508,7 @@ function PlantCard(props){
           )
         )
       ),
-      listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
-        h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
-          h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            h("div",null,
-              h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
-              h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
-            ),
-            h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
-          ),
-          lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
-          lists.map(function(list){
-            var inList=list.plants.indexOf(plant.latin)>=0;
-            return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
-              h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
-              h("span",{style:{fontSize:14,flex:1}},list.name),
-              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
-            );
-          }),
-          newListMode
-            ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
-                h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
-                  onKeyDown:function(ev){
-                    if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
-                    if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
-                  },
-                  placeholder:"List name…",
-                  style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
-                }),
-                h("div",{style:{display:"flex",gap:6,marginTop:8}},
-                  h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
-                  h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
-                )
-              )
-            :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
-        )
-      )
+      listPickerModal
     );
   }
 
@@ -482,7 +518,7 @@ function PlantCard(props){
         h("div",{style:{fontSize:13,fontWeight:"bold",letterSpacing:-1}},"\u25cf".repeat(score)),
         h("div",{style:{fontSize:8,opacity:0.85,lineHeight:1}},SCORE_LABELS[score])
       ),
-      h("div",{onClick:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}},
+      h("div",{onClick:hideRowToggle?undefined:function(){setOpen(!open);},style:{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:hideRowToggle?"default":"pointer"}},
         h(PlantThumb,{plant:plant,size:50,radius:8}),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontWeight:"bold",fontSize:16,fontFamily:"'Literata',serif"}},plant.common),
@@ -497,8 +533,10 @@ function PlantCard(props){
             cats>0&&h("span",{style:{fontSize:11,color:icolor,fontWeight:"bold"}},"\ud83e\udd8b"+ilabel)
           )
         ),
-        h("span",{className:"no-print",style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
+        !hideRowToggle&&h("span",{className:"no-print",style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
       ),
+      h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},title:"Add to a saved list",
+        style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2e5339",lineHeight:1,padding:"6px 9px",fontFamily:"inherit",flexShrink:0}},"+List"),
       h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},
         style:{background:"none",border:"none",cursor:"pointer",fontSize:24,color:hearted?"#e57373":"#ddd",flexShrink:0,padding:4,lineHeight:1}},
         hearted?"\u2665":"\u2661"
@@ -560,7 +598,8 @@ plant.hasScores&&h("div",{style:{marginTop:14}},
       )
         )
       )
-    )
+    ),
+    listPickerModal
   );
 }
 
@@ -636,6 +675,7 @@ var p=new URLSearchParams();
 // ── SuggestPanel ──────────────────────────────────────────────────────────
 function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _ex=useState([]),excluded=_ex[0],setExcluded=_ex[1];
   var scale=count/20;
@@ -673,7 +713,7 @@ function SuggestPanel(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -715,6 +755,7 @@ function SuggestPanel(props){
 function HabitatView(props){
   var plants=props.plants,concerns=props.concerns,heightCap=props.heightCap,
       patchSize=props.patchSize,hearts=props.hearts,onHeart=props.onHeart,onLoosen=props.onLoosen;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var isMobile=props.isMobile||false;
   var scale=patchSize/20;
   var HT={
@@ -837,7 +878,7 @@ function HabitatView(props){
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
-            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true})
+            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
           );
         }))
       );
@@ -848,6 +889,7 @@ function HabitatView(props){
 // ── SeedCard ──────────────────────────────────────────────────────────────
 function SeedCard(props){
   var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
   var ss=getStatusBadge(plant);
@@ -862,7 +904,7 @@ function SeedCard(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true})
+          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true,hideRowToggle:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -916,6 +958,8 @@ function SeedCard(props){
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
   var lists=props.lists||[];
+  var onToggleInList=props.onToggleInList||function(){};
+  var onCreateList=props.onCreateList||function(){};
   var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
@@ -1002,7 +1046,7 @@ function BloomCalendar(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,hideRowToggle:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -1025,7 +1069,7 @@ function BloomCalendar(props){
           h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My list"),
           lists.length>0&&h("select",{value:lists.find(function(l){return l.id===source;})?source:"",onChange:function(ev){if(ev.target.value)setSource(ev.target.value);},style:{padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.2)":"transparent",color:"white",outline:"none",appearance:"none",paddingRight:22}},
             h("option",{value:"",disabled:true},"Saved list\u2026"),
-            lists.map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
+            sortListsNewest(lists).map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
             var isNamedList=source!=="all"&&source!=="hearts";
@@ -1244,6 +1288,7 @@ var BLOOM_COLOR_GROUPS={
 // ── SeedCalendar ──────────────────────────────────────────────────────────
 function SeedCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var now=new Date();
   var _m=useState(now.getMonth()),monthIdx=_m[0],setMonthIdx=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
@@ -1371,9 +1416,9 @@ function SeedCalendar(props){
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
     h("div",{style:{maxWidth:1400,margin:"0 auto",padding:"16px 20px 80px"}},
-      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx});})),
-      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx});}))),
-      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx});}))),
+      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});})),
+      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});}))),
+      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});}))),
       ripeNow.length===0&&comingSoon.length===0&&justPassed.length===0&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},
         h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),
         h("div",{style:{fontStyle:"italic",fontSize:16}},"No seed collection activity around "+MONTHS[monthIdx]+"."),
@@ -1683,7 +1728,7 @@ function CompactPlantList(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -1740,6 +1785,7 @@ function PaletteView(props){
   var _bp=useState(false),bulkPickerOpen=_bp[0],setBulkPickerOpen=_bp[1];
   var _bn=useState(false),bulkNewMode=_bn[0],setBulkNewMode=_bn[1];
   var _bname=useState(""),bulkNewName=_bname[0],setBulkNewName=_bname[1];
+  var _bs=useState(""),bulkPickerSearch=_bs[0],setBulkPickerSearch=_bs[1];
   var resultsRef=useRef(null);
 
   function handleTileClick(key){
@@ -1838,7 +1884,7 @@ function PaletteView(props){
     )),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile})
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -1891,25 +1937,35 @@ function PaletteView(props){
         })()
     ),
     // Bulk "Save to list" picker modal
-    bulkPickerOpen&&h("div",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+    bulkPickerOpen&&h("div",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");setBulkPickerSearch("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
       h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
         h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
           h("div",null,
             h("div",{style:{fontWeight:700,fontSize:15}},"Save all "+hearted.length+" plants to a list"),
             h("div",{style:{fontSize:12,color:"#999",marginTop:2}},"Adds to any existing plants in the list")
           ),
-          h("button",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+          h("button",{onClick:function(){setBulkPickerOpen(false);setBulkNewMode(false);setBulkNewName("");setBulkPickerSearch("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
         ),
         lists.length===0&&!bulkNewMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
-        lists.map(function(list){
-          return h("div",{key:list.id,
-            onClick:function(){onBulkAdd(hearts,list.id);setBulkPickerOpen(false);},
-            style:{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",cursor:"pointer",background:"white",borderBottom:"1px solid #f5f5f5"}
-          },
-            h("span",{style:{fontSize:14,flex:1}},list.name),
-            h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length+" plants")
-          );
-        }),
+        lists.length>6&&h("div",{style:{padding:"8px 16px",borderBottom:"1px solid #f0ede4"}},
+          h("input",{value:bulkPickerSearch,type:"search",autoComplete:"off",onChange:function(ev){setBulkPickerSearch(ev.target.value);},placeholder:"Search your lists…",style:{width:"100%",padding:"6px 10px",border:"1.5px solid #e0ddd5",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none"}})
+        ),
+        h("div",{style:{maxHeight:280,overflowY:"auto"}},
+          (function(){
+            var sortedLists=sortListsNewest(lists);
+            var filtered=bulkPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(bulkPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
+            if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+bulkPickerSearch+"\".");
+            return filtered.map(function(list){
+              return h("div",{key:list.id,
+                onClick:function(){onBulkAdd(hearts,list.id);setBulkPickerOpen(false);setBulkPickerSearch("");},
+                style:{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",cursor:"pointer",background:"white",borderBottom:"1px solid #f5f5f5"}
+              },
+                h("span",{style:{fontSize:14,flex:1}},list.name),
+                h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length+" plants")
+              );
+            });
+          })()
+        ),
         bulkNewMode
           ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
               h("input",{autoFocus:true,value:bulkNewName,onChange:function(ev){setBulkNewName(ev.target.value);},
@@ -2009,6 +2065,7 @@ function getUnitPrice(vbPrice,size){
 
 function ProcurementView(props){
   var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){},onUpdateNotes=props.onUpdateNotes||function(){};
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _sz=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_selsize_"+list.id)||"{}");}catch(e){return {};}}),selSizes=_sz[0],setSelSizes=_sz[1];
@@ -2240,7 +2297,7 @@ function ProcurementView(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -2542,7 +2599,7 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);},onGoToBloom:props.onGoToBloom})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);},onGoToBloom:props.onGoToBloom,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               if(compactView){
@@ -2614,7 +2671,7 @@ function SavedListsView(props){
       h("div",{style:{fontSize:13,color:"#bbb"}},"then add plants with the \"+List\" button on any plant card.")
     ),
     h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-      lists.slice().sort(function(a,b){return(b.updated||b.created||0)-(a.updated||a.created||0);}).map(function(list){
+      sortListsNewest(lists).map(function(list){
         return h("div",{key:list.id,
           onClick:function(){setOpenId(list.id);},
           style:{background:"white",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}
@@ -2641,7 +2698,10 @@ function SelectActionBar(props){
   var _po=useState(false),pickerOpen=_po[0],setPickerOpen=_po[1];
   var _nm=useState(false),newListMode=_nm[0],setNewListMode=_nm[1];
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
-  function closePicker(){setPickerOpen(false);setNewListMode(false);setNewListName("");}
+  var _ls=useState(""),listSearch=_ls[0],setListSearch=_ls[1];
+  function closePicker(){setPickerOpen(false);setNewListMode(false);setNewListName("");setListSearch("");}
+  var sortedLists=sortListsNewest(lists);
+  var filteredLists=listSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listSearch.trim().toLowerCase())>=0;}):sortedLists;
   return h(React.Fragment,null,
     h("div",{style:{position:"fixed",bottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",left:0,right:0,zIndex:300,background:"#2e5339",color:"white",padding:"12px 20px",boxShadow:"0 -2px 16px rgba(0,0,0,0.2)",display:"flex",flexDirection:"column",gap:isMobile?8:0}},
       h("div",{style:{display:"flex",alignItems:"center",gap:10}},
@@ -2665,13 +2725,19 @@ function SelectActionBar(props){
           h("button",{onClick:closePicker,style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
         ),
         lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
-        lists.map(function(list){
-          return h("div",{key:list.id,onClick:function(){onBulkAdd(selectedLatins,list.id);closePicker();onExit();},
-            style:{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",cursor:"pointer",background:"white",borderBottom:"1px solid #f5f5f5"}},
-            h("span",{style:{fontSize:14,flex:1}},list.name),
-            h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length+" plants")
-          );
-        }),
+        lists.length>6&&h("div",{style:{padding:"8px 16px",borderBottom:"1px solid #f0ede4"}},
+          h("input",{value:listSearch,type:"search",autoComplete:"off",onChange:function(ev){setListSearch(ev.target.value);},placeholder:"Search your lists…",style:{width:"100%",padding:"6px 10px",border:"1.5px solid #e0ddd5",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none"}})
+        ),
+        h("div",{style:{maxHeight:280,overflowY:"auto"}},
+          lists.length>0&&filteredLists.length===0&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+listSearch+"\"."),
+          filteredLists.map(function(list){
+            return h("div",{key:list.id,onClick:function(){onBulkAdd(selectedLatins,list.id);closePicker();onExit();},
+              style:{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",cursor:"pointer",background:"white",borderBottom:"1px solid #f5f5f5"}},
+              h("span",{style:{fontSize:14,flex:1}},list.name),
+              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length+" plants")
+            );
+          })
+        ),
         newListMode
           ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
               h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
