@@ -1,5 +1,13 @@
 // Plant Palette Builder — UI components
 
+// Newest-first ordering for saved lists, used everywhere a list of lists is
+// shown (the "add to list" pickers, the bloom-calendar list selector, the
+// Saved Lists view itself) so a long-time user with dozens of lists finds
+// recent ones at the top instead of having to scroll to the bottom.
+function sortListsNewest(lists){
+  return lists.slice().sort(function(a,b){return(b.updated||b.created||0)-(a.updated||a.created||0);});
+}
+
 var STATUS_LABEL_TIPS={
   "Native":          "Native to Massachusetts — evolved here and directly supports local insects, birds, and other wildlife",
   "Near-Native":     "Not historically native to Massachusetts, but native to an adjacent state in an ecoregion shared with Massachusetts",
@@ -389,7 +397,10 @@ function PlantCard(props){
                 h("div",{style:{fontFamily:"'Literata',serif",fontWeight:700,fontSize:20,lineHeight:1.2}},plant.common),
                 h("div",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginTop:2}},plant.latin)
               ),
-              h("button",{onClick:function(){onHeart(plant.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:26,color:hearted?"#e57373":"#ddd",lineHeight:1,padding:4,flexShrink:0}},hearted?"♥":"♡")
+              h("div",{style:{display:"flex",alignItems:"center",gap:4,flexShrink:0}},
+                h("button",{onClick:function(){setListPickerOpen(true);},title:"Add to a saved list",style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2e5339",lineHeight:1,padding:"6px 9px",fontFamily:"inherit"}},"+List"),
+                h("button",{onClick:function(){onHeart(plant.latin);},style:{background:"none",border:"none",cursor:"pointer",fontSize:26,color:hearted?"#e57373":"#ddd",lineHeight:1,padding:4}},hearted?"♥":"♡")
+              )
             ),
             h("div",{style:{padding:"0 14px 16px"}},
               h("div",{style:{display:"flex",gap:16,marginTop:14,flexWrap:"wrap"}},
@@ -453,7 +464,8 @@ function PlantCard(props){
           ),
           h("div",{style:{maxHeight:280,overflowY:"auto"}},
             (function(){
-              var filtered=listPickerSearch.trim()?lists.filter(function(l){return l.name.toLowerCase().indexOf(listPickerSearch.trim().toLowerCase())>=0;}):lists;
+              var sortedLists=sortListsNewest(lists);
+              var filtered=listPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
               if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+listPickerSearch+"\".");
               return filtered.map(function(list){
                 var inList=list.plants.indexOf(plant.latin)>=0;
@@ -509,6 +521,8 @@ function PlantCard(props){
         ),
         h("span",{className:"no-print",style:{color:"#aaa",fontSize:14,flexShrink:0}},open?"\u25b2":"\u25bc")
       ),
+      h("button",{onClick:function(ev){ev.stopPropagation();setListPickerOpen(true);},title:"Add to a saved list",
+        style:{background:"none",border:"1px solid #e0ddd5",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2e5339",lineHeight:1,padding:"6px 9px",fontFamily:"inherit",flexShrink:0}},"+List"),
       h("button",{onClick:function(ev){ev.stopPropagation();onHeart(plant.latin);},
         style:{background:"none",border:"none",cursor:"pointer",fontSize:24,color:hearted?"#e57373":"#ddd",flexShrink:0,padding:4,lineHeight:1}},
         hearted?"\u2665":"\u2661"
@@ -1035,7 +1049,7 @@ function BloomCalendar(props){
           h("button",{onClick:function(){setSource("hearts");},style:{padding:"5px 13px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(source==="hearts"?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:source==="hearts"?"rgba(255,255,255,0.2)":"transparent",color:source==="hearts"?"white":"rgba(255,255,255,0.6)",fontWeight:source==="hearts"?"500":"normal"}},isMobile?"\u2665 Mine":"\u2665 My list"),
           lists.length>0&&h("select",{value:lists.find(function(l){return l.id===source;})?source:"",onChange:function(ev){if(ev.target.value)setSource(ev.target.value);},style:{padding:"4px 10px",borderRadius:20,cursor:"pointer",fontFamily:"inherit",fontSize:13,border:"1.5px solid "+(lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.8)":"rgba(255,255,255,0.25)"),background:lists.find(function(l){return l.id===source;})?"rgba(255,255,255,0.2)":"transparent",color:"white",outline:"none",appearance:"none",paddingRight:22}},
             h("option",{value:"",disabled:true},"Saved list\u2026"),
-            lists.map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
+            sortListsNewest(lists).map(function(l){return h("option",{key:l.id,value:l.id,style:{color:"#333",background:"white"}},l.name);})),
           h("div",{style:{width:1,height:18,background:"rgba(255,255,255,0.2)"}}),
           STATUS_OPTS.map(function(opt){
             var isNamedList=source!=="all"&&source!=="hearts";
@@ -1917,7 +1931,8 @@ function PaletteView(props){
         ),
         h("div",{style:{maxHeight:280,overflowY:"auto"}},
           (function(){
-            var filtered=bulkPickerSearch.trim()?lists.filter(function(l){return l.name.toLowerCase().indexOf(bulkPickerSearch.trim().toLowerCase())>=0;}):lists;
+            var sortedLists=sortListsNewest(lists);
+            var filtered=bulkPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(bulkPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
             if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+bulkPickerSearch+"\".");
             return filtered.map(function(list){
               return h("div",{key:list.id,
@@ -2634,7 +2649,7 @@ function SavedListsView(props){
       h("div",{style:{fontSize:13,color:"#bbb"}},"then add plants with the \"+List\" button on any plant card.")
     ),
     h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-      lists.slice().sort(function(a,b){return(b.updated||b.created||0)-(a.updated||a.created||0);}).map(function(list){
+      sortListsNewest(lists).map(function(list){
         return h("div",{key:list.id,
           onClick:function(){setOpenId(list.id);},
           style:{background:"white",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}
@@ -2663,7 +2678,8 @@ function SelectActionBar(props){
   var _nn=useState(""),newListName=_nn[0],setNewListName=_nn[1];
   var _ls=useState(""),listSearch=_ls[0],setListSearch=_ls[1];
   function closePicker(){setPickerOpen(false);setNewListMode(false);setNewListName("");setListSearch("");}
-  var filteredLists=listSearch.trim()?lists.filter(function(l){return l.name.toLowerCase().indexOf(listSearch.trim().toLowerCase())>=0;}):lists;
+  var sortedLists=sortListsNewest(lists);
+  var filteredLists=listSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listSearch.trim().toLowerCase())>=0;}):sortedLists;
   return h(React.Fragment,null,
     h("div",{style:{position:"fixed",bottom:isMobile?"calc(64px + env(safe-area-inset-bottom,0px))":"0",left:0,right:0,zIndex:300,background:"#2e5339",color:"white",padding:"12px 20px",boxShadow:"0 -2px 16px rgba(0,0,0,0.2)",display:"flex",flexDirection:"column",gap:isMobile?8:0}},
       h("div",{style:{display:"flex",alignItems:"center",gap:10}},
