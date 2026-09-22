@@ -344,6 +344,58 @@ function PlantCard(props){
   var icolor=cats>=100?"#2e7d32":cats>=20?"#f57f17":"#999";
   var ilabel=""+cats;
 
+  // Computed once, outside the gridMode/list-row branches below, so the
+  // "+List" button works from BOTH -- it was previously only defined inside
+  // the gridMode return, so opening a plant from anywhere that renders
+  // PlantCard without gridMode (Bloom, Seeds, Suggest a mix, Procurement...)
+  // had a "+List" button that set state but had no modal to actually show.
+  var listPickerModal=listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
+    h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
+      h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("div",null,
+          h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
+          h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
+        ),
+        h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
+      ),
+      lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
+      lists.length>6&&h("div",{style:{padding:"8px 16px",borderBottom:"1px solid #f0ede4"}},
+        h("input",{value:listPickerSearch,type:"search",autoComplete:"off",onChange:function(ev){setListPickerSearch(ev.target.value);},placeholder:"Search your lists…",style:{width:"100%",padding:"6px 10px",border:"1.5px solid #e0ddd5",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none"}})
+      ),
+      h("div",{style:{maxHeight:280,overflowY:"auto"}},
+        (function(){
+          var sortedLists=sortListsNewest(lists);
+          var filtered=listPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
+          if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+listPickerSearch+"\".");
+          return filtered.map(function(list){
+            var inList=list.plants.indexOf(plant.latin)>=0;
+            return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
+              h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
+              h("span",{style:{fontSize:14,flex:1}},list.name),
+              h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
+            );
+          });
+        })()
+      ),
+      newListMode
+        ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
+            h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
+              onKeyDown:function(ev){
+                if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
+                if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
+              },
+              placeholder:"List name…",
+              style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
+            }),
+            h("div",{style:{display:"flex",gap:6,marginTop:8}},
+              h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
+              h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
+            )
+          )
+        :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
+    )
+  );
+
   if(gridMode){
     var img=plant.image||imgFallback;
     var imgIsFallback=!plant.image&&!!imgFallback;
@@ -449,52 +501,7 @@ function PlantCard(props){
           )
         )
       ),
-      listPickerOpen&&h("div",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{position:"fixed",inset:0,zIndex:600,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}},
-        h("div",{onClick:function(ev){ev.stopPropagation();},style:{background:"white",borderRadius:12,width:300,maxWidth:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.25)",overflow:"hidden"}},
-          h("div",{style:{padding:"14px 16px 12px",borderBottom:"1px solid #f0ede4",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            h("div",null,
-              h("div",{style:{fontWeight:700,fontSize:15}},"Add to list"),
-              h("div",{style:{fontSize:12,color:"#999",fontStyle:"italic",marginTop:2}},plant.common)
-            ),
-            h("button",{onClick:function(){setListPickerOpen(false);setNewListMode(false);setNewListName("");setListPickerSearch("");},style:{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#aaa",padding:"0 0 0 8px",lineHeight:1}},"×")
-          ),
-          lists.length===0&&!newListMode&&h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center",lineHeight:1.6}},"No lists yet — create one below."),
-          lists.length>6&&h("div",{style:{padding:"8px 16px",borderBottom:"1px solid #f0ede4"}},
-            h("input",{value:listPickerSearch,type:"search",autoComplete:"off",onChange:function(ev){setListPickerSearch(ev.target.value);},placeholder:"Search your lists…",style:{width:"100%",padding:"6px 10px",border:"1.5px solid #e0ddd5",borderRadius:6,fontSize:13,fontFamily:"inherit",outline:"none"}})
-          ),
-          h("div",{style:{maxHeight:280,overflowY:"auto"}},
-            (function(){
-              var sortedLists=sortListsNewest(lists);
-              var filtered=listPickerSearch.trim()?sortedLists.filter(function(l){return l.name.toLowerCase().indexOf(listPickerSearch.trim().toLowerCase())>=0;}):sortedLists;
-              if(lists.length>0&&filtered.length===0)return h("div",{style:{padding:"16px",color:"#aaa",fontSize:13,textAlign:"center"}},"No lists match \""+listPickerSearch+"\".");
-              return filtered.map(function(list){
-                var inList=list.plants.indexOf(plant.latin)>=0;
-                return h("div",{key:list.id,onClick:function(){onToggleInList(plant.latin,list.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 16px",cursor:"pointer",background:inList?"#f0faf0":"white",borderBottom:"1px solid #f5f5f5"}},
-                  h("span",{style:{fontSize:17,color:inList?"#2e5339":"#ccc",lineHeight:1}},inList?"☑":"☐"),
-                  h("span",{style:{fontSize:14,flex:1}},list.name),
-                  h("span",{style:{fontSize:11,color:"#aaa"}},list.plants.length)
-                );
-              });
-            })()
-          ),
-          newListMode
-            ?h("div",{style:{padding:"12px 16px",borderTop:"1px solid #f0ede4"}},
-                h("input",{autoFocus:true,value:newListName,onChange:function(ev){setNewListName(ev.target.value);},
-                  onKeyDown:function(ev){
-                    if(ev.key==="Enter"&&newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}
-                    if(ev.key==="Escape"){setNewListMode(false);setNewListName("");}
-                  },
-                  placeholder:"List name…",
-                  style:{width:"100%",padding:"8px 10px",border:"1.5px solid #2e5339",borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none"}
-                }),
-                h("div",{style:{display:"flex",gap:6,marginTop:8}},
-                  h("button",{onClick:function(){if(newListName.trim()){var id=onCreateList(newListName.trim());onToggleInList(plant.latin,id);setNewListMode(false);setNewListName("");}},style:{flex:1,padding:"8px",background:"#2e5339",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:600}},"Create & add"),
-                  h("button",{onClick:function(){setNewListMode(false);setNewListName("");},style:{padding:"8px 14px",background:"#f0ede4",color:"#555",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},"Cancel")
-                )
-              )
-            :h("button",{onClick:function(){setNewListMode(true);},style:{width:"100%",padding:"12px 16px",background:"none",border:"none",borderTop:"1px solid #f0ede4",cursor:"pointer",textAlign:"left",fontSize:13,color:"#2e5339",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,fontWeight:500}},"＋ New list")
-        )
-      )
+      listPickerModal
     );
   }
 
@@ -584,7 +591,8 @@ plant.hasScores&&h("div",{style:{marginTop:14}},
       )
         )
       )
-    )
+    ),
+    listPickerModal
   );
 }
 
