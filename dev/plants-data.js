@@ -412,7 +412,7 @@ function taxonQ(latin){
 // photo found" miss, so a genuinely unmatched query isn't re-fetched every
 // render) and requests are throttled to a few at a time so rendering a full
 // results grid doesn't fire 100+ simultaneous calls at iNaturalist.
-var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v2";
+var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v3";
 function loadInatFallbackCache(){try{return JSON.parse(localStorage.getItem(INAT_FALLBACK_CACHE_KEY)||"{}");}catch(err){return{};}}
 function saveInatFallbackCache(c){try{localStorage.setItem(INAT_FALLBACK_CACHE_KEY,JSON.stringify(c));}catch(err){}}
 var _inatFallbackCache=loadInatFallbackCache();
@@ -421,26 +421,35 @@ function _inatFallbackPump(){
   while(_inatFallbackActive<INAT_FALLBACK_MAX_CONCURRENT&&_inatFallbackQueue.length){
     var job=_inatFallbackQueue.shift();
     _inatFallbackActive++;
+    // Only cache a *confirmed* outcome (taxon genuinely not found on
+    // iNaturalist, or a taxon found with no usable photo) -- never a
+    // transient failure (rate limit, timeout, bad response). Caching those
+    // the same way permanently "bricked" any plant unlucky enough to hit a
+    // hiccup during a big batch of simultaneous lookups, with no retry ever.
+    // Un-cached failures just retry next time that plant renders.
     fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.query)+"&per_page=1")
       .then(function(r){return r.json();})
       .then(function(data){
         var taxon=data&&data.results&&data.results[0];
-        if(!taxon)return Promise.reject("no taxon");
-        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd");
-      })
-      .then(function(r){return r.json();})
-      .then(function(data){
-        var obs=data&&data.results&&data.results[0];
-        var ph=obs&&obs.photos&&obs.photos[0];
-        var url=(ph&&ph.url&&ph.url.indexOf("http")>=0)?ph.url.replace("square","medium"):null;
-        _inatFallbackCache[job.query]=url;
-        saveInatFallbackCache(_inatFallbackCache);
-        job.resolve(url);
+        if(!taxon){
+          _inatFallbackCache[job.query]=null;
+          saveInatFallbackCache(_inatFallbackCache);
+          job.resolve(null);
+          return null;
+        }
+        return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd")
+          .then(function(r){return r.json();})
+          .then(function(data2){
+            var obs=data2&&data2.results&&data2.results[0];
+            var ph=obs&&obs.photos&&obs.photos[0];
+            var url=(ph&&ph.url&&ph.url.indexOf("http")>=0)?ph.url.replace("square","medium"):null;
+            _inatFallbackCache[job.query]=url;
+            saveInatFallbackCache(_inatFallbackCache);
+            job.resolve(url);
+          });
       })
       .catch(function(){
-        _inatFallbackCache[job.query]=null;
-        saveInatFallbackCache(_inatFallbackCache);
-        job.resolve(null);
+        job.resolve(null); // not cached -- retry on next attempt
       })
       .then(function(){_inatFallbackActive--;_inatFallbackPump();});
   }
