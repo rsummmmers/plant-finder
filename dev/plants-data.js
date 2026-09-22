@@ -377,10 +377,20 @@ function saveLists(a){try{localStorage.setItem(LS_LISTS_KEY,JSON.stringify(a));}
 // present) that iNaturalist's taxa search can actually match against. Shared
 // by PhotoGallery's live per-plant photo lookup and the grid/thumbnail
 // fallback below, so both search iNaturalist the same way.
+//
+// Both "spp?" and "x" MUST be word-bounded (\b) -- an earlier, unbounded
+// version matched those two letters anywhere, silently mangling any genus
+// that simply contains or ends with them: "Hesperis" -> "Heeris" (ate the
+// "sp"), and any genus ending in x followed by a space -- Phlox, Ilex,
+// Carex, Larix -- lost their last letter ("Phlox paniculata" ->
+// "Phlopaniculata"), which made the taxa lookup fail outright and left
+// those plants with no fallback photo at all. The unicode "×" doesn't need
+// the same treatment (it's never part of a genus name the way ASCII x is),
+// so it's stripped separately.
 function taxonQ(latin){
   return latin.replace(/['''"][^'''"]*['''"]/g,"").replace(/cultivars?/ig,"")
-    .replace(/hybrids?/ig,"").replace(/spp?/ig,"").replace(/var\b.*/ig,"")
-    .replace(/[x\xd7]\s+/g,"").trim().split(/\s+/).slice(0,2).join(" ");
+    .replace(/hybrids?/ig,"").replace(/\bspp?\b\.?/ig,"").replace(/var\b.*/ig,"")
+    .replace(/\bx\b\s*/g,"").replace(/\xd7\s*/g,"").trim().split(/\s+/).slice(0,2).join(" ");
 }
 
 // ── Live photo fallback (grid/thumbnail scale) ───────────────────────────
