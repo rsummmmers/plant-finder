@@ -660,6 +660,7 @@ var p=new URLSearchParams();
 // ── SuggestPanel ──────────────────────────────────────────────────────────
 function SuggestPanel(props){
   var plants=props.plants,siteKey=props.siteKey,count=props.count,hearts=props.hearts,onHeart=props.onHeart,onClose=props.onClose;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _mp=useState(null),modalPlant=_mp[0],setModalPlant=_mp[1];
   var _ex=useState([]),excluded=_ex[0],setExcluded=_ex[1];
   var scale=count/20;
@@ -697,7 +698,7 @@ function SuggestPanel(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -739,6 +740,7 @@ function SuggestPanel(props){
 function HabitatView(props){
   var plants=props.plants,concerns=props.concerns,heightCap=props.heightCap,
       patchSize=props.patchSize,hearts=props.hearts,onHeart=props.onHeart,onLoosen=props.onLoosen;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var isMobile=props.isMobile||false;
   var scale=patchSize/20;
   var HT={
@@ -861,7 +863,7 @@ function HabitatView(props){
         ld.plants.map(function(p){
           var isRemoving=removingLatin===p.latin;
           return h("div",{key:p.latin,className:isRemoving?"plant-removing":""},
-            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true})
+            h(PlantCard,{plant:p,siteKey:null,hearted:hearts.indexOf(p.latin)>=0,onHeart:onHeart,onRemove:handleRemovePlant,gridMode:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
           );
         }))
       );
@@ -872,6 +874,7 @@ function HabitatView(props){
 // ── SeedCard ──────────────────────────────────────────────────────────────
 function SeedCard(props){
   var plant=props.plant,status=props.status,monthIdx=props.monthIdx;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var _s=useState(false),open=_s[0],setOpen=_s[1];
   var _m=useState(false),modalOpen=_m[0],setModalOpen=_m[1];
   var ss=getStatusBadge(plant);
@@ -886,7 +889,7 @@ function SeedCard(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalOpen(false);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true})
+          h(PlantCard,{plant:plant,siteKey:null,hearted:false,onHeart:function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,defaultSeedOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -940,6 +943,8 @@ function SeedCard(props){
 function BloomCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
   var lists=props.lists||[];
+  var onToggleInList=props.onToggleInList||function(){};
+  var onCreateList=props.onCreateList||function(){};
   var _m=useState(null),selMonth=_m[0],setSelMonth=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
   var _src=useState("all"),source=_src[0],setSource=_src[1];
@@ -1026,7 +1031,7 @@ function BloomCalendar(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"\u2715"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:props.onHeart||function(){},edibleOnly:false,medicinalOnly:false,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -1268,6 +1273,7 @@ var BLOOM_COLOR_GROUPS={
 // ── SeedCalendar ──────────────────────────────────────────────────────────
 function SeedCalendar(props){
   var plants=props.plants,onBack=props.onBack,embedded=props.embedded||false;
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var now=new Date();
   var _m=useState(now.getMonth()),monthIdx=_m[0],setMonthIdx=_m[1];
   var _s=useState(["native","nearnative"]),statuses=_s[0],setStatuses=_s[1];
@@ -1395,9 +1401,9 @@ function SeedCalendar(props){
       h("span",{style:{fontSize:13,color:"#888",fontStyle:"italic",marginLeft:"auto"}},ripeNow.length+" plants with seeds ready in "+MONTHS[monthIdx])
     ),
     h("div",{style:{maxWidth:1400,margin:"0 auto",padding:"16px 20px 80px"}},
-      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx});})),
-      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx});}))),
-      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx});}))),
+      ripeNow.length>0&&Section("Ripe now","#2e7d32",ripeNow.length,"Collect this month",ripeNow.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"now",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});})),
+      comingSoon.length>0&&h("div",{style:{marginTop:24}},Section("Coming up","#f57f17",comingSoon.length,"Seeds ripening in "+MONTHS[(monthIdx+1)%12],comingSoon.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"soon",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});}))),
+      justPassed.length>0&&h("div",{style:{marginTop:24}},Section("Just passed","#999",justPassed.length,"Seeds ripe in "+MONTHS[(monthIdx+11)%12]+" \u2014 did you collect?",justPassed.map(function(p){return h(SeedCard,{key:p.latin,plant:p,status:"past",monthIdx:monthIdx,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList});}))),
       ripeNow.length===0&&comingSoon.length===0&&justPassed.length===0&&h("div",{style:{textAlign:"center",padding:"60px 20px",color:"#888"}},
         h("div",{style:{fontSize:40,marginBottom:12}},"\ud83c\udf31"),
         h("div",{style:{fontStyle:"italic",fontSize:16}},"No seed collection activity around "+MONTHS[monthIdx]+"."),
@@ -1707,7 +1713,7 @@ function CompactPlantList(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:siteKey,hearted:hearts.indexOf(modalPlant.latin)>=0,onHeart:onHeart,defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -1863,7 +1869,7 @@ function PaletteView(props){
     )),
     // Mix suggestion panel
     showMix&&h("div",{style:{background:"white",border:"1px solid #e0ddd5",borderRadius:12,padding:"14px 16px",marginBottom:12}},
-      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile})
+      h(HabitatView,{plants:mixFiltered,concerns:concerns,heightCap:null,patchSize:patchSize,hearts:hearts,onHeart:onHeart,onLoosen:onLoosen,onLayersChange:setMixLayers,isMobile:isMobile,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
     ),
     // Search within palette
     h("div",{style:{position:"relative",marginBottom:12}},
@@ -2044,6 +2050,7 @@ function getUnitPrice(vbPrice,size){
 
 function ProcurementView(props){
   var list=props.list,plants=props.plants,vbData=props.vbData,onRemove=props.onRemove||function(){},onUpdateNotes=props.onUpdateNotes||function(){};
+  var lists=props.lists||[],onToggleInList=props.onToggleInList||function(){},onCreateList=props.onCreateList||function(){};
   var storageKey="ppb_qty_"+list.id;
   var _q=useState(function(){try{return JSON.parse(localStorage.getItem(storageKey)||"{}");}catch(e){return {};}}),qtys=_q[0],setQtys=_q[1];
   var _sz=useState(function(){try{return JSON.parse(localStorage.getItem("ppb_selsize_"+list.id)||"{}");}catch(e){return {};}}),selSizes=_sz[0],setSelSizes=_sz[1];
@@ -2275,7 +2282,7 @@ function ProcurementView(props){
       h("div",{onClick:function(e){e.stopPropagation();},style:{maxWidth:700,margin:"0 auto",paddingTop:40,position:"relative"}},
         h("button",{onClick:function(){setModalPlant(null);},style:{position:"absolute",top:6,right:0,background:"white",border:"none",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:20,color:"#555",zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}},"✕"),
         h("div",{style:{background:"white",borderRadius:12,overflow:"hidden"}},
-          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true})
+          h(PlantCard,{plant:modalPlant,siteKey:null,hearted:false,onHeart:function(){},defaultOpen:true,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
         )
       )
     ),
@@ -2577,7 +2584,7 @@ function SavedListsView(props){
             h("button",{onClick:onGoToExplore,style:{background:"#2e5339",color:"white",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:500}},"Browse & add plants")
           )
         :proMode
-          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);},onGoToBloom:props.onGoToBloom})
+          ?h(ProcurementView,{list:openList,plants:openPlants,vbData:vbData,onRemove:function(latin){onToggleInList(latin,openList.id);},onUpdateNotes:function(notes){onUpdateListNotes(openList.id,notes);},onGoToBloom:props.onGoToBloom,lists:lists,onToggleInList:onToggleInList,onCreateList:onCreateList})
           :(function(){
               var grouped=groupByTypeLayer(openPlants);
               if(compactView){
