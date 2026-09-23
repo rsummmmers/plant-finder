@@ -583,12 +583,25 @@ var CULTIVAR_NAME_RE=/[‘’'"]/;
 // "commons/", append "/<width>px-<filename>"), so rewrite any raw original
 // down to a reasonable width rather than editing 66 CSV cells by hand --
 // this also covers any future curated URL that has the same problem.
+//
+// Also handles URLs that are ALREADY thumb-formatted, re-normalizing them to
+// the same known-good width. Found 2026-09-22: two Hydrangea rows had a
+// pre-built "640px-" thumb URL that 400'd (real file, real path, but
+// Wikimedia rejects most arbitrary on-demand thumbnail widths now --
+// empirically only a handful, including 500, reliably work; 300/400/640/800/
+// 1024 all failed in direct testing). Since this only fires for URLs that
+// don't already match the raw-original pattern above, and 500px is verified
+// working, always re-target to that rather than trust whatever width is
+// already embedded in a stored URL.
 function wikimediaThumb(url,widthPx){
   if(!url)return url;
+  var w=widthPx||500;
   var clean=url.split("?")[0];
+  var mThumb=clean.match(/^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/thumb\/[0-9a-f]\/[0-9a-f]{2}\/)([^\/]+)\/\d+px-\2$/i);
+  if(mThumb)return mThumb[1]+mThumb[2]+"/"+w+"px-"+mThumb[2];
   var m=clean.match(/^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/)([0-9a-f])\/([0-9a-f]{2})\/(.+)$/i);
   if(!m)return url;
-  return m[1]+"thumb/"+m[2]+"/"+m[3]+"/"+m[4]+"/"+(widthPx||500)+"px-"+m[4];
+  return m[1]+"thumb/"+m[2]+"/"+m[3]+"/"+m[4]+"/"+w+"px-"+m[4];
 }
 
 function rowToPlant(row){
@@ -596,7 +609,7 @@ function rowToPlant(row){
   ZONE_KEYS.forEach(function(k){var m=(row[k]||"").match(/\d/);scores[k]=m?parseInt(m[0]):0;});
   var hasScores=Object.values(scores).some(function(s){return s>0;});
   var cur=wikimediaThumb(row["curated image url"]||"");
-  var inat=row["inaturalist image url"]||"";
+  var inat=wikimediaThumb(row["inaturalist image url"]||"");
   var status=row["Ecological Status"]||"";
   var cat=row["Category"]||"";
   var latinName=row["Latin Name"]||"";
