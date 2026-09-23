@@ -256,8 +256,8 @@ function App(){
               if(tab.key==="plants"){setDrawerOpen(true);}
               else{setDrawerOpen(false);setShowSuggest(false);}
             },
-              style:{padding:"14px 28px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:400,
-                color:active?"white":"rgba(255,255,255,0.55)",
+              style:{padding:"14px 28px",fontFamily:"inherit",fontSize:14,fontWeight:active?700:500,
+                color:"white",
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:6}
             },
@@ -267,8 +267,8 @@ function App(){
           }).concat([
             h("div",{key:"divider",style:{width:1,background:"rgba(255,255,255,0.15)",margin:"8px 6px",flexShrink:0}}),
             h("button",{key:"seeds",onClick:function(){setSearch("");setActiveTab("seeds");setDrawerOpen(false);},
-              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"&&!searchActive?700:400,
-                color:activeTab==="seeds"&&!searchActive?"white":"rgba(255,255,255,0.55)",
+              style:{padding:"14px 20px",fontFamily:"inherit",fontSize:14,fontWeight:activeTab==="seeds"&&!searchActive?700:500,
+                color:"white",
                 background:"none",border:"none",
                 cursor:"pointer",whiteSpace:"nowrap"}
             },"Seeds"),
