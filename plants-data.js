@@ -48,13 +48,26 @@ var STATUS_COLORS_MAP={
 // isCultivar even when the raw status string doesn't say so, otherwise a
 // Near-Native cultivar (and any newly-added Native cultivar that isn't
 // hand-labeled "Native Cultivar") looks identical to the plain species.
+//
+// STATUS_COLORS_MAP is keyed by exact strings, but the sheet's status text
+// isn't always typed identically -- e.g. "Safe Non-native" (lowercase n)
+// vs. "Safe Non-Native" -- which used to fall through to the generic gray
+// default instead of matching its real color, so otherwise-identical
+// statuses could render with different badge colors depending on how a
+// given row happened to be capitalized. Look the status up case/whitespace
+// -insensitively so any capitalization of an otherwise-valid status still
+// finds its real styling; only a genuinely unrecognized status falls back
+// to gray.
+var STATUS_COLORS_MAP_CI={};
+for(var _skey in STATUS_COLORS_MAP)STATUS_COLORS_MAP_CI[_skey.toLowerCase().replace(/\s+/g," ").trim()]=STATUS_COLORS_MAP[_skey];
 function getStatusBadge(plant){
   var status=plant.status;
   if(plant.isCultivar&&status.indexOf("Cultivar")<0){
     if(status==="Native")status="Native Cultivar";
     else if(status==="Near-Native"||status==="Near Native")status="Near-Native Cultivar";
   }
-  return STATUS_COLORS_MAP[status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var norm=(status||"").toLowerCase().replace(/\s+/g," ").trim();
+  return STATUS_COLORS_MAP_CI[norm]||{bg:"#f5f5f5",text:"#555",label:plant.status};
 }
 
 var PLANT_TYPES=[
@@ -388,9 +401,19 @@ function saveLists(a){try{localStorage.setItem(LS_LISTS_KEY,JSON.stringify(a));}
 // the same treatment (it's never part of a genus name the way ASCII x is),
 // so it's stripped separately.
 function taxonQ(latin){
-  return latin.replace(/['''"][^'''"]*['''"]/g,"").replace(/cultivars?/ig,"")
+  var q=latin.replace(/['''"][^'''"]*['''"]/g,"").replace(/cultivars?/ig,"")
     .replace(/hybrids?/ig,"").replace(/\bspp?\b\.?/ig,"").replace(/var\b.*/ig,"")
-    .replace(/\bx\b\s*/g,"").replace(/\xd7\s*/g,"").trim().split(/\s+/).slice(0,2).join(" ");
+    .replace(/\bx\b\s*/g,"").replace(/\bx(?=[A-Z])/g,"").replace(/\xd7\s*/g,"")
+    .trim().split(/\s+/).slice(0,2);
+  // A real species epithet is always lowercase in binomial nomenclature, so
+  // a capitalized second word here isn't one -- it's a trade/series name
+  // still stuck to the genus (e.g. "Cocktails" in "Geum x Cocktails 'Sea
+  // Breeze'", the Proven Winners series name). iNaturalist has no taxon by
+  // that two-word "species", so the fallback photo lookup found nothing.
+  // Drop it and fall back to a genus-level query instead, same as a plain
+  // "Geum 'Totally Tangerine'" with no series name already does.
+  if(q.length>1&&/^[A-Z]/.test(q[1]))q=q.slice(0,1);
+  return q.join(" ");
 }
 
 // ── Live photo fallback (grid/thumbnail scale) ───────────────────────────
