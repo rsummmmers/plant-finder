@@ -740,7 +740,7 @@ function applyFilters(plants,f,siteKey){
     if(f.heightCap&&p.heightFt>f.heightCap)return false;
     if(f.heightMin&&p.heightFt<f.heightMin)return false;
     if(!f.showCultivars&&p.isCultivar)return false;
-    if(f.search){var re=new RegExp('\\b'+f.search.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');if(!re.test(p.common)&&!re.test(p.latin))return false;}
+    if(f.search){var q=f.search.trim().toLowerCase();if(p.common.toLowerCase().indexOf(q)<0&&p.latin.toLowerCase().indexOf(q)<0)return false;}
     if(siteKey&&ZONE_KEYS.indexOf(siteKey)>=0&&(p.hasScores?(p.scores[siteKey]||0):zoneFallbackScore(p,siteKey))<3)return false;
     var cx=f.concerns||[];
     if(cx.indexOf("shadedby_norway")>=0&&(p.norwayMaple==="avoid"||!p.norwayMaple))return false;
