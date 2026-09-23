@@ -48,13 +48,26 @@ var STATUS_COLORS_MAP={
 // isCultivar even when the raw status string doesn't say so, otherwise a
 // Near-Native cultivar (and any newly-added Native cultivar that isn't
 // hand-labeled "Native Cultivar") looks identical to the plain species.
+//
+// STATUS_COLORS_MAP is keyed by exact strings, but the sheet's status text
+// isn't always typed identically -- e.g. "Safe Non-native" (lowercase n)
+// vs. "Safe Non-Native" -- which used to fall through to the generic gray
+// default instead of matching its real color, so otherwise-identical
+// statuses could render with different badge colors depending on how a
+// given row happened to be capitalized. Look the status up case/whitespace
+// -insensitively so any capitalization of an otherwise-valid status still
+// finds its real styling; only a genuinely unrecognized status falls back
+// to gray.
+var STATUS_COLORS_MAP_CI={};
+for(var _skey in STATUS_COLORS_MAP)STATUS_COLORS_MAP_CI[_skey.toLowerCase().replace(/\s+/g," ").trim()]=STATUS_COLORS_MAP[_skey];
 function getStatusBadge(plant){
   var status=plant.status;
   if(plant.isCultivar&&status.indexOf("Cultivar")<0){
     if(status==="Native")status="Native Cultivar";
     else if(status==="Near-Native"||status==="Near Native")status="Near-Native Cultivar";
   }
-  return STATUS_COLORS_MAP[status]||{bg:"#f5f5f5",text:"#555",label:plant.status};
+  var norm=(status||"").toLowerCase().replace(/\s+/g," ").trim();
+  return STATUS_COLORS_MAP_CI[norm]||{bg:"#f5f5f5",text:"#555",label:plant.status};
 }
 
 var PLANT_TYPES=[
