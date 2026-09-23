@@ -1298,6 +1298,7 @@ function SeedCalendar(props){
   var eligible=useMemo(function(){
     return plants.filter(function(p){
       if(!p.seedStart&&!p.seedNotes&&!p.propagNotes)return false;
+      if(p.isCultivar)return false; // cultivars often don't come true from seed / are sterile -- not relevant here, unconditionally
       var s=p.status.toLowerCase().replace(/[-\s]/g,"");
       if(s==="invasive"||s==="caution")return false;
       if(search.trim()){
