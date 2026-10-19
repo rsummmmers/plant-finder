@@ -192,13 +192,25 @@ function baseSpecies(latin){
   var n=parts[1]==="x"?3:2;
   return parts.slice(0,n).join(" ");
 }
+// Cultivars never fall back to their parent species' VB entry -- a nursery
+// stocking plain "Panicum virgatum" doesn't mean a specific unstocked
+// cultivar like 'Dallas Blues' is actually available, and showing that
+// species-level price/availability on the cultivar's own card is actively
+// misleading for procurement. The baseSpecies fallback stays for non-cultivar
+// lookups (straight species name formatting can still vary slightly).
 function vbLookup(vbData,latin){
-  return vbData[latin.toLowerCase()]||vbData[baseSpecies(latin).toLowerCase()]||null;
+  var exact=vbData[latin.toLowerCase()];
+  if(exact)return exact;
+  if(CULTIVAR_NAME_RE.test(latin))return null;
+  return vbData[baseSpecies(latin).toLowerCase()]||null;
 }
 function vbLookupAll(vbData,latin){
   var all=vbData&&vbData._allSizes;
   if(!all)return null;
-  return all[latin.toLowerCase()]||all[baseSpecies(latin).toLowerCase()]||null;
+  var exact=all[latin.toLowerCase()];
+  if(exact)return exact;
+  if(CULTIVAR_NAME_RE.test(latin))return null;
+  return all[baseSpecies(latin).toLowerCase()]||null;
 }
 
 function applyInheritance(plants){
