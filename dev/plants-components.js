@@ -1480,7 +1480,7 @@ function FilterDrawer(props){
   },[isMobile]);
 
   function resetAll(){
-    onChange({statuses:[],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
+    onChange({statuses:[],ptypes:[],heightCap:null,heightMin:null,showCultivars:false,cultivarsTouched:false,concerns:[],moisture:null,sun:null,irrigated:false,rflower:[],rwinter:false,edibleOnly:false,medicinalOnly:false,deerLevel:null,rabbitLevel:null,voleLevel:null,dogsLevel:null,catsLevel:null,childrenLevel:null,bloomMonth:null});
     onSetZone(null);
     onVbFilter(false);
     if(props.onClearSearch)props.onClearSearch();
@@ -1523,7 +1523,7 @@ function FilterDrawer(props){
           h("div",{style:{fontSize:11,color:"#555",fontWeight:600,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8,paddingBottom:5,borderBottom:"1px solid #eee"}},"Include"),
           h("div",{style:{display:"flex",flexWrap:"wrap",gap:5}},
             visibleStatuses.map(function(opt){return P(opt.label,f.statuses.indexOf(opt.key)>=0,function(){togSt(opt.key);},opt.bg,opt.fg);}),
-            P("Show cultivars",!!f.showCultivars,function(){set({showCultivars:!f.showCultivars});},"#f3e5f5","#6a1b9a")
+            (function(){var effShowCultivars=!!f.showCultivars||(props.searchActive&&!f.cultivarsTouched);return P("Show cultivars"+(props.searchActive&&!f.cultivarsTouched?" (auto, searching)":""),effShowCultivars,function(){set({showCultivars:!effShowCultivars,cultivarsTouched:true});},"#f3e5f5","#6a1b9a");})()
           )
         ),
         h("div",null,
