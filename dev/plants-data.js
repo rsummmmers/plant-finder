@@ -351,6 +351,18 @@ function loadVBData(){
     })();
     function matchVBName(vbName){
       var low=vbName.toLowerCase().trim();
+      // A specific cultivar-to-cultivar match always wins over a species-level
+      // crosswalk entry, even an explicit "examples" one -- a nurse row that
+      // rolls a whole species up to one card (with specific cultivars listed
+      // as its "examples" for historical/legacy reasons) was silently
+      // stealing stock from cultivars that have their own dedicated DB row.
+      // Found via audit: 66+ cultivars across the database were affected
+      // (Rudbeckia fulgida 'Goldsturm', Vinca minor 'Alba', Echinacea
+      // purpurea 'Flame Thrower', Asclepias tuberosa 'Hello Yellow', etc.)
+      // -- all had a real, distinct DB row, but their availability was
+      // showing up on the generic species card instead.
+      var ck0=cultivarKey(vbName);
+      if(ck0&&dbCultivarIndex[ck0])return dbCultivarIndex[ck0];
       if(cwByExample[low])return cwByExample[low];
       var base=low.replace(/\s*[‘’’\x27’’].*/,"").trim();
       if(cwByNorm[base]){
@@ -366,8 +378,6 @@ function loadVBData(){
           if(kp[0]===genus&&kp[1]&&kp[1][0]===abbr)return cwByNorm[key];
         }
       }
-      var ck=cultivarKey(vbName);
-      if(ck&&dbCultivarIndex[ck])return dbCultivarIndex[ck];
       return null;
     }
     // Parse availability CSV
