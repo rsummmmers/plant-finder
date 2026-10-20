@@ -18,7 +18,11 @@ Asarum europaeum,Asarum europaeum,Asarum europaeum
 Asclepias incarnata,Asclepias incarnata,Asclepias incarnata 'Ice Ballet' | Asclepias incarnata LE
 Asclepias tuberosa,Asclepias tuberosa,Asclepias tuberosa 'Hello Yellow'
 Aster tataricus,Aster tataricus,Aster tataricus 'Jindai'
-Astrantia major,Astrantia major,Astrantia major 'Roma' | Astrantia major 'Snow Star'
+Astrantia major,Astrantia major,
+Astrantia major 'Roma',Astrantia major 'Roma',Astrantia major 'Roma'
+Astrantia major 'Snow Star',Astrantia major 'Snow Star',Astrantia major 'Snow Star'
+Astrantia major 'Star of Beauty',Astrantia major 'Star of Beauty',Astrantia major 'Star of Beauty'
+Astrantia major 'Star of Love',Astrantia major 'Star of Love',Astrantia major 'Star of Love'
 Athyrium filix-femina,Athyrium filix-femina,Athyrium filix-femina 'Lady in Red' | Athyrium filix-femina
 Baptisia australis,Baptisia australis,Baptisia australis
 Boltonia asteroides,Boltonia asteroides,Boltonia asteroides 'Snowbank'
@@ -54,7 +58,16 @@ Dryopteris filix-mas,Dryopteris filix-mas,Dryopteris filix-mas
 Dryopteris marginalis,Dryopteris marginalis,Dryopteris marginalis
 Echinacea purpurea,Echinacea purpurea,Echinacea p. 'Flame Thrower' | Echinacea p. 'Green Twister' | Echinacea p. 'Magnus'
 Echinops ritro,Echinops ritro,Echinops ritro
-Epimedium grandiflorum,Epimedium grandiflorum,Epimedium grandiflorum 'Lilafee' | Epimedium grandiflorum 'Pretty in Pink'
+Epimedium grandiflorum,Epimedium grandiflorum,Epimedium grandiflorum 'Lilafee'
+Epimedium grandiflorum 'Pretty in Pink',Epimedium grandiflorum 'Pretty in Pink',Epimedium grandiflorum 'Pretty in Pink'
+Epimedium 'Amber Queen',Epimedium 'Amber Queen',Epimedium 'Amber Queen'
+Epimedium 'Sunny and Share',Epimedium 'Sunny and Share',Epimedium 'Sunny and Share'
+Epimedium 'Bandit',Epimedium 'Bandit',Epimedium 'Bandit'
+Epimedium x perralchicum 'Frohnleiten',Epimedium x perralchicum 'Frohnleiten',Epimedium 'Frohnleiten'
+Epimedium xversicolor 'Sulphureum',Epimedium xversicolor 'Sulphureum',Epimedium ×versicolor 'Sulphureum'
+Epimedium 'Ellen Willmot',Epimedium 'Ellen Willmot',Epimedium 'Ellen Willmot'
+Epimedium x youngianum 'Niveum',Epimedium x youngianum 'Niveum',Epimedium x youngianum 'Niveum'
+Epimedium x youngianum 'Roseum',Epimedium x youngianum 'Roseum',Epimedium x youngianum 'Roseum'
 Eragrostis spectabilis,Eragrostis spectabilis,Eragrostis spectabilis LE
 Eryngium planum,Eryngium planum,Eryngium planum Blue Hobbit
 Euonymus fortunei,Euonymus fortunei,Euonymus fortunei 'Kewensis'
@@ -66,7 +79,9 @@ Eutrochium dubium,Eutrochium dubium,Eutrochium dubium LE
 Eutrochium maculatum,Eutrochium maculatum,Eutrochium maculatum LE | Eutrochium maculatum 'Gateway'
 Filipendula rubra,Filipendula rubra,Filipendula rubra 'Venusta'
 Fragaria vesca,Fragaria vesca,Fragaria vesca LE
-Gaillardia aristata,Gaillardia aristata,Gaillardia aristata 'Arizona Apricot'
+Gaillardia aristata,Gaillardia aristata,
+Gaillardia aristata 'Arizona Apricot',Gaillardia aristata 'Arizona Apricot',Gaillardia aristata 'Arizona Apricot'
+Gaillardia aristata 'Spintop Red',Gaillardia aristata 'Spintop Red',Gaillardia aristata 'Spintop Red'
 Galium odoratum,Galium odoratum,Galium odoratum
 Geranium maculatum,Geranium maculatum,Geranium maculatum
 Gillenia trifoliata,Gillenia trifoliata,Gillenia trifoliata
@@ -83,7 +98,12 @@ Jeffersonia diphylla,Jeffersonia diphylla,Jeffersonia diphylla
 Lamiastrum galeobdolon,Lamiastrum galeobdolon,Lamiastrum galeobdolon 'Florentinum'
 Lamium maculatum,Lamium maculatum,Lamium maculatum 'Orchid Frost' | Lamium maculatum 'Pink Pewter'
 Liatris spicata,Liatris spicata,Liatris spicata
-Ligularia dentata,Ligularia dentata,Ligularia dentata 'Osiris Fantaisie' | Ligularia dentata 'Othello'
+Ligularia dentata,Ligularia dentata,
+Ligularia dentata 'Osiris Fantaisie',Ligularia dentata 'Osiris Fantaisie',Ligularia dentata 'Osiris Fantaisie'
+Ligularia dentata 'Othello',Ligularia dentata 'Othello',Ligularia dentata 'Othello'
+Ligularia dentata 'Twilight',Ligularia dentata 'Twilight',Ligularia dentata 'Twilight'
+Ligularia stenocephala 'Little Rocket',Ligularia stenocephala 'Little Rocket',Ligularia 'Little Rocket'
+Ligularia stenocephala 'The Rocket',Ligularia stenocephala 'The Rocket',Ligularia stenocephala 'The Rocket'
 Liriope spicata,Liriope spicata,Liriope spicata
 Lobelia cardinalis,Lobelia cardinalis,Lobelia cardinalis LE
 Lobelia siphilitica,Lobelia siphilitica,Lobelia siphilitica
@@ -126,7 +146,14 @@ Ratibida pinnata,Ratibida pinnata,Ratibida pinnata
 Rhus aromatica,Rhus aromatica,Rhus aromatica 'Gro-low'
 Rudbeckia fulgida,Rudbeckia fulgida,Rudbeckia fulgida 'Early Bird Gold' | Rudbeckia fulgida 'Goldsturm'
 Rudbeckia laciniata,Rudbeckia laciniata,Rudbeckia laciniata LE
-Salvia nemorosa,Salvia nemorosa,Salvia nemorosa 'Blue Hill' | Salvia nemorosa 'May Night'
+Salvia nemorosa,Salvia nemorosa,
+Salvia nemorosa 'Blue Hill',Salvia nemorosa 'Blue Hill',Salvia nemorosa 'Blue Hill'
+Salvia nemorosa 'May Night',Salvia nemorosa 'May Night',Salvia nemorosa 'May Night'
+Salvia nemorosa 'Rose Marvel',Salvia nemorosa 'Rose Marvel',Salvia 'Rose Marvel'
+Salvia nemorosa 'Salute Light Pink',Salvia nemorosa 'Salute Light Pink',Salvia nemorosa 'Salute Light Pink'
+Salvia nemorosa 'Snow Hill',Salvia nemorosa 'Snow Hill',Salvia nemorosa 'Snow Hill'
+Salvia nemorosa 'Wesuwe',Salvia nemorosa 'Wesuwe',Salvia nemorosa ' Wesuwe'
+Salvia 'Eveline',Salvia 'Eveline',Salvia 'Eveline'
 Sanguisorba canadensis,Sanguisorba canadensis,Sanguisorba canadensis
 Sanguisorba tenuifolia,Sanguisorba tenuifolia,Sanguisorba tenuifolia var. purpurea
 Schizachyrium scoparium,Schizachyrium scoparium,Schizachyrium scoparium
@@ -179,6 +206,7 @@ Epimedium x rubrum,Epimedium x rubrum,Epimedium x rubrum
 Fragaria virginiana,Fragaria virginiana,Fragaria virginiana
 Helenium flexuosum,Helenium flexuosum,Helenium flexuosum | Helenium flexuosum LE
 Hibiscus moscheutos,Hibiscus moscheutos,Hibiscus moscheutos | Hibiscus moscheutos LE
+Hibiscus 'Blackberry Merlot',Hibiscus 'Blackberry Merlot',Hibiscus 'Blackberry Merlot'
 Juncus effusus,Juncus effusus,Juncus effusus
 Packera aurea,Packera aurea,Packera aurea
 Parthenocissus quinquefolia,Parthenocissus quinquefolia,Parthenocissus quinquefolia
@@ -278,3 +306,80 @@ Hemerocallis 'Stella de Oro',Hemerocallis 'Stella de Oro',Hemerocallis 'Stella d
 Hemerocallis 'Pandora's Box',Hemerocallis 'Pandora's Box',Hemerocallis 'Pandora's Box'
 Hemerocallis citrina,Hemerocallis citrina,Hemerocallis citrina
 Hemerocallis flava,Hemerocallis flava,Hemerocallis flava
+Iris sibirica 'Caesar',Iris sibirica 'Caesar',Iris sibirica 'Caesar's Brother'
+Iris sibirica 'Cote d',Iris sibirica 'Cote d',Iris sibirica 'Cote d'Azur'
+Iris sibirica 'Dear Delight',Iris sibirica 'Dear Delight',Iris sibirica 'Dear Delight'
+Iris sibirica 'Moon Silk',Iris sibirica 'Moon Silk',Iris sibirica 'Moon Silk'
+Iris sibirica 'Ruffled Velvet',Iris sibirica 'Ruffled Velvet',Iris sibirica 'Ruffled Velvet'
+Iris sibirica 'Summer Revels',Iris sibirica 'Summer Revels',Iris sibirica 'Summer Revels'
+Iris ensata 'Darling',Iris ensata 'Darling',Iris ensata 'Darling'
+Iris ensata 'Gold Bound',Iris ensata 'Gold Bound',Iris ensata 'Gold Bound'
+Iris ensata 'Katy Mendez',Iris ensata 'Katy Mendez',Iris ensata 'Katy Mendez'
+Iris ensata 'Variegata',Iris ensata 'Variegata',Iris ensata 'Variegata'
+Dianthus carthusianorum,Dianthus carthusianorum,Dianthus carthusianorum
+Dianthus cruentus,Dianthus cruentus,Dianthus cruentus
+Dianthus FIRESTAR 'Devon Xera',Dianthus FIRESTAR 'Devon Xera',Dianthus FIRESTAR 'Devon Xera'
+Dianthus EverBloom 'Watermelon Ice',Dianthus EverBloom 'Watermelon Ice',Dianthus EverBloom™ 'Watermelon Ice'
+Dianthus petraeus,Dianthus petraeus,Dianthus petraeus
+Dianthus Scent First 'Coconut Surprise',Dianthus Scent First 'Coconut Surprise',Dianthus Scent First ® 'Coconut Surprise'
+Dianthus superbus,Dianthus superbus,Dianthus superbus
+Dianthus Vivid 'Bright Light',Dianthus Vivid 'Bright Light',Dianthus Vivid™ 'Bright Light'
+Astilbe x arendsii 'August Light',Astilbe x arendsii 'August Light',Astilbe 'August Light'
+Astilbe xarendsii 'Bressingham Beauty',Astilbe xarendsii 'Bressingham Beauty',Astilbe ×arendsii 'Bressingham Beauty'
+Astilbe xarendsii 'Bridal Veil',Astilbe xarendsii 'Bridal Veil',Astilbe ×arendsii 'Bridal Veil'
+Astilbe xarendsii 'Chocolate Shogun',Astilbe xarendsii 'Chocolate Shogun',Astilbe ×arendsii 'Chocolate Shogun'
+Astilbe 'Delft Lace',Astilbe 'Delft Lace',Astilbe 'Delft Lace'
+Astilbe 'Deutschland',Astilbe 'Deutschland',Astilbe 'Deutschland'
+Astilbe xarendsii 'Fanal',Astilbe xarendsii 'Fanal',Astilbe ×arendsii 'Fanal'
+Astilbe simplicifolia 'Hennie Graafland',Astilbe simplicifolia 'Hennie Graafland',Astilbe 'Hennie Graafland'
+Astilbe 'Ostrich Plume',Astilbe 'Ostrich Plume',Astilbe 'Ostrich Plume'
+Astilbe 'Peach Blossom',Astilbe 'Peach Blossom',Astilbe 'Peach Blossom'
+Astilbe 'Prof. van der Wielen',Astilbe 'Prof. van der Wielen',Astilbe 'Prof. van der Wielen'
+Astilbe 'Red Sentinel',Astilbe 'Red Sentinel',Astilbe 'Red Sentinel'
+Astilbe x arendsii 'Snowdrift',Astilbe x arendsii 'Snowdrift',Astilbe 'Snowdrift'
+Astilbe Younique 'Cerise',Astilbe Younique 'Cerise',Astilbe Younique™ 'Cerise'
+Astilbe Younique 'Silvery Pink',Astilbe Younique 'Silvery Pink',Astilbe Younique™ 'Silvery Pink'
+Astilbe xarendsii 'Color Flash',Astilbe xarendsii 'Color Flash',Astilbe ×arendsii 'Color Flash®'
+Astilbe biternata,Astilbe biternata,Astilbe biternata
+Astilbe chinensis 'Milk and Honey',Astilbe chinensis 'Milk and Honey',Astilbe chinensis 'Milk and Honey'
+Astilbe chinensis 'Pumila',Astilbe chinensis 'Pumila',Astilbe chinensis 'Pumila'
+Astilbe chinensis 'Purple Candle',Astilbe chinensis 'Purple Candle',Astilbe chinensis 'Purple Candle'
+Astilbe chinensis 'Vision in Pink',Astilbe chinensis 'Vision in Pink',Astilbe 'Vision in Pink'
+Astilbe chinensis 'Vision in Red',Astilbe chinensis 'Vision in Red',Astilbe 'Vision in Red'
+Astilbe 'Vision in White',Astilbe 'Vision in White',Astilbe 'Vision in White'
+Astilbe 'Vision in White Delight',Astilbe 'Vision in White Delight',Astilbe 'Vision in White Delight'
+Astilbe soft pink,Astilbe soft pink,Astilbe soft pink
+Hosta 'August Moon',Hosta 'August Moon',Hosta 'August Moon'
+Hosta 'Blue Mouse Ears',Hosta 'Blue Mouse Ears',Hosta 'Blue Mouse Ears'
+Hosta 'Blueberry Muffin',Hosta 'Blueberry Muffin',Hosta 'Blueberry Muffin'
+Hosta 'Cameo',Hosta 'Cameo',Hosta 'Cameo'
+Hosta 'Curly Fries',Hosta 'Curly Fries',Hosta 'Curly Fries'
+Hosta 'Fire Island',Hosta 'Fire Island',Hosta 'Fire Island'
+Hosta 'Firn Line',Hosta 'Firn Line',Hosta 'Firn Line'
+Hosta 'Frances Williams',Hosta 'Frances Williams',Hosta 'Frances Williams'
+Hosta 'Great Expectations',Hosta 'Great Expectations',Hosta 'Great Expectations'
+Hosta 'Guacamole',Hosta 'Guacamole',Hosta 'Guacamole'
+Hosta 'Maui Buttercups',Hosta 'Maui Buttercups',Hosta 'Maui Buttercups'
+Hosta 'Mighty Mouse',Hosta 'Mighty Mouse',Hosta 'Mighty Mouse'
+Hosta 'Mini Skirt',Hosta 'Mini Skirt',Hosta 'Mini Skirt'
+Hosta 'Munchkin Fire',Hosta 'Munchkin Fire',Hosta 'Munchkin Fire'
+Hosta 'Paradigm',Hosta 'Paradigm',Hosta 'Paradigm'
+Hosta 'Patriot',Hosta 'Patriot',Hosta 'Patriot'
+Hosta 'Pilgrim',Hosta 'Pilgrim',Hosta 'Pilgrim'
+Hosta 'School Mouse',Hosta 'School Mouse',Hosta 'School Mouse'
+Hosta 'Stained Glass',Hosta 'Stained Glass',Hosta 'Stained Glass'
+Hosta 'Sugar Daddy',Hosta 'Sugar Daddy',Hosta 'Sugar Daddy'
+Hosta 'Sun Mouse',Hosta 'Sun Mouse',Hosta 'Sun Mouse'
+Hosta 'Wide Brim',Hosta 'Wide Brim',Hosta 'Wide Brim'
+Hosta 'Pandora's Box',Hosta 'Pandora's Box',Hosta 'Pandora's Box'
+Lavandula x intermedia 'Sensational!',Lavandula x intermedia 'Sensational!',Lavandula 'Sensational!'®
+Lavandula x intermedia 'Provence',Lavandula x intermedia 'Provence',Lavandula × intermedia 'Provence'
+Nepeta 'Early Bird',Nepeta 'Early Bird',Nepeta 'Early Bird'
+Nepeta x faassenii 'Junior Walker',Nepeta x faassenii 'Junior Walker',Nepeta 'Junior Walker™'
+Nepeta x faassenii 'Six Hills Giant',Nepeta x faassenii 'Six Hills Giant',Nepeta 'Six Hills Giant'
+Nepeta x faassenii 'Walker's Low',Nepeta x faassenii 'Walker's Low',Nepeta 'Walker's Low'
+Nepeta kubanica,Nepeta kubanica,Nepeta kubanica
+Nepeta sibirica 'Souvenir d'André Chaudron',Nepeta sibirica 'Souvenir d'André Chaudron',Nepeta 'Souvenir d'André Chaudron'
+Nepeta subsessilis,Nepeta subsessilis,Nepeta subsessilis
+Papaver orientalis 'Prince of Orange',Papaver orientalis 'Prince of Orange',Papaver orientalis 'Prince of Orange'
+Papaver orientalis 'Royal Wedding',Papaver orientalis 'Royal Wedding',Papaver orientalis 'Royal Wedding'
