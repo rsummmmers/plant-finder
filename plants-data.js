@@ -294,9 +294,10 @@ function loadVBData(){
   }
   return Promise.all([
     fetch("./vb_availability.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";}),
-    fetch("./nursery_crosswalk.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";})
+    fetch("./nursery_crosswalk.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";}),
+    fetch("./plants.csv").then(function(r){return r.ok?r.text():"";}).catch(function(){return "";})
   ]).then(function(results){
-    var availText=results[0],cwText=results[1];
+    var availText=results[0],cwText=results[1],plantsText=results[2];
     // Build crosswalk lookup: vb_normalized and example names → db_latin
     var cwByNorm={},cwByExample={},cwVbName={};
     cwText.split(/\r?\n/).slice(1).forEach(function(line){
@@ -313,6 +314,41 @@ function loadVBData(){
       });
     });
     function isCultivar(name){return /[‘’’\x27‘’]/.test(name);}
+    // Generic fallback: genus + quoted cultivar name, independent of species
+    // epithet, abbreviation ("virg.", "p."), trademark symbols (™®©), or
+    // stray whitespace -- the thing that's actually stable between how VB
+    // spells a name and how it's recorded in the DB. Catches cultivars with
+    // no crosswalk entry at all instead of requiring one be hand-added per
+    // plant per genus (see commits fixing Peonies/Helleborus/Panicum/
+    // Hemerocallis/Iris/Astrantia/Dianthus/Epimedium/Gaillardia/Ligularia/
+    // Salvia/Astilbe/Hosta/Lavandula/Nepeta/Papaver/Echinacea/Coreopsis --
+    // all the same root cause, found one genus at a time). Only fires for
+    // genuinely quoted cultivar names, so it never touches straight-species
+    // matching or reintroduces the cultivar-borrows-species-badge bug.
+    function cultivarKey(name){
+      var s=name.replace(/[‘’]/g,"'").replace(/[™®©]/g,"").replace(/\s+/g," ").trim();
+      var m=s.match(/'([^']+)'/);
+      if(!m)return null;
+      var genus=s.split(/\s+/)[0].toLowerCase();
+      var cultivar=m[1].toLowerCase().replace(/\s+/g," ").trim();
+      return genus+"|"+cultivar;
+    }
+    var dbCultivarIndex={};
+    (function(){
+      var lines=plantsText.split(/\r?\n/);
+      if(!lines.length)return;
+      var header=parseRow(lines[0]);
+      var latinIdx=header.indexOf("Latin Name");
+      if(latinIdx<0)return;
+      for(var i=1;i<lines.length;i++){
+        if(!lines[i].trim())continue;
+        var row=parseRow(lines[i]);
+        var latin=(row[latinIdx]||"").trim();
+        if(!latin)continue;
+        var key=cultivarKey(latin);
+        if(key&&!dbCultivarIndex[key])dbCultivarIndex[key]=latin;
+      }
+    })();
     function matchVBName(vbName){
       var low=vbName.toLowerCase().trim();
       if(cwByExample[low])return cwByExample[low];
@@ -330,6 +366,8 @@ function loadVBData(){
           if(kp[0]===genus&&kp[1]&&kp[1][0]===abbr)return cwByNorm[key];
         }
       }
+      var ck=cultivarKey(vbName);
+      if(ck&&dbCultivarIndex[ck])return dbCultivarIndex[ck];
       return null;
     }
     // Parse availability CSV
