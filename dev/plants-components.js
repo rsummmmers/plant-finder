@@ -197,13 +197,13 @@ function PhotoGallery(props){
     if(!name){setPhotos(cur?[{medium:cur,large:cur,thumb:cur,credit:""}]:[]);return;}
     var taxon=null;
     fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page="+INAT_TAXA_PER_PAGE)
-      .then(function(r){return r.json();})
+      .then(inatJson)
       .then(function(d){
         taxon=pickTaxon(d.results,name);
         if(!taxon)return Promise.reject("no taxon");
         return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=5&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd");
       })
-      .then(function(r){return r.json();})
+      .then(inatJson)
       .then(function(d){
         var seen={};
         var imgs=[];

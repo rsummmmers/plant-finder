@@ -495,7 +495,7 @@ function taxonQ(latin){
 // photo found" miss, so a genuinely unmatched query isn't re-fetched every
 // render) and requests are throttled to a few at a time so rendering a full
 // results grid doesn't fire 100+ simultaneous calls at iNaturalist.
-var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v4";
+var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v5";
 
 // iNaturalist's taxa search ranks synonym hits first sometimes -- "Fraxinus
 // americana" returns Fraxinus pennsylvanica first (via an old synonym). Prefer
@@ -508,6 +508,13 @@ function pickTaxon(results,query){
   return results[0]||null;
 }
 // The taxon's community-chosen photo, if it carries a reusable license.
+// A rate-limited (429) or failed response still parses as JSON, just with no
+// "results" -- treat it as a transient error (throw) so it is never cached as
+// "this plant has no photo".
+function inatJson(r){
+  if(!r.ok)throw new Error("iNat "+r.status);
+  return r.json().then(function(d){if(!d||!Array.isArray(d.results))throw new Error("iNat bad response");return d;});
+}
 function taxonDefaultPhoto(taxon){
   var dp=taxon&&taxon.default_photo;
   return dp&&dp.medium_url&&dp.license_code?dp:null;
@@ -527,9 +534,9 @@ function _inatFallbackPump(){
     // hiccup during a big batch of simultaneous lookups, with no retry ever.
     // Un-cached failures just retry next time that plant renders.
     fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.query)+"&per_page="+INAT_TAXA_PER_PAGE)
-      .then(function(r){return r.json();})
+      .then(inatJson)
       .then(function(data){
-        var taxon=pickTaxon(data&&data.results,job.query);
+        var taxon=pickTaxon(data.results,job.query);
         if(!taxon){
           _inatFallbackCache[job.query]=null;
           saveInatFallbackCache(_inatFallbackCache);
@@ -544,7 +551,7 @@ function _inatFallbackPump(){
           return null;
         }
         return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd")
-          .then(function(r){return r.json();})
+          .then(inatJson)
           .then(function(data2){
             var obs=data2&&data2.results&&data2.results[0];
             var ph=obs&&obs.photos&&obs.photos[0];
@@ -555,7 +562,11 @@ function _inatFallbackPump(){
           });
       })
       .catch(function(){
-        job.resolve(null); // not cached -- retry on next attempt
+        // Not cached. Usually iNaturalist throttling a burst of lookups --
+        // back off and retry a few times before giving up for this session.
+        job.tries=(job.tries||0)+1;
+        if(job.tries<=3){setTimeout(function(){_inatFallbackQueue.push(job);_inatFallbackPump();},1500*job.tries);}
+        else job.resolve(null);
       })
       .then(function(){_inatFallbackActive--;_inatFallbackPump();});
   }
