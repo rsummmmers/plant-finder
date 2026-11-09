@@ -195,14 +195,15 @@ function PhotoGallery(props){
     var name=taxonQ(plant.latin);
     var cur=plant.curatedImage;
     if(!name){setPhotos(cur?[{medium:cur,large:cur,thumb:cur,credit:""}]:[]);return;}
-    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page=1")
-      .then(function(r){return r.json();})
+    var taxon=null;
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(name)+"&per_page="+INAT_TAXA_PER_PAGE)
+      .then(inatJson)
       .then(function(d){
-        var taxon=(d.results||[])[0];
+        taxon=pickTaxon(d.results,name);
         if(!taxon)return Promise.reject("no taxon");
         return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=5&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd");
       })
-      .then(function(r){return r.json();})
+      .then(inatJson)
       .then(function(d){
         var seen={};
         var imgs=[];
@@ -213,6 +214,10 @@ function PhotoGallery(props){
         }
         if(cur){addImg(cur,cur,cur,"");seen[cur]=true;}
         if(plant.inatImage){var im=plant.inatImage;addImg(im,im.replace("medium","square"),im.replace("medium","large"),"");}
+        // iNaturalist's community-chosen species photo -- usually a far better
+        // whole-plant shot than the top-voted observations (e.g. White Ash twigs).
+        var dp=taxonDefaultPhoto(taxon);
+        if(dp)addImg(dp.medium_url,dp.square_url||dp.medium_url,dp.medium_url.replace("medium","large"),dp.attribution);
         (d.results||[]).forEach(function(obs){
           (obs.photos||[]).forEach(function(ph){
             if(imgs.length>=5)return;
@@ -476,7 +481,7 @@ function PlantCard(props){
                     plant.category&&h("div",null,h("span",{style:{color:"#888"}},"Type: "),plant.category),
                     plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
                     plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
-                    plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
+                    plant.heightFt>0&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
                     plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
                     plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
                     plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
@@ -571,7 +576,7 @@ h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"5px 12px",font
   plant.category&&h("div",null,h("span",{style:{color:"#888"}},"Type: "),plant.category),
                     plant.sun&&h("div",null,h("span",{style:{color:"#888"}},"Sun: "),plant.sun),
   plant.moisture&&h("div",null,h("span",{style:{color:"#888"}},"Moisture: "),plant.moisture),
-  plant.heightFt&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
+  plant.heightFt>0&&h("div",null,h("span",{style:{color:"#888"}},"Height: "),plant.heightFt+" ft"),
   plant.bloom&&plant.bloom!=="N/A"&&h("div",null,h("span",{style:{color:"#888"}},"Bloom: "),plant.bloom),
   plant.seasonal&&h("div",null,h("span",{style:{color:"#888"}},"Interest: "),plant.seasonal),
   plant.aggressive&&h("div",null,h("span",{style:{color:"#888"}},"Spreads: "),plant.aggressive==="Y"?"Aggressive spreader":plant.aggressive==="M"?"Moderate spreader":"Does not spread"),
