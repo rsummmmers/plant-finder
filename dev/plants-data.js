@@ -495,7 +495,23 @@ function taxonQ(latin){
 // photo found" miss, so a genuinely unmatched query isn't re-fetched every
 // render) and requests are throttled to a few at a time so rendering a full
 // results grid doesn't fire 100+ simultaneous calls at iNaturalist.
-var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v3";
+var INAT_FALLBACK_CACHE_KEY="ppb_inat_fallback_v4";
+
+// iNaturalist's taxa search ranks synonym hits first sometimes -- "Fraxinus
+// americana" returns Fraxinus pennsylvanica first (via an old synonym). Prefer
+// the result whose accepted name exactly matches the query; else the first.
+var INAT_TAXA_PER_PAGE=5;
+function pickTaxon(results,query){
+  results=results||[];
+  var q=(query||"").trim().toLowerCase();
+  for(var i=0;i<results.length;i++)if((results[i].name||"").toLowerCase()===q)return results[i];
+  return results[0]||null;
+}
+// The taxon's community-chosen photo, if it carries a reusable license.
+function taxonDefaultPhoto(taxon){
+  var dp=taxon&&taxon.default_photo;
+  return dp&&dp.medium_url&&dp.license_code?dp:null;
+}
 function loadInatFallbackCache(){try{return JSON.parse(localStorage.getItem(INAT_FALLBACK_CACHE_KEY)||"{}");}catch(err){return{};}}
 function saveInatFallbackCache(c){try{localStorage.setItem(INAT_FALLBACK_CACHE_KEY,JSON.stringify(c));}catch(err){}}
 var _inatFallbackCache=loadInatFallbackCache();
@@ -510,14 +526,21 @@ function _inatFallbackPump(){
     // the same way permanently "bricked" any plant unlucky enough to hit a
     // hiccup during a big batch of simultaneous lookups, with no retry ever.
     // Un-cached failures just retry next time that plant renders.
-    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.query)+"&per_page=1")
+    fetch("https://api.inaturalist.org/v1/taxa?q="+encodeURIComponent(job.query)+"&per_page="+INAT_TAXA_PER_PAGE)
       .then(function(r){return r.json();})
       .then(function(data){
-        var taxon=data&&data.results&&data.results[0];
+        var taxon=pickTaxon(data&&data.results,job.query);
         if(!taxon){
           _inatFallbackCache[job.query]=null;
           saveInatFallbackCache(_inatFallbackCache);
           job.resolve(null);
+          return null;
+        }
+        var dp=taxonDefaultPhoto(taxon);
+        if(dp){
+          _inatFallbackCache[job.query]=dp.medium_url;
+          saveInatFallbackCache(_inatFallbackCache);
+          job.resolve(dp.medium_url);
           return null;
         }
         return fetch("https://api.inaturalist.org/v1/observations?taxon_id="+taxon.id+"&quality_grade=research&photos=true&per_page=1&order_by=votes&photo_license=cc-by-nc,cc-by-nc-sa,cc-by-nc-nd")
